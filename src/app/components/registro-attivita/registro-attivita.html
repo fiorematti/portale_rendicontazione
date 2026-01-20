@@ -1,0 +1,156 @@
+<div class="container-fluid min-vh-100 p-2">
+  <h1 class="page-title mb-4">Registro attività</h1>
+
+  <div class="card card-custom mb-4 border-0 shadow-sm filter-container">
+    <div class="card-body p-3">
+      <div class="row g-3 align-items-end">
+        
+        <div class="col-12 col-md-3">
+          <label class="label-custom">Cerca utente</label>
+          <div class="input-group custom-input-bg">
+            <span class="input-group-text border-0 bg-transparent"><i class="bi bi-search"></i></span>
+            <input type="text" [(ngModel)]="filtroTesto" class="form-control border-0 bg-transparent shadow-none" placeholder="Cerca utente...">
+          </div>
+        </div>
+        
+        <div class="col-6 col-md-2 position-relative">
+          <label class="label-custom">In data</label>
+          <div class="input-group custom-input-bg">
+            <input type="text" [ngModel]="filtroData" (input)="onDataInput($event)" class="form-control border-0 bg-transparent shadow-none" placeholder="gg/mm/aaaa" (click)="toggleCalendar()">
+            <span class="input-group-text border-0 bg-transparent" (click)="toggleCalendar()" style="cursor: pointer;"><i class="bi bi-calendar3"></i></span>
+          </div>
+
+          @if (showCalendar) {
+            <div class="calendar-popup shadow border-0">
+              <div class="calendar-header d-flex justify-content-between align-items-center">
+                <i class="bi bi-chevron-left nav-arrow" (click)="prevMonth($event)"></i>
+                <span class="month-display">{{ monthNames[currentMonth] }} {{ currentYear }}</span>
+                <i class="bi bi-chevron-right nav-arrow" (click)="nextMonth($event)"></i>
+              </div>
+              <div class="calendar-grid">
+                <div class="day-name">L</div><div class="day-name">M</div><div class="day-name">M</div>
+                <div class="day-name">G</div><div class="day-name">V</div><div class="day-name">S</div><div class="day-name">D</div>
+                @for (day of calendarDays; track $index) {
+                  <div class="calendar-day" [class.empty]="!day" [class.selected]="isSelected(day)" (click)="selectDate(day)">
+                    {{ day }}
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="col-6 col-md-2">
+          <label class="label-custom">Stato convalida</label>
+          <select [(ngModel)]="filtroConvalida" class="form-select border-0 custom-input-bg shadow-none">
+            <option value="">Tutti</option>
+            <option value="convalidato">Convalidati</option>
+            <option value="da-convalidare">Da convalidare</option>
+          </select>
+        </div>
+
+        <div class="col-6 col-md-2">
+          <label class="label-custom">Location</label>
+          <select [(ngModel)]="filtroLocation" class="form-select border-0 custom-input-bg shadow-none">
+            <option value="">Tutti</option>
+            <option value="In sede">In sede</option>
+            <option value="Trasferta">Trasferta</option>
+          </select>
+        </div>
+
+        <div class="col-6 col-md-3 d-flex align-items-center justify-content-md-end gap-3">
+          <div class="text-center">
+            <label class="label-custom d-block">Seleziona tutto</label>
+            <input type="checkbox" class="form-check-input border-secondary" (change)="toggleAll($event)">
+          </div>
+          <button class="btn btn-dark-custom p-2 px-3" (click)="toggleExportPopup()">
+            <i class="bi bi-box-arrow-up"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-custom border-0 shadow-sm overflow-hidden mb-4">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="ps-4">Nome</th><th>Cognome</th><th>Data</th><th>Location</th><th class="pe-4 text-center">Convalida</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (attivita of attivitaFiltrate; track $index) {
+            <tr>
+              <td class="ps-4 fw-medium">{{ attivita.nome }}</td>
+              <td>{{ attivita.cognome }}</td>
+              <td class="text-muted">{{ attivita.data | date:'dd/MM/yyyy' }}</td>
+              <td>{{ attivita.location }}</td>
+              <td class="pe-4 text-center">
+                <input type="checkbox" class="form-check-input border-secondary" [(ngModel)]="attivita.convalidato">
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="text-center py-4 text-muted">Nessuna attività trovata.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="text-end pe-2">
+    <button class="btn px-5 py-3 fw-bold rounded-4 shadow-sm" 
+            [class.btn-confirm-orange]="countSelezionati > 0"
+            [class.btn-confirm-gray]="countSelezionati === 0"
+            (click)="confermaConvalide()">
+      Conferma convalide
+    </button>
+  </div>
+
+  @if (showExportPopup) {
+    <div class="modal-backdrop-custom">
+      <div class="export-card">
+        <h2 class="fw-bold mb-4">Esporta attività</h2>
+        
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <label class="label-custom text-start d-block">Mese</label>
+            <select [(ngModel)]="exportMese" class="form-select border-0 custom-input-bg shadow-none">
+              <option value="AUG">AUG</option>
+              <option value="SET">SET</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="label-custom text-start d-block">Utente</label>
+            <select [(ngModel)]="exportUtente" class="form-select border-0 custom-input-bg shadow-none">
+              <option value="">Nome Utente</option>
+              @for (a of elencoAttivita; track $index) {
+                <option [value]="a.nome">{{ a.nome }} {{ a.cognome }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="d-flex gap-3 mb-4">
+          <button class="btn btn-format flex-fill py-3 rounded-4 d-flex align-items-center justify-content-center gap-2"
+                  [class.selected]="formatoSelezionato === 'PDF'"
+                  (click)="selezionaFormato('PDF')">
+            <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i> PDF
+          </button>
+          <button class="btn btn-format flex-fill py-3 rounded-4 d-flex align-items-center justify-content-center gap-2"
+                  [class.selected]="formatoSelezionato === 'EXCEL'"
+                  (click)="selezionaFormato('EXCEL')">
+            <i class="bi bi-file-earmark-excel-fill text-success fs-4"></i> EXCEL
+          </button>
+        </div>
+
+        <div class="d-flex gap-3 mt-2">
+          <button class="btn btn-annulla-black flex-fill py-3 fw-bold" (click)="toggleExportPopup()">Annulla</button>
+          <button class="btn btn-esporta-confirm flex-fill py-3 fw-bold" (click)="esportaDati()">Esporta</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

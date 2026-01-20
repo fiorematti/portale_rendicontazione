@@ -1,0 +1,19 @@
+/* Riduciamo l'altezza delle righe della tabella */
+.table td, .table th {
+  padding: 5px 10px !important; /* Molto più strette */
+  font-size: 0.9rem;
+}
+
+/* Riduciamo l'altezza dei box Calendario e Ordini Assegnati */
+.card {
+  margin-top: 10px !important;
+}
+
+.card-body {
+  padding: 10px !important;
+}
+
+/* Se il calendario è un'immagine o un componente fisso, limitane l'altezza */
+.calendar-container {
+  max-height: 250px;
+}

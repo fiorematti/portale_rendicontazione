@@ -1,12 +1,15 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { Navbar } from './shared/navbar/navbar';
+
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
+  standalone: true,
+  imports: [RouterOutlet, Navbar],
+  templateUrl: './app.html',      // Nota che qui punta correttamente al tuo app.html
   styleUrl: './app.css'
 })
-export class App {
-  protected readonly title = signal('portale-rendicontazione');
+export class AppComponent {
+  title = 'portale-rendicontazione';
 }

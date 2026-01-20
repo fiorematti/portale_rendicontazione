@@ -1,0 +1,115 @@
+<div class="container-fluid p-2">
+  <h1 class="fw-bold mb-4">Clienti</h1>
+
+  <div class="bg-white p-3 rounded-4 shadow-sm mb-4 border border-light">
+    <div class="row g-3 align-items-end">
+      
+      <div class="col-12 col-md-4 col-lg-3">
+        <label class="small fw-bold mb-1 d-block">Cerca cliente</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" (input)="cercaCliente($event)" class="form-control bg-light border-start-0" placeholder="Cerca cliente...">
+        </div>
+      </div>
+      
+      <div class="col-6 col-md-3 col-lg-2">
+        <label class="small fw-bold mb-1 d-block">Stato Cliente</label>
+        <select class="form-select bg-light" (change)="filtraPerStato($event)">
+          <option value="tutti" selected>Tutti gli stati</option>
+          <option value="attivo">Attivo</option>
+          <option value="non-attivo">Non attivo</option>
+        </select>
+      </div>
+
+      <div class="col-6 col-md-3 col-lg-2">
+        <label class="small fw-bold mb-1 d-block">Stato Ordini</label>
+        <select class="form-select bg-light" (change)="filtraPerOrdini($event)">
+          <option value="tutti" selected>Tutti gli ordini</option>
+          <option value="ok">Completati</option>
+          <option value="ko">Non completati</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-md-2 col-lg-5 text-md-end">
+        <button (click)="aggiungiCliente()" class="btn btn-dark px-4 py-2 rounded-3 shadow-sm d-inline-flex align-items-center">
+          <i class="bi bi-plus-lg me-2"></i> Aggiungi Cliente
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="bg-white rounded-4 shadow-sm border border-light overflow-hidden">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4 py-3">Cliente</th>
+            <th>Stato</th>
+            <th>Ordini</th>
+            <th class="text-end pe-4">Azioni</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cliente of listaClientiFiltrata; track $index) {
+          <tr>
+            <td class="ps-4 fw-medium text-nowrap">{{ cliente.nome }}</td>
+            <td>
+              <span class="badge rounded-pill" [ngClass]="cliente.statoAttivo ? 'badge-attivo' : 'badge-non-attivo'">
+                {{ cliente.statoAttivo ? 'attivo' : 'non attivo' }}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex flex-column gap-1 py-1">
+                @for (ordine of cliente.ordini; track $index) {
+                <span class="small d-flex align-items-center text-nowrap">
+                  <i class="bi bi-circle-fill me-2" [ngClass]="ordine.stato === 'completato' ? 'text-success' : 'text-danger'" style="font-size: 8px;"></i>
+                  {{ ordine.codice }}
+                </span>
+                }
+              </div>
+            </td>
+            <td class="text-end pe-4 text-nowrap">
+              <button (click)="eliminaCliente(cliente.id)" class="btn btn-link text-dark p-1"><i class="bi bi-trash3"></i></button>
+              <button (click)="modificaCliente(cliente)" class="btn btn-link text-dark p-1"><i class="bi bi-pencil"></i></button>
+            </td>
+          </tr>
+          }
+          
+          @if (listaClientiFiltrata.length === 0) {
+          <tr>
+            <td colspan="4" class="text-center py-4 text-muted">
+              Nessun cliente trovato con i filtri selezionati.
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+@if (mostraModal) {
+<div class="modal-overlay">
+  <div class="modal-card p-4 rounded-5 bg-white shadow-lg">
+    <h2 class="fw-bold mb-4 text-center">{{ isModifica ? 'Modifica Cliente' : 'Aggiungi Cliente' }}</h2>
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="fw-bold mb-1">Nome</label>
+        <input type="text" [(ngModel)]="clienteSelezionato.nome" class="form-control bg-light" placeholder="Inserisci nome" required>
+      </div>
+      <div class="col-12">
+        <label class="fw-bold mb-1">Stato</label>
+        <select [(ngModel)]="clienteSelezionato.statoAttivo" class="form-select bg-light">
+          <option [ngValue]="true">Attivo</option>
+          <option [ngValue]="false">Non attivo</option>
+        </select>
+      </div>
+    </div>
+    <div class="d-flex justify-content-center gap-3 mt-5">
+      <button class="btn btn-dark rounded-pill px-5 py-2 fw-bold" (click)="chiudiModal()">Annulla</button>
+      <button class="btn btn-warning rounded-pill px-5 py-2 fw-bold text-white" (click)="salvaModifica()">Conferma</button>
+    </div>
+  </div>
+</div>
+}

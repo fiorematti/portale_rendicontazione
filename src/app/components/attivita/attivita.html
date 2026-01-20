@@ -1,0 +1,117 @@
+<div class="container-fluid p-2">
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div class="d-flex align-items-start">
+      <div>
+        <h2 class="fw-bold m-0">Attività</h2>
+        <div class="d-flex align-items-center mt-2">
+          <button class="btn btn-link text-dark p-0" (click)="cambiaGiorno(-1)">
+            <i class="bi bi-caret-left-fill"></i>
+          </button>
+          <span class="mx-3 fw-bold">{{ giornoSelezionato }}/{{ meseCorrente + 1 }}/{{ annoCorrente }}</span>
+          <button class="btn btn-link text-dark p-0" (click)="cambiaGiorno(1)">
+            <i class="bi bi-caret-right-fill"></i>
+          </button>
+          <span class="ms-5 text-muted">Totale ore: <strong>{{ totaleOreCalcolato }}</strong></span>
+        </div>
+      </div>
+
+      <div class="ms-5">
+        <div class="calendar-card-mini p-2 border rounded-4 bg-light shadow-sm">
+          <div class="d-flex justify-content-center align-items-center mb-2 px-1">
+            <div class="d-flex align-items-center gap-1">
+              <select class="calendar-select fw-bold" [(ngModel)]="meseCorrente" (change)="generaCalendario()">
+                <option *ngFor="let m of listaMesi; let i = index" [value]="i">{{ m }}</option>
+              </select>
+              <select class="calendar-select fw-bold" [(ngModel)]="annoCorrente" (change)="generaCalendario()">
+                <option *ngFor="let a of listaAnni" [value]="a">{{ a }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="calendar-mini-grid">
+            <div class="day-name">Su</div><div class="day-name">Mo</div><div class="day-name">Tu</div>
+            <div class="day-name">We</div><div class="day-name">Th</div><div class="day-name">Fr</div><div class="day-name">Sa</div>
+            
+            <ng-container *ngFor="let g of giorniCalendario">
+              <div *ngIf="g.corrente" class="day-dot" 
+                   [class.active]="g.valore === giornoSelezionato" 
+                   (click)="selezionaGiorno(g)">
+                {{ g.valore }}
+              </div>
+              <div *ngIf="!g.corrente" class="day-dot empty"></div>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <button class="btn btn-dark rounded-pill px-4" (click)="apriModal()">
+        <i class="bi bi-plus-lg me-2"></i>Aggiungi attività
+      </button>
+    </div>
+  </div>
+
+  <div class="mb-4">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-4">Codice ordine</th>
+          <th>Cliente</th>
+          <th>Location</th>
+          <th>Ore</th>
+          <th class="text-end pe-4">Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of listaAttivita; let i = index" class="border-bottom">
+          <td class="ps-4 text-muted">{{ item.codice }}</td>
+          <td>{{ item.cliente }}</td>
+          <td>{{ item.location }}</td>
+          <td>{{ item.ore }}:00</td>
+          <td class="text-end pe-4">
+            <button class="btn btn-link text-dark" (click)="eliminaAttivita(i)">
+              <i class="bi bi-trash"></i>
+            </button>
+            <button class="btn btn-link text-dark" (click)="modificaAttivita(i)">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="mostraModal">
+  <div class="modal-card p-4 rounded-5 bg-white shadow-lg">
+    <h2 class="fw-bold mb-4 text-center">{{ isModifica ? 'Modifica attività' : 'Aggiungi attività' }}</h2>
+    <div class="row g-3">
+      <div class="col-6 text-start">
+        <label class="fw-bold mb-1">Codice ordine</label>
+        <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.codice">
+          <option value="AAAA/xxxx">AAAA/xxxx</option>
+        </select>
+      </div>
+      <div class="col-6 text-start">
+        <label class="fw-bold mb-1">Cliente</label>
+        <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.cliente">
+          <option value="Nome cliente">Nome cliente</option>
+        </select>
+      </div>
+      <div class="col-6 text-start">
+        <label class="fw-bold mb-1">Location</label>
+        <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.location">
+          <option value="In sede">In sede</option>
+          <option value="Trasferta">Trasferta</option>
+        </select>
+      </div>
+      <div class="col-6 text-start">
+        <label class="fw-bold mb-1">Ore</label>
+        <input type="number" class="form-control bg-light" [(ngModel)]="nuovaAttivita.ore">
+      </div>
+    </div>
+    <div class="d-flex justify-content-center gap-3 mt-5">
+      <button class="btn btn-dark rounded-pill px-5 py-2 fw-bold" (click)="chiudiModal()">Annulla</button>
+      <button class="btn btn-warning rounded-pill px-5 py-2 fw-bold text-white" (click)="confermaAggiunta()">Conferma</button>
+    </div>
+  </div>
+</div>

@@ -1,1 +1,23 @@
-/* You can add global styles to this file, and also import other style files */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #f3f0eb;
+  font-family: 'Segoe UI', sans-serif;
+  
+}
+
+.main-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+.content-area {
+  margin-left: 70px; /* spazio occupato dalla sidebar chiusa */
+  flex-grow: 1;
+  padding: 10px;
+  height: 100vh;
+  
+}
+.content-area::-webkit-scrollbar { display: none; }

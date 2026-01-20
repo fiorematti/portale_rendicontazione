@@ -1,0 +1,129 @@
+<div class="container-fluid p-4">
+  <h1 class="page-title mb-4">Ordini</h1>
+
+  <div class="filter-bar-custom mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="label-filter">Cerca ordine</label>
+        <div class="search-wrapper">
+          <i class="bi bi-search"></i>
+          <input type="text" [(ngModel)]="filtroTesto" placeholder="Cerca...">
+        </div>
+      </div>
+
+      <div class="col-md-2">
+        <label class="label-filter">Stato ordine</label>
+        <select class="select-filter-custom" [(ngModel)]="filtroStato">
+          <option value="">Tutti</option>
+          <option value="Ricevuto">Ricevuto</option>
+          <option value="Fatto">Fatto</option>
+        </select>
+      </div>
+
+      <div class="col-grow"></div>
+
+      <div class="col-auto">
+        <button class="btn btn-dark-custom py-2 px-4 d-flex align-items-center gap-2" (click)="nuovoOrdine()">
+          <i class="bi bi-plus-lg"></i> Aggiungi Ordine
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-container-custom shadow-sm mb-4">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0 custom-table-style">
+        <thead>
+          <tr>
+            <th class="ps-4">Cod. ordine</th>
+            <th>Cliente</th>
+            <th>Data inizio</th>
+            <th>Codice offerta</th>
+            <th class="pe-4 text-center">Stato</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (ordine of ordiniFiltrati; track $index) {
+            <tr>
+              <td class="ps-4 fw-bold">{{ ordine.id }}</td>
+              <td>{{ ordine.cliente }}</td>
+              <td>{{ ordine.dataInizio }}</td>
+              <td>{{ ordine.codiceOfferta }}</td>
+              <td class="pe-4 text-center">
+                <span class="badge-custom" [ngClass]="getBadgeClass(ordine.stato)">
+                  {{ ordine.stato }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  @if (mostraModal) {
+  <div class="modal-overlay" (click)="chiudiModal()">
+    <div class="modal-card shadow-lg" (click)="$event.stopPropagation()">
+      <h2 class="modal-title-custom">Aggiungi ordini</h2>
+      
+      <div class="row g-4 mt-2">
+        <div class="col-md-6">
+          <label class="label-custom">Codice ordine</label>
+          <input type="text" [(ngModel)]="nuovoOrdineDati.id" class="form-control input-modal-style" placeholder="Inserisci nome">
+        </div>
+        <div class="col-md-6">
+          <label class="label-custom">Cliente</label>
+          <input type="text" [(ngModel)]="nuovoOrdineDati.cliente" class="form-control input-modal-style" placeholder="Inserisci cognome">
+        </div>
+        
+        <div class="col-md-4">
+          <label class="label-custom">Data inizio</label>
+          <div class="date-container">
+            <input type="text" [(ngModel)]="nuovoOrdineDati.dataInizio" (input)="formattaData($event)"
+                   class="form-control input-modal-style" placeholder="gg/mm/aaaa" maxlength="10">
+            <div class="calendar-wrapper" (click)="mostraCalendario = !mostraCalendario">
+              <i class="bi bi-calendar3"></i>
+            </div>
+
+            @if (mostraCalendario) {
+            <div class="custom-datepicker-popup">
+              <div class="datepicker-header">
+                <i class="bi bi-chevron-left nav-icon" (click)="cambiaMese(-1); $event.stopPropagation()"></i>
+                <span class="current-month">{{ nomeMeseAnno }}</span>
+                <i class="bi bi-chevron-right nav-icon" (click)="cambiaMese(1); $event.stopPropagation()"></i>
+              </div>
+              <div class="datepicker-grid">
+                <div class="weekday">L</div><div class="weekday">M</div><div class="weekday">M</div>
+                <div class="weekday">G</div><div class="weekday">V</div><div class="weekday">S</div><div class="weekday">D</div>
+                @for (g of calendarioGiorni; track $index) {
+                  <div class="day" [class.empty]="!g"
+                       [class.selected]="isGiornoSelezionato(g)" (click)="selezionaGiorno(g); $event.stopPropagation()">
+                    {{ g }}
+                  </div>
+                }
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <label class="label-custom">Stato</label>
+          <select [(ngModel)]="nuovoOrdineDati.stato" class="form-select input-modal-style">
+            <option value="Ricevuto">Ricevuto</option>
+            <option value="Fatto">Fatto</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="label-custom">Codice offerta</label>
+          <input type="text" [(ngModel)]="nuovoOrdineDati.codiceOfferta" class="form-control input-modal-style" placeholder="Inserisci cod. offerta">
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-center gap-3 mt-5">
+        <button class="btn btn-modal-annulla" (click)="chiudiModal()">Annulla</button>
+        <button class="btn btn-modal-conferma" (click)="confermaOrdine()">Conferma</button>
+      </div>
+    </div>
+  </div>
+  }
