@@ -14,9 +14,15 @@ export class OrdiniComponent implements OnInit {
   filtroStato: string = '';
   mostraModal: boolean = false;
   mostraCalendario: boolean = false;
+  mostraErrore: boolean = false;
 
-  dataVisualizzata: Date = new Date();
-  calendarioGiorni: (number | null)[] = [];
+  isModifica: boolean = false;
+  indiceInModifica: number = -1;
+
+  currentMonth = new Date().getMonth();
+  currentYear = new Date().getFullYear();
+  calendarDays: (number | null)[] = [];
+  monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
 
   nuovoOrdineDati = {
     id: '',
@@ -32,60 +38,48 @@ export class OrdiniComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.generaCalendario();
+    this.generateCalendar();
   }
 
-  generaCalendario(): void {
-    const anno = this.dataVisualizzata.getFullYear();
-    const mese = this.dataVisualizzata.getMonth();
-    const primoGiornoMese = new Date(anno, mese, 1).getDay();
-    const offset = primoGiornoMese === 0 ? 6 : primoGiornoMese - 1;
-    const giorniNelMese = new Date(anno, mese + 1, 0).getDate();
-
-    this.calendarioGiorni = [];
-    for (let i = 0; i < offset; i++) {
-      this.calendarioGiorni.push(null);
-    }
-    for (let i = 1; i <= giorniNelMese; i++) {
-      this.calendarioGiorni.push(i);
-    }
+  generateCalendar(): void {
+    this.calendarDays = [];
+    const firstDayIndex = new Date(this.currentYear, this.currentMonth, 1).getDay();
+    const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+    const offset = (firstDayIndex === 0) ? 6 : firstDayIndex - 1;
+    for (let i = 0; i < offset; i++) this.calendarDays.push(null);
+    for (let i = 1; i <= daysInMonth; i++) this.calendarDays.push(i);
   }
 
-  cambiaMese(delta: number): void {
-    this.dataVisualizzata = new Date(
-      this.dataVisualizzata.getFullYear(),
-      this.dataVisualizzata.getMonth() + delta,
-      1
-    );
-    this.generaCalendario();
+  prevMonth(event: Event): void {
+    event.stopPropagation();
+    this.currentMonth--;
+    if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
+    this.generateCalendar();
+  }
+
+  nextMonth(event: Event): void {
+    event.stopPropagation();
+    this.currentMonth++;
+    if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
+    this.generateCalendar();
   }
 
   get nomeMeseAnno(): string {
-    const options: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
-    const localeMese = this.dataVisualizzata.toLocaleString('it-IT', options);
-    return localeMese.charAt(0).toUpperCase() + localeMese.slice(1);
+    return `${this.monthNames[this.currentMonth]} ${this.currentYear}`;
   }
 
-  selezionaGiorno(giorno: number | null): void {
-    if (!giorno) return;
-    const g = giorno.toString().padStart(2, '0');
-    const m = (this.dataVisualizzata.getMonth() + 1).toString().padStart(2, '0');
-    const a = this.dataVisualizzata.getFullYear();
-    this.nuovoOrdineDati.dataInizio = `${g}/${m}/${a}`;
+  selectDate(day: number | null): void {
+    if (!day) return;
+    const d = day.toString().padStart(2, '0');
+    const m = (this.currentMonth + 1).toString().padStart(2, '0');
+    this.nuovoOrdineDati.dataInizio = `${d}/${m}/${this.currentYear}`;
     this.mostraCalendario = false;
   }
 
-  isGiornoSelezionato(giorno: number | null): boolean {
-    if (!giorno) return false;
-    const dataInput = this.nuovoOrdineDati.dataInizio;
-    if (!dataInput || dataInput.length < 10) return false;
-    const parti = dataInput.split('/');
-    const d = parseInt(parti[0]);
-    const m = parseInt(parti[1]);
-    const a = parseInt(parti[2]);
-    return d === giorno &&
-           m === (this.dataVisualizzata.getMonth() + 1) &&
-           a === this.dataVisualizzata.getFullYear();
+  isSelected(day: number | null): boolean {
+    if (!day) return false;
+    const dateStr = `${day.toString().padStart(2, '0')}/${(this.currentMonth + 1).toString().padStart(2, '0')}/${this.currentYear}`;
+    return this.nuovoOrdineDati.dataInizio === dateStr;
   }
 
   formattaData(event: any): void {
@@ -99,19 +93,52 @@ export class OrdiniComponent implements OnInit {
   }
 
   nuovoOrdine(): void {
+    this.isModifica = false;
+    this.mostraErrore = false;
+    this.mostraModal = true;
+  }
+
+  modificaOrdine(ordine: any): void {
+    this.isModifica = true;
+    this.indiceInModifica = this.elencoOrdini.findIndex(o => o.id === ordine.id);
+    this.nuovoOrdineDati = { ...ordine };
+    this.mostraErrore = false;
     this.mostraModal = true;
   }
 
   chiudiModal(): void {
     this.mostraModal = false;
+    this.isModifica = false;
+    this.indiceInModifica = -1;
     this.resetForm();
     this.mostraCalendario = false;
+    this.mostraErrore = false;
   }
 
   confermaOrdine(): void {
-    if (this.nuovoOrdineDati.id && this.nuovoOrdineDati.cliente) {
+    const { id, cliente, dataInizio, codiceOfferta } = this.nuovoOrdineDati;
+    const campiValidi = id.trim() && cliente.trim() && dataInizio.trim() && codiceOfferta.trim();
+
+    if (!campiValidi) {
+      this.mostraErrore = true;
+      setTimeout(() => (this.mostraErrore = false), 4000);
+      return;
+    }
+
+    if (this.isModifica) {
+      this.elencoOrdini[this.indiceInModifica] = { ...this.nuovoOrdineDati };
+    } else {
       this.elencoOrdini.unshift({ ...this.nuovoOrdineDati });
-      this.chiudiModal();
+    }
+    this.chiudiModal();
+  }
+
+  eliminaOrdine(ordine: any): void {
+    if (confirm('Sei sicuro di voler eliminare questo ordine?')) {
+      const index = this.elencoOrdini.findIndex(o => o.id === ordine.id);
+      if (index !== -1) {
+        this.elencoOrdini.splice(index, 1);
+      }
     }
   }
 

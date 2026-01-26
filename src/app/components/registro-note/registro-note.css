@@ -27,6 +27,7 @@
   align-items: center;
   border: 1px solid #ddd;
   height: 45px;
+  position: relative;
 }
 
 .search-wrapper input {
@@ -37,15 +38,9 @@
   margin-left: 8px;
 }
 
-.select-filter-custom {
-  width: 100%;
-  background: white;
-  border-radius: 12px;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  height: 45px;
-  font-size: 0.9rem;
-  outline: none;
+.search-wrapper i {
+  color: #666;
+  cursor: pointer;
 }
 
 /* TABELLA */
@@ -70,18 +65,6 @@
   padding: 18px 20px;
   border-bottom: 1px solid #f0f0f0;
 }
-
-/* BADGE STATI */
-.badge-custom {
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  display: inline-block;
-}
-
-.badge-success { background-color: #d1e7dd; color: #0f5132; }
-.badge-warning { background-color: #fff3cd; color: #856404; }
 
 /* MODAL OVERLAY */
 .modal-overlay {
@@ -123,7 +106,7 @@
   border: none !important;
   border-radius: 18px !important;
   padding: 15px 20px !important;
-  height: 60px;
+  height: auto;
   font-weight: 500;
   color: #333;
 }
@@ -205,3 +188,45 @@
   font-weight: 700;
   border: none;
 }
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+/* MODAL OVERLAY */
+.modal-backdrop-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* MODAL CARD */
+.export-card {
+  background-color: #ffffff;
+  border-radius: 30px;
+  padding: 2.5rem;
+  width: 450px;
+  max-width: 90%;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+.btn-format {
+  background-color: #f2f2f2;
+  border-radius: 15px;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.btn-format.selected { background-color: #d0d0d0 !important; border: 1px solid #999 !important; }
+
+.btn-esporta-confirm { background-color: #ff9500; color: white; border-radius: 12px; border: none; }
+.btn-annulla-black { background-color: #1a1a1a; color: white; border-radius: 12px; border: none; }

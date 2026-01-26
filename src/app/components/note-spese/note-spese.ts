@@ -2,6 +2,29 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+interface Spesa {
+  data: string;
+  codice: string;
+  richiesto: string;
+  validato: string;
+  pagato: boolean;
+}
+
+interface DettaglioSpesa {
+  codiceOrdine: string;
+  vitto?: number | null;
+  alloggio?: number | null;
+  hotel?: number | null;
+  trasporti?: number | null;
+  aereo?: number | null;
+  varie?: number | null;
+  auto?: string;
+  km?: number | null;
+  parking?: number | null;
+  telepass?: number | null;
+  costo?: number | null;
+}
+
 @Component({
   selector: 'app-note-spese',
   standalone: true,
@@ -10,7 +33,7 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './note-spese.css',
 })
 export class NoteSpese implements OnInit {
-  listaSpese = [
+  listaSpese: Spesa[] = [
     { data: '14/01/2026', codice: 'AAAA/xxxx', richiesto: '215,00€', validato: '190,00€', pagato: true },
     { data: '15/01/2026', codice: 'BBBB/yyyy', richiesto: '120,00€', validato: '120,00€', pagato: true },
     { data: '16/01/2026', codice: 'CCCC/zzzz', richiesto: '45,00€',  validato: '40,00€',  pagato: false },
@@ -24,7 +47,8 @@ export class NoteSpese implements OnInit {
   modalMode: 'aggiungi' | 'visualizza' | 'modifica' = 'aggiungi'; 
   nuovaSpesaData: string = '';
   tabAttiva: number = 0;
-  dettagliSpesa: any[] = [];
+  dettagliSpesa: DettaglioSpesa[] = [];
+  mostraErrore: boolean = false;
   
   rigaSelezionata: any = null;
 
@@ -34,6 +58,10 @@ export class NoteSpese implements OnInit {
   giorniDelMese: number[] = [];
   giorniVuoti: number[] = [];
 
+  get isAggiungi(): boolean { return this.modalMode === 'aggiungi'; }
+  get isVisualizza(): boolean { return this.modalMode === 'visualizza'; }
+  get isModifica(): boolean { return this.modalMode === 'modifica'; }
+
   ngOnInit(): void {
     this.generaCalendario();
     this.resetNuovaSpesa();
@@ -42,15 +70,13 @@ export class NoteSpese implements OnInit {
   visualizzaDettaglio(spesa: any): void {
     this.rigaSelezionata = spesa;
     this.caricaDatiNellaModal(spesa);
-    this.modalMode = 'visualizza';
-    this.mostraModal = true;
+    this.apriModalConModalita('visualizza');
   }
 
   apriModifica(spesa: any): void {
     this.rigaSelezionata = spesa;
     this.caricaDatiNellaModal(spesa);
-    this.modalMode = 'modifica';
-    this.mostraModal = true;
+    this.apriModalConModalita('modifica');
   }
 
   eliminaSpesa(indexTable: number): void {
@@ -61,7 +87,7 @@ export class NoteSpese implements OnInit {
     }
   }
 
-  private caricaDatiNellaModal(spesa: any) {
+  private caricaDatiNellaModal(spesa: Spesa) {
     this.nuovaSpesaData = spesa.data;
 
     const importoPulito = parseFloat(
@@ -89,24 +115,20 @@ export class NoteSpese implements OnInit {
   }
 
   confermaSpesa(): void {
-    if (!this.nuovaSpesaData) {
-      alert("Inserire una data valida");
+    const dett = this.dettagliSpesa[this.tabAttiva] || this.dettagliSpesa[0];
+    if (!this.isDettaglioValido(dett)) {
+      this.mostraErrore = true;
+      setTimeout(() => (this.mostraErrore = false), 4000);
       return;
     }
 
     const totaleStringa = this.totaleCalcolato.toFixed(2).replace('.', ',') + '€';
 
-    if (this.modalMode === 'aggiungi') {
-      this.listaSpese.unshift({
-        data: this.nuovaSpesaData,
-        codice: this.dettagliSpesa[0].codiceOrdine,
-        richiesto: totaleStringa,
-        validato: '0,00€',
-        pagato: false
-      });
+    if (this.isAggiungi) {
+      this.listaSpese.unshift(this.creaSpesaDaDettaglio(dett, totaleStringa));
     } else if (this.rigaSelezionata) {
       this.rigaSelezionata.data = this.nuovaSpesaData;
-      this.rigaSelezionata.codice = this.dettagliSpesa[0].codiceOrdine;
+      this.rigaSelezionata.codice = dett.codiceOrdine;
       this.rigaSelezionata.richiesto = totaleStringa;
     }
 
@@ -118,18 +140,19 @@ export class NoteSpese implements OnInit {
     this.dettagliSpesa = [{ codiceOrdine: 'AAAA/xxxx', vitto: null, auto: 'Modello auto' }];
     this.tabAttiva = 0;
     this.rigaSelezionata = null;
+    this.mostraErrore = false;
   }
 
   apriModalSpesa(): void { 
-    this.modalMode = 'aggiungi';
     this.resetNuovaSpesa();
-    this.mostraModal = true; 
+    this.apriModalConModalita('aggiungi');
   }
 
   chiudiModal(): void { 
     this.mostraModal = false; 
     this.mostraCalendario = false;
     this.rigaSelezionata = null;
+    this.mostraErrore = false;
   }
 
   get totaleCalcolato(): number {
@@ -143,7 +166,7 @@ export class NoteSpese implements OnInit {
   }
 
   toggleCalendario(target: 'filtro' | 'popup'): void {
-    if (this.modalMode === 'visualizza' && target === 'popup') return;
+    if (this.isVisualizza && target === 'popup') return;
     this.targetData = target;
     this.mostraCalendario = !this.mostraCalendario;
   }
@@ -195,5 +218,29 @@ export class NoteSpese implements OnInit {
     this.dettagliSpesa.splice(this.tabAttiva, 1);
     if (this.dettagliSpesa.length === 0) this.chiudiModal();
     else this.tabAttiva = 0;
+  }
+
+  private apriModalConModalita(mode: 'aggiungi' | 'visualizza' | 'modifica'): void {
+    this.modalMode = mode;
+    this.mostraModal = true;
+  }
+
+  private isDettaglioValido(dett: DettaglioSpesa | undefined): boolean {
+    if (!dett) return false;
+    const dataValida = this.nuovaSpesaData.trim().length > 0;
+    const codiceValido = dett.codiceOrdine?.toString().trim().length > 0;
+    const hasImporto = [dett.vitto, dett.alloggio, dett.hotel, dett.trasporti, dett.aereo, dett.varie, dett.parking, dett.telepass, dett.costo]
+      .some(v => Number(v || 0) > 0);
+    return Boolean(dataValida && codiceValido && hasImporto);
+  }
+
+  private creaSpesaDaDettaglio(dett: DettaglioSpesa, totale: string): Spesa {
+    return {
+      data: this.nuovaSpesaData,
+      codice: dett.codiceOrdine,
+      richiesto: totale,
+      validato: '0,00€',
+      pagato: false,
+    };
   }
 }

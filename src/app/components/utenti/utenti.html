@@ -23,8 +23,7 @@
           <select [(ngModel)]="filtroRuolo" class="form-select border-0 custom-input-bg shadow-none">
             <option value="">Tutti i ruoli</option>
             <option value="Admin">Admin</option>
-            <option value="Utente interno">Utente interno</option>
-            <option value="Utente esterno">Utente esterno</option>
+            <option value="Amministratore">Amministratore</option>
           </select>
         </div>
 
@@ -63,8 +62,8 @@
           @for (utente of utentiFiltrati; track utente.email) {
             <tr>
               <td class="ps-4 fw-medium text-nowrap">{{ utente.nome }}</td>
-              <td class="text-muted text-nowrap">{{ utente.cognome }}</td>
-              <td class="text-muted text-nowrap">{{ utente.ruolo }}</td>
+              <td class="ps-4 fw-medium text-nowrap">{{ utente.cognome }}</td>
+              <td class="ps-4 fw-medium text-nowrap">{{ utente.ruolo }}</td>
               <td>
                 <span class="badge-status" 
                       [class.badge-attivo]="utente.attivo" 

@@ -7,13 +7,13 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './utenti.html',
-  styleUrl: './utenti.css',
+  styleUrls: ['./utenti.css'],
 })
 export class UtentiComponent {
   utentiOriginali = [
     { nome: 'Giovanni', cognome: 'Bianchi', ruolo: 'Admin', attivo: true, email: 'giovanni@syncpoint.it' },
-    { nome: 'Lorenzo', cognome: 'Ostuni', ruolo: 'Utente interno', attivo: true, email: 'lorenzo@syncpoint.it' },
-    { nome: 'Luca', cognome: 'Gini', ruolo: 'Utente esterno', attivo: true, email: 'luca@syncpoint.it' },
+    { nome: 'Lorenzo', cognome: 'Ostuni', ruolo: 'Amministratore', attivo: true, email: 'lorenzo@syncpoint.it' },
+    { nome: 'Luca', cognome: 'Gini', ruolo: 'Amministratore', attivo: true, email: 'luca@syncpoint.it' },
     { nome: 'Giulia', cognome: 'Lilla', ruolo: 'Admin', attivo: false, email: 'giulia@syncpoint.it' },
   ];
 

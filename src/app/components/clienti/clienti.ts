@@ -34,6 +34,7 @@ export class ClientiComponent implements OnInit {
   public clienteSelezionato: Cliente = { id: 0, nome: '', statoAttivo: true, ordini: [] };
   public mostraModal: boolean = false;
   public isModifica: boolean = false;
+  public mostraErrore: boolean = false;
 
   public filtroTesto: string = '';
   public filtroStatoCliente: string = 'tutti';
@@ -76,19 +77,22 @@ export class ClientiComponent implements OnInit {
 
   public aggiungiCliente(): void {
     this.isModifica = false;
+    this.mostraErrore = false;
     this.clienteSelezionato = { id: 0, nome: '', statoAttivo: true, ordini: [] };
     this.mostraModal = true;
   }
 
   public modificaCliente(cliente: Cliente): void {
     this.isModifica = true;
+    this.mostraErrore = false;
     this.clienteSelezionato = { ...cliente };
     this.mostraModal = true;
   }
 
   public salvaModifica(): void {
     if (!this.clienteSelezionato.nome.trim()) {
-      alert("Per favore, inserisci un nome valido.");
+      this.mostraErrore = true;
+      setTimeout(() => this.mostraErrore = false, 4000);
       return;
     }
     if (this.clienteSelezionato.id === 0) {
@@ -107,6 +111,7 @@ export class ClientiComponent implements OnInit {
   public chiudiModal(): void {
     this.mostraModal = false;
     this.isModifica = false;
+    this.mostraErrore = false;
   }
 
   public eliminaCliente(id: number): void {

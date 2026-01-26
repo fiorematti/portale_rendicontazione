@@ -26,10 +26,12 @@ export class Attivita implements OnInit {
   mostraModal: boolean = false;
   isModifica: boolean = false;
   indiceInModifica: number = -1;
+  mostraErrore: boolean = false;
 
   apriModal() { 
     this.isModifica = false;
-    this.nuovaAttivita = { codice: 'AAAA/xxxx', cliente: 'Nome cliente', location: 'In sede', ore: 0 };
+    this.mostraErrore = false;
+    this.nuovaAttivita = { codice: '', cliente: '', location: '', ore: 0 };
     this.mostraModal = true; 
   }
 
@@ -43,19 +45,25 @@ export class Attivita implements OnInit {
   chiudiModal() { 
     this.mostraModal = false; 
     this.isModifica = false;
+    this.mostraErrore = false;
   }
 
   confermaAggiunta() {
-    if (this.nuovaAttivita.ore > 0) {
-      if (this.isModifica) {
-        this.listaAttivita[this.indiceInModifica] = { ...this.nuovaAttivita };
-      } else {
-        this.listaAttivita.push({ ...this.nuovaAttivita });
-      }
-      this.chiudiModal();
-    } else {
-      alert("Per favore, inserisci tutti i dati correttamente.");
+    const { codice, cliente, location, ore } = this.nuovaAttivita;
+    const campiValidi = codice.trim() && cliente.trim() && location.trim() && Number(ore) > 0;
+
+    if (!campiValidi) {
+      this.mostraErrore = true;
+      setTimeout(() => this.mostraErrore = false, 4000);
+      return;
     }
+
+    if (this.isModifica) {
+      this.listaAttivita[this.indiceInModifica] = { ...this.nuovaAttivita };
+    } else {
+      this.listaAttivita.push({ ...this.nuovaAttivita });
+    }
+    this.chiudiModal();
   }
 
   eliminaAttivita(index: number) {

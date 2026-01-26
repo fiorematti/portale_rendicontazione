@@ -1,0 +1,250 @@
+<div class="container-fluid p-4">
+  <h1 class="page-title mb-4">Registro Note</h1>
+
+  <div class="filter-bar-custom mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="label-filter">Cerca nota</label>
+        <div class="search-wrapper">
+          <i class="bi bi-search"></i>
+          <input type="text" [(ngModel)]="filtroTesto" placeholder="Cerca...">
+        </div>
+      </div>
+
+      <div class="col-md-2 position-relative">
+        <label class="label-filter">In data</label>
+        <div class="search-wrapper">
+          <input type="text" [(ngModel)]="filtroData" (input)="formattaDataFiltro($event)" placeholder="gg/mm/aaaa" (click)="calendarContext='filter'; mostraCalendario = !mostraCalendario">
+          <i class="bi bi-calendar3" (click)="calendarContext='filter'; mostraCalendario = !mostraCalendario" style="cursor: pointer;"></i>
+
+          @if (mostraCalendario) {
+            <div class="calendar-popup shadow border-0">
+              <div class="calendar-header d-flex justify-content-between align-items-center">
+                <i class="bi bi-chevron-left nav-arrow" (click)="prevMonth($event)"></i>
+                <span class="month-display">{{ nomeMeseAnno }}</span>
+                <i class="bi bi-chevron-right nav-arrow" (click)="nextMonth($event)"></i>
+              </div>
+              <div class="calendar-grid">
+                <div class="day-name">L</div><div class="day-name">M</div><div class="day-name">M</div>
+                <div class="day-name">G</div><div class="day-name">V</div><div class="day-name">S</div><div class="day-name">D</div>
+                @for (day of calendarDays; track $index) {
+                  <div class="calendar-day" [class.empty]="!day" [class.selected]="isSelected(day)" (click)="selectDate(day, 'filter')">
+                    {{ day }}
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="col-grow"></div>
+
+      <div class="col-auto d-flex">
+        <button class="btn btn-dark-custom py-2 px-4 d-flex align-items-center gap-2" (click)="nuovaNotaFn()">
+          <i class="bi bi-plus-lg"></i> Aggiungi Nota
+        </button>
+        <button class="btn btn-dark-custom p-2 px-3 ms-2" (click)="toggleExportPopup()">
+          <i class="bi bi-box-arrow-up"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-container-custom shadow-sm mb-4">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0 custom-table-style">
+        <thead>
+          <tr>
+            <th class="ps-4">Data</th>
+            <th>Codice ordine</th>
+            <th>Totale pagato</th>
+            <th>Totale validato</th>
+            <th>Pagato</th>
+            <th class="text-center">Azioni</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (nota of noteFiltrate; track $index) {
+            <tr>
+              <td class="ps-4">{{ nota.data }}</td>
+              <td>{{ nota.codiceOrdine }}</td>
+              <td>{{ nota.totalePagato }}</td>
+              <td>{{ nota.totaleValidato }}</td>
+              <td class="text-center">
+                <input type="checkbox" class="form-check-input border-secondary" [(ngModel)]="nota.pagato">
+              </td>
+              <td class="text-center">
+                <button (click)="openDettaglio(nota)" class="btn btn-link text-dark p-1"><i class="bi bi-eye"></i></button>
+                <button (click)="eliminaNota(nota)" class="btn btn-link text-dark p-1"><i class="bi bi-trash3"></i></button>
+                <button (click)="modificaNota(nota)" class="btn btn-link text-dark p-1"><i class="bi bi-pencil"></i></button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  @if (mostraModal) {
+  <div class="modal-overlay" (click)="chiudiModal()">
+    <div class="modal-card shadow-lg" (click)="$event.stopPropagation()">
+      <h2 class="modal-title-custom">{{ isModifica ? 'Modifica Nota' : 'Aggiungi Nota' }}</h2>
+
+      @if (mostraErrore) {
+        <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert" style="border-radius: 15px;">
+          <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
+          <div>Tutti i campi sono obbligatori per confermare.</div>
+        </div>
+      }
+
+      <div class="row g-4 mt-2">
+        <div class="col-md-6">
+          <label class="label-custom">Data</label>
+          <div class="date-container">
+            <input type="text" [(ngModel)]="nuovaNota.data" (input)="formattaDataNota($event)"
+                   class="form-control input-modal-style" placeholder="gg/mm/aaaa" maxlength="10">
+            <div class="calendar-wrapper" (click)="calendarContext='form'; mostraCalendario = !mostraCalendario">
+              <i class="bi bi-calendar3"></i>
+            </div>
+
+            @if (mostraCalendario) {
+            <div class="calendar-popup shadow border-0">
+              <div class="calendar-header d-flex justify-content-between align-items-center">
+                <i class="bi bi-chevron-left nav-arrow" (click)="prevMonth($event)"></i>
+                <span class="month-display">{{ nomeMeseAnno }}</span>
+                <i class="bi bi-chevron-right nav-arrow" (click)="nextMonth($event)"></i>
+              </div>
+              <div class="calendar-grid">
+                <div class="day-name">L</div><div class="day-name">M</div><div class="day-name">M</div>
+                <div class="day-name">G</div><div class="day-name">V</div><div class="day-name">S</div><div class="day-name">D</div>
+                @for (day of calendarDays; track $index) {
+                  <div class="calendar-day" [class.empty]="!day" [class.selected]="isSelected(day)" (click)="selectDate(day, 'form')">
+                    {{ day }}
+                  </div>
+                }
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="label-custom">Codice ordine</label>
+          <input type="text" [(ngModel)]="nuovaNota.codiceOrdine" class="form-control input-modal-style" placeholder="Inserisci codice ordine">
+        </div>
+
+        <div class="col-md-6">
+          <label class="label-custom">Totale pagato</label>
+          <input type="text" [(ngModel)]="nuovaNota.totalePagato" class="form-control input-modal-style" placeholder="Inserisci totale pagato">
+        </div>
+
+        <div class="col-md-6">
+          <label class="label-custom">Totale validato</label>
+          <input type="text" [(ngModel)]="nuovaNota.totaleValidato" class="form-control input-modal-style" placeholder="Inserisci totale validato">
+        </div>
+
+        <div class="col-md-6">
+          <label class="label-custom">Pagato</label>
+          <input type="checkbox" class="form-check-input" [(ngModel)]="nuovaNota.pagato">
+        </div>
+      </div>
+
+      @if (isModifica) {
+      <div class="d-flex justify-content-center gap-3 mt-4">
+        <button class="btn btn-danger rounded-pill px-4 py-2 fw-bold" (click)="eliminaNota(elencoNote[indiceInModifica]); chiudiModal()">Elimina</button>
+        <button class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-white" (click)="confermaNota()">Modifica</button>
+      </div>
+      }
+
+      <div class="d-flex justify-content-center gap-3 mt-5">
+        <button class="btn btn-modal-annulla" (click)="chiudiModal()">Annulla</button>
+        <button class="btn btn-modal-conferma" (click)="confermaNota()">{{ isModifica ? 'Salva modifiche' : 'Conferma' }}</button>
+      </div>
+    </div>
+  </div>
+  }
+</div>
+
+  @if (isDettaglioOpen) {
+    <div class="modal-overlay" (click)="closeDettaglio()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <h2 class="modal-title-custom">Dettaglio Nota</h2>
+        <div class="row g-4 mt-2 text-start">
+          <div class="col-md-6">
+            <label class="label-custom d-block text-muted" style="font-size: 0.8rem;">DATA</label>
+            <span class="fw-bold fs-5">{{ notaDettaglio?.data }}</span>
+          </div>
+          <div class="col-md-6">
+            <label class="label-custom d-block text-muted" style="font-size: 0.8rem;">CODICE ORDINE</label>
+            <span class="fw-bold fs-5">{{ notaDettaglio?.codiceOrdine }}</span>
+          </div>
+          <div class="col-md-6">
+            <label class="label-custom d-block text-muted" style="font-size: 0.8rem;">TOTALE PAGATO</label>
+            <span class="fw-bold fs-5">{{ notaDettaglio?.totalePagato }}</span>
+          </div>
+          <div class="col-md-6">
+            <label class="label-custom d-block text-muted" style="font-size: 0.8rem;">TOTALE VALIDATO</label>
+            <span class="fw-bold fs-5">{{ notaDettaglio?.totaleValidato }}</span>
+          </div>
+          <div class="col-md-6">
+            <label class="label-custom d-block text-muted" style="font-size: 0.8rem;">PAGATO</label>
+            @if (notaDettaglio?.pagato) {
+              <span class="badge bg-success-subtle text-success px-3 py-2">Pagato</span>
+            } @else {
+              <span class="badge bg-danger-subtle text-danger px-3 py-2">Non pagato</span>
+            }
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-center gap-3 mt-5">
+          <button class="btn btn-modal-annulla" (click)="closeDettaglio()">Chiudi</button>
+          <button class="btn btn-modal-conferma" (click)="passaAModificaDaDettaglio()">Modifica</button>
+        </div>
+      </div>
+    </div>
+  }
+
+@if (showExportPopup) {
+  <div class="modal-backdrop-custom">
+    <div class="export-card">
+      <h2 class="fw-bold mb-4">Esporta note</h2>
+      
+      <div class="row g-3 mb-4">
+        <div class="col-6">
+          <label class="label-custom text-start d-block">Mese</label>
+          <select [(ngModel)]="exportMese" class="form-select border-0 custom-input-bg shadow-none">
+            <option value="AUG">AUG</option>
+            <option value="SET">SET</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="label-custom text-start d-block">Utente</label>
+          <select [(ngModel)]="exportUtente" class="form-select border-0 custom-input-bg shadow-none">
+            <option value="">Nome Utente</option>
+            @for (n of elencoNote; track $index) {
+              <option [value]="n.codiceOrdine">{{ n.codiceOrdine }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="d-flex gap-3 mb-4">
+        <button class="btn btn-format flex-fill py-3 rounded-4 d-flex align-items-center justify-content-center gap-2"
+                [class.selected]="formatoSelezionato === 'PDF'"
+                (click)="selezionaFormato('PDF')">
+          <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i> PDF
+        </button>
+        <button class="btn btn-format flex-fill py-3 rounded-4 d-flex align-items-center justify-content-center gap-2"
+                [class.selected]="formatoSelezionato === 'EXCEL'"
+                (click)="selezionaFormato('EXCEL')">
+          <i class="bi bi-file-earmark-excel-fill text-success fs-4"></i> EXCEL
+        </button>
+      </div>
+
+      <div class="d-flex gap-3 mt-2">
+        <button class="btn btn-annulla-black flex-fill py-3 fw-bold" (click)="toggleExportPopup()">Annulla</button>
+        <button class="btn btn-esporta-confirm flex-fill py-3 fw-bold" (click)="esportaDati()">Esporta</button>
+      </div>
+    </div>
+  </div>
+}
