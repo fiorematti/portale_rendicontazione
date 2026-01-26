@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router'; // Importazione corretta
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-navbar',
-  standalone: true, // Assicurati che sia standalone se usi "imports"
-  imports: [RouterModule], // Usa RouterModule per routerLink e router-outlet
+  standalone: true,
+  imports: [RouterModule],
   templateUrl: './navbar.html',
-  styleUrl: './navbar.css',
+  styleUrls: ['./navbar.css'],
 })
-export class Navbar { }
+export class Navbar {}
