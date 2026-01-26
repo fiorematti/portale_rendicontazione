@@ -106,7 +106,7 @@
       @if (mostraErrore) {
         <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert" style="border-radius: 15px;">
           <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
-          <div>Tutti i campi sono obbligatori per confermare.</div>
+          <div>Compila tutti i campi.</div>
         </div>
       }
 
@@ -168,26 +168,26 @@
       <div class="row g-4 mt-2 text-start">
         <div class="col-md-6">
           <label class="label-custom d-block text-muted" style="font-size: 0.8rem;">NOME</label>
-          <span class="fw-bold fs-5">{{ utenteDettaglio.nome }}</span>
+          <span class="fw-bold fs-5">{{ utenteDettaglio?.nome }}</span>
         </div>
         <div class="col-md-6">
           <label class="label-custom d-block text-muted" style="font-size: 0.8rem;">COGNOME</label>
-          <span class="fw-bold fs-5">{{ utenteDettaglio.cognome }}</span>
+          <span class="fw-bold fs-5">{{ utenteDettaglio?.cognome }}</span>
         </div>
         <div class="col-md-6">
           <label class="label-custom d-block text-muted" style="font-size: 0.8rem;">EMAIL</label>
-          <span class="fw-bold fs-5">{{ utenteDettaglio.email }}</span>
+          <span class="fw-bold fs-5">{{ utenteDettaglio?.email }}</span>
         </div>
         <div class="col-md-6">
           <label class="label-custom d-block text-muted" style="font-size: 0.8rem;">RUOLO</label>
-          <span class="fw-bold fs-5">{{ utenteDettaglio.ruolo }}</span>
+          <span class="fw-bold fs-5">{{ utenteDettaglio?.ruolo }}</span>
         </div>
         <div class="col-md-12">
           <label class="label-custom d-block text-muted" style="font-size: 0.8rem;">STATO</label>
           <span class="badge-status" 
-                [class.badge-attivo]="utenteDettaglio.attivo" 
-                [class.badge-non-attivo]="!utenteDettaglio.attivo">
-            {{ utenteDettaglio.attivo ? 'Attivo' : 'Non Attivo' }}
+                [class.badge-attivo]="utenteDettaglio?.attivo" 
+                [class.badge-non-attivo]="!utenteDettaglio?.attivo">
+            {{ utenteDettaglio?.attivo ? 'Attivo' : 'Non Attivo' }}
           </span>
         </div>
       </div>

@@ -14,8 +14,14 @@
     <div class="filter-group datepicker-wrapper position-relative">
       <label class="fw-bold mb-1">In data</label>
       <div class="input-with-icon">
-        <input type="text" class="form-control custom-input" [(ngModel)]="filtroData" 
-               (input)="formattaData($event, 'filtro')" placeholder="gg/mm/aaaa" maxlength="10">
+        <input
+          class="form-control custom-input"
+          maxlength="10"
+          placeholder="gg/mm/aaaa"
+          type="text"
+          [(ngModel)]="filtroData"
+          (input)="formattaData($event, 'filtro')"
+        />
         <i class="bi bi-calendar3 calendar-icon-overlay" (click)="toggleCalendario('filtro')"></i>
       </div>
 
@@ -45,7 +51,8 @@
     </div>
 
     <button class="btn btn-dark rounded-pill px-4 ms-auto mb-1" (click)="apriModalSpesa()">
-      <i class="bi bi-plus-lg me-2"></i>Aggiungi spesa
+      <i class="bi bi-plus-lg me-2"></i>
+      <span>Aggiungi spesa</span>
     </button>
   </div>
 
@@ -54,26 +61,24 @@
       <table class="table align-middle">
         <thead>
           <tr>
-            <th>Data</th>
-            <th>Codice ordine</th>
-            <th>Totale richiesto</th>
-            <th>Totale validato</th>
-            <th>Pagato</th>
-            <th class="text-end">Azioni</th>
+            <th class="ps-4">Data</th>
+            <th>Totale complessivo</th>
+            <th>Totale annullato</th>
+            <th class="text-center">Pagato</th>
+            <th class="text-center">Azioni</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let spesa of speseFiltrate; let i = index">
-            <td>{{ spesa.data }}</td>
-            <td>{{ spesa.codice }}</td>
+            <td class="ps-4">{{ spesa.data }}</td>
             <td>{{ spesa.richiesto }}</td>
             <td>{{ spesa.validato }}</td>
-            <td>
+            <td class="text-center">
               <span class="badge rounded-pill" [ngClass]="spesa.pagato ? 'bg-success-custom' : 'bg-danger-custom'">
                 {{ spesa.pagato ? 'SI' : 'NO' }}
               </span>
             </td>
-            <td class="text-end">
+            <td class="text-center">
               <i class="bi bi-eye mx-1 cursor-pointer" (click)="visualizzaDettaglio(spesa)"></i>
               <i class="bi bi-trash mx-1 cursor-pointer" (click)="eliminaSpesa(i)"></i>
               <i class="bi bi-pencil mx-1 cursor-pointer" (click)="apriModifica(spesa)"></i>
@@ -91,19 +96,30 @@
           {{ modalMode === 'aggiungi' ? 'Aggiungi spesa' : (modalMode === 'visualizza' ? 'Dettaglio spesa' : 'Modifica spesa') }}
         </h2>
 
-        <div *ngIf="mostraErrore" class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert" style="border-radius: 15px;">
+        <div
+          *ngIf="mostraErrore"
+          class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4"
+          role="alert"
+          style="border-radius: 15px;"
+        >
           <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
           <div>Compila tutti i campi.</div>
         </div>
-        
+
         <div class="d-flex align-items-center gap-3 mb-4 border-bottom pb-2">
-          <span *ngFor="let dett of dettagliSpesa; let i = index" 
-                class="tab-item" 
-                [class.active]="tabAttiva === i"
-                (click)="selezionaTab(i)">
+          <span
+            *ngFor="let dett of dettagliSpesa; let i = index"
+            class="tab-item"
+            [class.active]="tabAttiva === i"
+            (click)="selezionaTab(i)"
+          >
             Dett. {{ i + 1 }}
           </span>
-          <i *ngIf="modalMode !== 'visualizza'" class="bi bi-plus-circle-fill text-warning fs-5 cursor-pointer ms-1" (click)="aggiungiTab()"></i>
+          <i
+            *ngIf="modalMode !== 'visualizza'"
+            class="bi bi-plus-circle-fill text-warning fs-5 cursor-pointer ms-1"
+            (click)="aggiungiTab()"
+          ></i>
         </div>
 
         <div class="row" *ngIf="dettagliSpesa[tabAttiva]">
@@ -112,9 +128,21 @@
               <div class="col-6 position-relative">
                 <label class="small fw-bold">Data</label>
                 <div class="input-with-icon">
-                  <input type="text" class="form-control custom-input" [(ngModel)]="nuovaSpesaData" 
-                         (input)="formattaData($event, 'popup')" placeholder="gg/mm/aaaa" [disabled]="modalMode === 'visualizza'" readonly (click)="toggleCalendario('popup')">
-                  <i *ngIf="modalMode !== 'visualizza'" class="bi bi-calendar3 calendar-icon-overlay" (click)="toggleCalendario('popup')"></i>
+                  <input
+                    class="form-control custom-input"
+                    placeholder="gg/mm/aaaa"
+                    [disabled]="modalMode === 'visualizza'"
+                    readonly
+                    type="text"
+                    [(ngModel)]="nuovaSpesaData"
+                    (input)="formattaData($event, 'popup')"
+                    (click)="toggleCalendario('popup')"
+                  />
+                  <i
+                    *ngIf="modalMode !== 'visualizza'"
+                    class="bi bi-calendar3 calendar-icon-overlay"
+                    (click)="toggleCalendario('popup')"
+                  ></i>
                 </div>
 
                 <div class="calendar-dropdown shadow-lg p-2 bg-white rounded-3" *ngIf="mostraCalendario && targetData === 'popup'">
@@ -134,54 +162,54 @@
 
               <div class="col-6">
                 <label class="small fw-bold">Codice ordine</label>
-                <input type="text" class="form-control custom-input" [(ngModel)]="dettagliSpesa[tabAttiva].codiceOrdine" [disabled]="modalMode === 'visualizza'">
+                <input class="form-control custom-input" [disabled]="modalMode === 'visualizza'" type="text" [(ngModel)]="dettagliSpesa[tabAttiva].codiceOrdine" />
               </div>
               <div class="col-4">
                 <label class="small fw-bold">Vitto</label>
-                <input type="number" class="form-control custom-input" [(ngModel)]="dettagliSpesa[tabAttiva].vitto" [disabled]="modalMode === 'visualizza'">
+                <input class="form-control custom-input" [disabled]="modalMode === 'visualizza'" type="number" [(ngModel)]="dettagliSpesa[tabAttiva].vitto" />
               </div>
               <div class="col-4">
                 <label class="small fw-bold">Alloggio</label>
-                <input type="number" class="form-control custom-input" [(ngModel)]="dettagliSpesa[tabAttiva].alloggio" [disabled]="modalMode === 'visualizza'">
+                <input class="form-control custom-input" [disabled]="modalMode === 'visualizza'" type="number" [(ngModel)]="dettagliSpesa[tabAttiva].alloggio" />
               </div>
               <div class="col-4">
                 <label class="small fw-bold">Hotel</label>
-                <input type="number" class="form-control custom-input" [(ngModel)]="dettagliSpesa[tabAttiva].hotel" [disabled]="modalMode === 'visualizza'">
+                <input class="form-control custom-input" [disabled]="modalMode === 'visualizza'" type="number" [(ngModel)]="dettagliSpesa[tabAttiva].hotel" />
               </div>
               <div class="col-4">
                 <label class="small fw-bold">Trasporti locali</label>
-                <input type="number" class="form-control custom-input" [(ngModel)]="dettagliSpesa[tabAttiva].trasporti" [disabled]="modalMode === 'visualizza'">
+                <input class="form-control custom-input" [disabled]="modalMode === 'visualizza'" type="number" [(ngModel)]="dettagliSpesa[tabAttiva].trasporti" />
               </div>
               <div class="col-4">
                 <label class="small fw-bold">Aereo</label>
-                <input type="number" class="form-control custom-input" [(ngModel)]="dettagliSpesa[tabAttiva].aereo" [disabled]="modalMode === 'visualizza'">
+                <input class="form-control custom-input" [disabled]="modalMode === 'visualizza'" type="number" [(ngModel)]="dettagliSpesa[tabAttiva].aereo" />
               </div>
               <div class="col-4">
                 <label class="small fw-bold">Spese varie</label>
-                <input type="number" class="form-control custom-input" [(ngModel)]="dettagliSpesa[tabAttiva].varie" [disabled]="modalMode === 'visualizza'">
+                <input class="form-control custom-input" [disabled]="modalMode === 'visualizza'" type="number" [(ngModel)]="dettagliSpesa[tabAttiva].varie" />
               </div>
             </div>
           </div>
-          
+
           <div class="col-md-5 ps-4">
             <div class="row g-3">
               <div class="col-12">
                 <label class="small fw-bold">Auto</label>
-                <select class="form-select custom-select" [(ngModel)]="dettagliSpesa[tabAttiva].auto" [disabled]="modalMode === 'visualizza'">
+                <select class="form-select custom-select" [disabled]="modalMode === 'visualizza'" [(ngModel)]="dettagliSpesa[tabAttiva].auto">
                   <option value="Modello auto">Modello auto</option>
                 </select>
               </div>
               <div class="col-6">
                 <label class="small fw-bold">Km</label>
-                <input type="number" class="form-control custom-input" [(ngModel)]="dettagliSpesa[tabAttiva].km" [disabled]="modalMode === 'visualizza'">
+                <input class="form-control custom-input" [disabled]="modalMode === 'visualizza'" type="number" [(ngModel)]="dettagliSpesa[tabAttiva].km" />
               </div>
               <div class="col-6">
                 <label class="small fw-bold">Parking</label>
-                <input type="number" class="form-control custom-input" [(ngModel)]="dettagliSpesa[tabAttiva].parking" [disabled]="modalMode === 'visualizza'">
+                <input class="form-control custom-input" [disabled]="modalMode === 'visualizza'" type="number" [(ngModel)]="dettagliSpesa[tabAttiva].parking" />
               </div>
               <div class="col-6">
                 <label class="small fw-bold">Telepass</label>
-                <input type="number" class="form-control custom-input" [(ngModel)]="dettagliSpesa[tabAttiva].telepass" [disabled]="modalMode === 'visualizza'">
+                <input class="form-control custom-input" [disabled]="modalMode === 'visualizza'" type="number" [(ngModel)]="dettagliSpesa[tabAttiva].telepass" />
               </div>
             </div>
           </div>
@@ -189,7 +217,7 @@
 
         <div class="mt-4 pt-3 border-top">
           <div class="d-flex align-items-center justify-content-between mb-4">
-            <h4 class="fw-bold m-0">Totale: {{ totaleCalcolato | number:'1.2-2' }}€</h4>
+            <h4 class="fw-bold m-0">Totale: {{ totaleCalcolato | number: '1.2-2' }}€</h4>
             <div *ngIf="modalMode !== 'aggiungi'" class="fw-bold">
               Stato validazione: <span class="text-muted">Non Validato</span>
             </div>

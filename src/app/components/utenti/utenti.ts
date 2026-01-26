@@ -2,6 +2,14 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+interface Utente {
+  nome: string;
+  cognome: string;
+  ruolo: string;
+  attivo: boolean;
+  email: string;
+}
+
 @Component({
   selector: 'app-utenti',
   standalone: true,
@@ -10,7 +18,7 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./utenti.css'],
 })
 export class UtentiComponent {
-  utentiOriginali = [
+  utentiOriginali: Utente[] = [
     { nome: 'Giovanni', cognome: 'Bianchi', ruolo: 'Admin', attivo: true, email: 'giovanni@syncpoint.it' },
     { nome: 'Lorenzo', cognome: 'Ostuni', ruolo: 'Amministratore', attivo: true, email: 'lorenzo@syncpoint.it' },
     { nome: 'Luca', cognome: 'Gini', ruolo: 'Amministratore', attivo: true, email: 'luca@syncpoint.it' },
@@ -22,22 +30,16 @@ export class UtentiComponent {
   mostraErrore = false;
   utenteSelezionatoIndex: number | null = null;
 
-  nuovoUtente = {
-    nome: '',
-    cognome: '',
-    email: '',
-    ruolo: '',
-    attivo: true
-  };
+  nuovoUtente: Utente = this.creaUtenteVuoto();
 
-  filtroTesto: string = '';
-  filtroRuolo: string = '';
-  filtroStato: string = '';
+  filtroTesto = '';
+  filtroRuolo = '';
+  filtroStato = '';
 
   isDettaglioOpen = false;
-  utenteDettaglio: any = null;
+  utenteDettaglio: Utente | null = null;
 
-  openModal(utente?: any, index?: number): void {
+  openModal(utente?: Utente, index?: number): void {
     if (utente !== undefined && index !== undefined) {
       this.isEditMode = true;
       this.utenteSelezionatoIndex = index;
@@ -57,7 +59,7 @@ export class UtentiComponent {
   }
 
   resetForm(): void {
-    this.nuovoUtente = { nome: '', cognome: '', email: '', ruolo: '', attivo: true };
+    this.nuovoUtente = this.creaUtenteVuoto();
   }
 
   salvaUtente(): void {
@@ -76,7 +78,7 @@ export class UtentiComponent {
     this.closeModal();
   }
 
-  get utentiFiltrati() {
+  get utentiFiltrati(): Utente[] {
     return this.utentiOriginali.filter(utente => {
       const matchTesto = (utente.nome + ' ' + utente.cognome).toLowerCase().includes(this.filtroTesto.toLowerCase());
       const matchRuolo = this.filtroRuolo ? utente.ruolo === this.filtroRuolo : true;
@@ -92,7 +94,7 @@ export class UtentiComponent {
     }
   }
 
-  openDettaglio(utente: any): void {
+  openDettaglio(utente: Utente): void {
     this.utenteDettaglio = { ...utente };
     this.isDettaglioOpen = true;
   }
@@ -103,11 +105,16 @@ export class UtentiComponent {
   }
 
   passaAModificaDaDettaglio(): void {
-    if (!this.utenteDettaglio) return;
-    const index = this.utentiOriginali.findIndex(u => u.email === this.utenteDettaglio.email);
+    const utenteDettaglio = this.utenteDettaglio;
+    if (!utenteDettaglio) return;
+    const index = this.utentiOriginali.findIndex(u => u.email === utenteDettaglio.email);
     if (index === -1) return;
     this.utenteSelezionatoIndex = index;
     this.openModal(this.utentiOriginali[index], index);
     this.closeDettaglio();
+  }
+
+  private creaUtenteVuoto(): Utente {
+    return { nome: '', cognome: '', email: '', ruolo: '', attivo: true };
   }
 }

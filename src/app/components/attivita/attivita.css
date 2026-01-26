@@ -1,6 +1,4 @@
-.card {
-    border-radius: 20px !important;
-}
+.card { border-radius: 20px !important; }
 
 .table thead th {
     background-color: #f8f9fa;
@@ -12,29 +10,16 @@
     color: #444;
 }
 
-.main-content {
-    background-color: #f3f0eb; 
-    height: calc(100vh -160px);
-    display: flex;
-    flex-direction: column;
-    
-    position: relative;
-    top: -20px;   /* per spostare il div verso l’alto */
-    margin-bottom: 20px;
-}
-
-.btn-dark {
-    background-color: #1a1a1a;
-}
+.btn-dark { background-color: #1a1a1a; }
 
 .main-content {
-    background-color: white !important; 
-    min-height: calc(100vh - 160px); /* min-height mi permette alla tabella di allungarsi se ci sono molti dati */
+    background-color: white !important;
+    min-height: calc(100vh - 160px);
     display: flex;
     flex-direction: column;
-    overflow: visible; /* overflow: visible mi permette di vedere tutte le righe della tabella */
+    overflow: visible;
     position: relative;
-    top: -20px;   
+    top: -20px;
     margin-bottom: 20px;
     border-radius: 20px;
 }
@@ -94,7 +79,7 @@
 
 /* Giorno Selezionato */
 .day-dot.active {
-    background-color: #ff8c00 !important; 
+    background-color: #ff9500;  
     color: white ;
     font-weight: bold;
 }
@@ -121,5 +106,20 @@
 
 .modal-card {
     width: 500px;
+}
+
+.azioni-col {
+    width: 140px;
+    white-space: nowrap;
+}
+
+.bg-success-custom {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.bg-danger-custom {
+    background-color: #f8d7da;
+    color: #721c24;
 }
 

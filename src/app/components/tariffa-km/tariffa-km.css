@@ -1,0 +1,144 @@
+.page-wrapper {
+	background: linear-gradient(180deg, #f4efe8 0%, #e6e0d7 100%);
+}
+
+.page-title {
+	font-weight: 700;
+	color: #1b1b1b;
+}
+
+.search-card {
+	min-width: 260px;
+	width: min(620px, 100%);
+	background-color: #f7f7f7;
+	border: 1px solid #e0e0e0;
+}
+
+.search-label {
+	font-weight: 700;
+	color: #2c2c2c;
+}
+
+.search-input {
+	background: #ededed;
+	border: 1px solid #d2d2d2;
+	border-radius: 10px;
+	padding: 6px 10px;
+}
+
+.search-input input {
+	background: transparent;
+	font-weight: 600;
+}
+
+.btn.btn-add {
+	background: #000;
+	color: #fff;
+	border: 1px solid #000;
+	font-weight: 700;
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+	align-self: flex-end;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.btn.btn-add:hover {
+	background: #000;
+	color: #fff;
+	transform: translateY(-1px);
+	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.table-card {
+	border: 1px solid #e6e6e6;
+}
+
+.table thead th {
+	font-weight: 700;
+	color: #1d1d1d;
+	border-bottom: 1px solid #e6e6e6;
+}
+
+.table tbody td {
+	color: #222;
+	border-top: 1px solid #ededed;
+}
+
+.modal-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.55);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+	padding: 12px;
+}
+
+.modal-card {
+	background: #fff;
+	border-radius: 18px;
+	padding: 28px;
+	width: 100%;
+	max-width: 520px;
+	box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-card-detail {
+	max-width: 900px;
+	padding: 32px;
+}
+
+.detail-table-wrapper {
+	border: 1px solid #e6e6e6;
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.detail-table thead th {
+	font-weight: 700;
+	color: #1d1d1d;
+	background: #fafafa;
+}
+
+.detail-table tbody td {
+	border-top: 1px solid #ededed;
+}
+
+.modal-title {
+	font-weight: 800;
+	margin-bottom: 16px;
+	color: #1c1c1c;
+}
+
+.input-soft {
+	background: #f5f5f5;
+	border: 1px solid #dcdcdc;
+	border-radius: 10px;
+}
+
+.btn-confirm-orange {
+	background-color: #ff9500;
+	border: none;
+}
+
+.btn-confirm-orange:hover {
+	background-color: #ff9500;
+}
+
+@media (max-width: 768px) {
+	.search-card {
+		width: 100%;
+	}
+
+	.btn-add {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+@media (min-width: 769px) {
+	.search-card {
+		flex-wrap: nowrap;
+	}
+}

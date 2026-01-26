@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 interface Spesa {
@@ -28,32 +28,34 @@ interface DettaglioSpesa {
 @Component({
   selector: 'app-note-spese',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgIf, NgForOf],
   templateUrl: './note-spese.html',
   styleUrl: './note-spese.css',
 })
 export class NoteSpese implements OnInit {
+  private readonly filtroDefault = 'Tutti';
+
   listaSpese: Spesa[] = [
     { data: '14/01/2026', codice: 'AAAA/xxxx', richiesto: '215,00€', validato: '190,00€', pagato: true },
     { data: '15/01/2026', codice: 'BBBB/yyyy', richiesto: '120,00€', validato: '120,00€', pagato: true },
-    { data: '16/01/2026', codice: 'CCCC/zzzz', richiesto: '45,00€',  validato: '40,00€',  pagato: false },
+    { data: '16/01/2026', codice: 'CCCC/zzzz', richiesto: '45,00€', validato: '40,00€', pagato: false },
   ];
 
-  filtroPagate: string = 'Tutti';
-  filtroData: string = '';
-  filtroOrdine: string = 'Tutti';
+  filtroPagate = this.filtroDefault;
+  filtroData = '';
+  filtroOrdine = this.filtroDefault;
 
-  mostraModal: boolean = false;
-  modalMode: 'aggiungi' | 'visualizza' | 'modifica' = 'aggiungi'; 
-  nuovaSpesaData: string = '';
-  tabAttiva: number = 0;
+  mostraModal = false;
+  modalMode: 'aggiungi' | 'visualizza' | 'modifica' = 'aggiungi';
+  nuovaSpesaData = '';
+  tabAttiva = 0;
   dettagliSpesa: DettaglioSpesa[] = [];
-  mostraErrore: boolean = false;
-  
-  rigaSelezionata: any = null;
+  mostraErrore = false;
 
-  mostraCalendario: boolean = false;
-  targetData: 'filtro' | 'popup' = 'filtro'; 
+  rigaSelezionata: Spesa | null = null;
+
+  mostraCalendario = false;
+  targetData: 'filtro' | 'popup' = 'filtro';
   dataVisualizzata: Date = new Date();
   giorniDelMese: number[] = [];
   giorniVuoti: number[] = [];
@@ -67,13 +69,13 @@ export class NoteSpese implements OnInit {
     this.resetNuovaSpesa();
   }
 
-  visualizzaDettaglio(spesa: any): void {
+  visualizzaDettaglio(spesa: Spesa): void {
     this.rigaSelezionata = spesa;
     this.caricaDatiNellaModal(spesa);
     this.apriModalConModalita('visualizza');
   }
 
-  apriModifica(spesa: any): void {
+  apriModifica(spesa: Spesa): void {
     this.rigaSelezionata = spesa;
     this.caricaDatiNellaModal(spesa);
     this.apriModalConModalita('modifica');
@@ -87,15 +89,9 @@ export class NoteSpese implements OnInit {
     }
   }
 
-  private caricaDatiNellaModal(spesa: Spesa) {
+  private caricaDatiNellaModal(spesa: Spesa): void {
     this.nuovaSpesaData = spesa.data;
-
-    const importoPulito = parseFloat(
-      spesa.richiesto
-        .replace(/\./g, '')
-        .replace(',', '.')
-        .replace(/[^\d.]/g, '')
-    ) || 0;
+    const importoPulito = this.parseImporto(spesa.richiesto);
     
     this.dettagliSpesa = [{
       codiceOrdine: spesa.codice,
@@ -122,7 +118,7 @@ export class NoteSpese implements OnInit {
       return;
     }
 
-    const totaleStringa = this.totaleCalcolato.toFixed(2).replace('.', ',') + '€';
+    const totaleStringa = this.formattaTotale(this.totaleCalcolato);
 
     if (this.isAggiungi) {
       this.listaSpese.unshift(this.creaSpesaDaDettaglio(dett, totaleStringa));
@@ -156,13 +152,7 @@ export class NoteSpese implements OnInit {
   }
 
   get totaleCalcolato(): number {
-    return this.dettagliSpesa.reduce((acc, dett) => {
-      return acc + (
-        Number(dett.vitto || 0) + Number(dett.alloggio || 0) + Number(dett.hotel || 0) +
-        Number(dett.trasporti || 0) + Number(dett.aereo || 0) + Number(dett.varie || 0) +
-        Number(dett.parking || 0) + Number(dett.telepass || 0) + Number(dett.costo || 0)
-      );
-    }, 0);
+    return this.dettagliSpesa.reduce((acc, dett) => acc + this.sommaDettaglio(dett), 0);
   }
 
   toggleCalendario(target: 'filtro' | 'popup'): void {
@@ -182,32 +172,33 @@ export class NoteSpese implements OnInit {
   }
 
   selezionaGiorno(g: number): void {
-    const d = `${String(g).padStart(2,'0')}/${String(this.dataVisualizzata.getMonth()+1).padStart(2,'0')}/${this.dataVisualizzata.getFullYear()}`;
+    const d = `${String(g).padStart(2, '0')}/${String(this.dataVisualizzata.getMonth() + 1).padStart(2, '0')}/${this.dataVisualizzata.getFullYear()}`;
     if (this.targetData === 'filtro') this.filtroData = d; else this.nuovaSpesaData = d;
     this.mostraCalendario = false;
   }
 
-  cambiaMese(d: number): void { 
-    this.dataVisualizzata.setMonth(this.dataVisualizzata.getMonth() + d); 
-    this.generaCalendario(); 
+  cambiaMese(d: number): void {
+    this.dataVisualizzata.setMonth(this.dataVisualizzata.getMonth() + d);
+    this.generaCalendario();
   }
 
-  formattaData(event: any, campo: string): void {
-    let v = event.target.value.replace(/\D/g, '');
+  formattaData(event: Event, campo: string): void {
+    const target = event.target as HTMLInputElement;
+    let v = target.value.replace(/\D/g, '');
     if (v.length > 8) v = v.substring(0, 8);
-    if (v.length >= 5) v = v.replace(/(\d{2})(\d{2})(\d{1,4})/, "$1/$2/$3");
-    else if (v.length >= 3) v = v.replace(/(\d{2})(\d{1,2})/, "$1/$2");
+    if (v.length >= 5) v = v.replace(/(\d{2})(\d{2})(\d{1,4})/, '$1/$2/$3');
+    else if (v.length >= 3) v = v.replace(/(\d{2})(\d{1,2})/, '$1/$2');
     if (campo === 'filtro') this.filtroData = v; else this.nuovaSpesaData = v;
   }
 
   get nomeMeseCorrente(): string { return this.dataVisualizzata.toLocaleString('it-IT', { month: 'long' }); }
   get annoVisualizzato(): number { return this.dataVisualizzata.getFullYear(); }
 
-  get speseFiltrate() {
-    return this.listaSpese.filter(s => {
-      const mPagato = this.filtroPagate === 'Tutti' || (this.filtroPagate === 'Si' ? s.pagato : !s.pagato);
+  get speseFiltrate(): Spesa[] {
+    return this.listaSpese.filter((s) => {
+      const mPagato = this.filtroPagate === this.filtroDefault || (this.filtroPagate === 'Si' ? s.pagato : !s.pagato);
       const mData = !this.filtroData || s.data === this.filtroData;
-      const mOrdine = this.filtroOrdine === 'Tutti' || s.codice === this.filtroOrdine;
+      const mOrdine = this.filtroOrdine === this.filtroDefault || s.codice === this.filtroOrdine;
       return mPagato && mData && mOrdine;
     });
   }
@@ -229,8 +220,17 @@ export class NoteSpese implements OnInit {
     if (!dett) return false;
     const dataValida = this.nuovaSpesaData.trim().length > 0;
     const codiceValido = dett.codiceOrdine?.toString().trim().length > 0;
-    const hasImporto = [dett.vitto, dett.alloggio, dett.hotel, dett.trasporti, dett.aereo, dett.varie, dett.parking, dett.telepass, dett.costo]
-      .some(v => Number(v || 0) > 0);
+    const hasImporto = [
+      dett.vitto,
+      dett.alloggio,
+      dett.hotel,
+      dett.trasporti,
+      dett.aereo,
+      dett.varie,
+      dett.parking,
+      dett.telepass,
+      dett.costo,
+    ].some((v) => Number(v || 0) > 0);
     return Boolean(dataValida && codiceValido && hasImporto);
   }
 
@@ -242,5 +242,34 @@ export class NoteSpese implements OnInit {
       validato: '0,00€',
       pagato: false,
     };
+  }
+
+  private parseImporto(importo: string): number {
+    return (
+      parseFloat(
+        importo
+          .replace(/\./g, '')
+          .replace(',', '.')
+          .replace(/[^\d.]/g, '')
+      ) || 0
+    );
+  }
+
+  private formattaTotale(totale: number): string {
+    return totale.toFixed(2).replace('.', ',') + '€';
+  }
+
+  private sommaDettaglio(dett: DettaglioSpesa): number {
+    return (
+      Number(dett.vitto || 0) +
+      Number(dett.alloggio || 0) +
+      Number(dett.hotel || 0) +
+      Number(dett.trasporti || 0) +
+      Number(dett.aereo || 0) +
+      Number(dett.varie || 0) +
+      Number(dett.parking || 0) +
+      Number(dett.telepass || 0) +
+      Number(dett.costo || 0)
+    );
   }
 }

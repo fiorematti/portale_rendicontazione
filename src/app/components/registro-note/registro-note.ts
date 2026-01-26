@@ -2,6 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+interface Nota {
+  id: string;
+  data: string;
+  totaleAnnullato: string;
+  totaleComplessivo: string;
+  totaleNonValidato: string;
+  pagato: boolean;
+}
+
+type CalendarContext = 'filter' | 'form';
+
 @Component({
   selector: 'app-registro-note',
   standalone: true,
@@ -15,9 +26,9 @@ export class RegistroNoteComponent implements OnInit {
   mostraModal: boolean = false;
   mostraCalendario: boolean = false;
   mostraErrore: boolean = false;
-  calendarContext: 'filter' | 'form' = 'filter';
+  calendarContext: CalendarContext = 'filter';
   isDettaglioOpen: boolean = false;
-  notaDettaglio: any = null;
+  notaDettaglio: Nota | null = null;
 
   showExportPopup = false;
   exportMese: string = 'AUG';
@@ -32,18 +43,11 @@ export class RegistroNoteComponent implements OnInit {
   calendarDays: (number | null)[] = [];
   monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
 
-  nuovaNota = {
-    id: '',
-    data: '',
-    codiceOrdine: '',
-    totalePagato: '',
-    totaleValidato: '',
-    pagato: false
-  };
+  nuovaNota: Nota = this.buildNota();
 
-  elencoNote = [
-    { id: '1', data: '14/01/2026', codiceOrdine: 'AAAA/xxxx', totalePagato: '215,00€', totaleValidato: '190,00€', pagato: true },
-    { id: '2', data: '15/01/2026', codiceOrdine: 'BBBB/yyyy', totalePagato: '120,00€', totaleValidato: '120,00€', pagato: false },
+  elencoNote: Nota[] = [
+    { id: '1', data: '14/01/2026', totaleAnnullato: '25,00€', totaleComplessivo: '215,00€', totaleNonValidato: '190,00€', pagato: true },
+    { id: '2', data: '15/01/2026', totaleAnnullato: '0,00€', totaleComplessivo: '120,00€', totaleNonValidato: '120,00€', pagato: false },
   ];
 
   ngOnInit(): void {
@@ -77,7 +81,7 @@ export class RegistroNoteComponent implements OnInit {
     return `${this.monthNames[this.currentMonth]} ${this.currentYear}`;
   }
 
-  selectDate(day: number | null, context: 'filter' | 'form' = 'form'): void {
+  selectDate(day: number | null, context: CalendarContext = 'form'): void {
     if (!day) return;
     const d = day.toString().padStart(2, '0');
     const m = (this.currentMonth + 1).toString().padStart(2, '0');
@@ -90,10 +94,10 @@ export class RegistroNoteComponent implements OnInit {
     this.mostraCalendario = false;
   }
 
-  isSelected(day: number | null): boolean {
+  isSelected(day: number | null, context: CalendarContext = 'form'): boolean {
     if (!day) return false;
     const dateStr = `${day.toString().padStart(2, '0')}/${(this.currentMonth + 1).toString().padStart(2, '0')}/${this.currentYear}`;
-    return this.nuovaNota.data === dateStr;
+    return context === 'form' ? this.nuovaNota.data === dateStr : this.filtroData === dateStr;
   }
   
   formattaDataNota(event: any): void {
@@ -117,10 +121,7 @@ export class RegistroNoteComponent implements OnInit {
   }
 
   nuovaNotaFn(): void {
-    this.isModifica = false;
-    this.mostraErrore = false;
-    this.resetForm();
-    this.mostraModal = true;
+    this.apriModal('aggiungi');
   }
 
   toggleExportPopup(): void {
@@ -141,14 +142,15 @@ export class RegistroNoteComponent implements OnInit {
     this.showExportPopup = false;
   }
 
-  modificaNota(nota: any): void {
+  modificaNota(nota: Nota): void {
     this.isModifica = true;
     this.indiceInModifica = this.elencoNote.findIndex(n => n.id === nota.id);
     this.nuovaNota = { ...nota };
+    this.mostraErrore = false;
     this.mostraModal = true;
   }
 
-  openDettaglio(nota: any): void {
+  openDettaglio(nota: Nota): void {
     this.notaDettaglio = { ...nota };
     this.isDettaglioOpen = true;
   }
@@ -174,20 +176,16 @@ export class RegistroNoteComponent implements OnInit {
   }
 
   confermaNota(): void {
-    const { data, codiceOrdine, totalePagato, totaleValidato } = this.nuovaNota;
-    const campiValidi = data.trim() && codiceOrdine.trim() && totalePagato.trim() && totaleValidato.trim();
-
-    if (!campiValidi) {
+    if (!this.isNotaValida(this.nuovaNota)) {
       this.mostraErrore = true;
       setTimeout(() => (this.mostraErrore = false), 4000);
       return;
     }
 
-    if (this.isModifica) {
+    if (this.isModifica && this.indiceInModifica > -1) {
       this.elencoNote[this.indiceInModifica] = { ...this.nuovaNota };
     } else {
-      const newId = (this.elencoNote.length + 1).toString();
-      this.elencoNote.unshift({ ...this.nuovaNota, id: newId });
+      this.elencoNote.unshift({ ...this.nuovaNota, id: this.nextId() });
     }
     this.chiudiModal();
   }
@@ -202,20 +200,44 @@ export class RegistroNoteComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.nuovaNota = {
-      id: '',
-      data: '',
-      codiceOrdine: '',
-      totalePagato: '',
-      totaleValidato: '',
-      pagato: false
-    };
+    this.nuovaNota = this.buildNota();
   }
 
   get noteFiltrate() {
     return this.elencoNote.filter(n =>
-      (n.codiceOrdine + n.totalePagato).toLowerCase().includes(this.filtroTesto.toLowerCase()) &&
+      (n.totaleAnnullato + n.totaleComplessivo).toLowerCase().includes(this.filtroTesto.toLowerCase()) &&
       n.data.includes(this.filtroData)
     );
+  }
+
+  private apriModal(mode: 'aggiungi' | 'modifica'): void {
+    this.isModifica = mode === 'modifica';
+    this.mostraErrore = false;
+    if (!this.isModifica) {
+      this.resetForm();
+      this.indiceInModifica = -1;
+    }
+    this.mostraModal = true;
+  }
+
+  private buildNota(): Nota {
+    return {
+      id: '',
+      data: '',
+      totaleAnnullato: '',
+      totaleComplessivo: '',
+      totaleNonValidato: '',
+      pagato: false,
+    };
+  }
+
+  private isNotaValida(nota: Nota): boolean {
+    const { data, totaleAnnullato, totaleComplessivo, totaleNonValidato } = nota;
+    return Boolean(data.trim() && totaleAnnullato.trim() && totaleComplessivo.trim() && totaleNonValidato.trim());
+  }
+
+  private nextId(): string {
+    const maxId = this.elencoNote.reduce((acc, n) => Math.max(acc, Number(n.id) || 0), 0);
+    return String(maxId + 1);
   }
 }

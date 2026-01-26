@@ -1,9 +1,10 @@
-/* Struttura filtri */
 .filter-card {
   background-color: #ffffff;
   border-radius: 20px;
   border: 1px solid #eee;
   z-index: 10;
+  margin-top: 0 !important;
+  margin-bottom: 10px !important;
 }
 
 .filter-group {
@@ -16,7 +17,8 @@
   position: relative;
 }
 
-.custom-select, .custom-input {
+.custom-select,
+.custom-input {
   border-radius: 10px;
   border: 1px solid #ced4da;
   background-color: #f8f9fa;
@@ -25,20 +27,18 @@
   min-width: 160px;
 }
 
-/* CALENDARIO - AGGIORNATO PER ESSERE SOPRA IL POPUP */
 .custom-datepicker {
-  position: fixed; /* Fixed per non essere influenzato dai contenitori padri */
+  position: fixed;
   background: white;
   border-radius: 12px;
   border: 1px solid #ddd;
   width: 280px;
-  z-index: 11000; /* Più alto della modale (10000) */
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  z-index: 11000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-/* Posizionamento dinamico */
 .pos-filtro {
-  position: absolute; 
+  position: absolute;
   top: 100%;
   left: 0;
   margin-top: 8px;
@@ -51,7 +51,6 @@
   transform: translate(-50%, -50%);
 }
 
-/* NUOVO: Posizionamento specifico per calendario dentro il popup */
 .pos-popup-internal {
   position: absolute;
   top: 100%;
@@ -66,7 +65,11 @@
   border-radius: 12px 12px 0 0;
 }
 
-.btn-arrow { border: none; background: transparent; padding: 0 10px; }
+.btn-arrow {
+  border: none;
+  background: transparent;
+  padding: 0 10px;
+}
 
 .weekdays-grid {
   display: grid;
@@ -96,14 +99,16 @@
   transition: background 0.2s;
 }
 
-.days-grid span:hover:not(.empty-day) { background: #f0f0f0; }
-.days-grid span.is-today { 
-  background: #212529 !important; 
-  color: white !important; 
-  font-weight: bold; 
+.days-grid span:hover:not(.empty-day) {
+  background: #f0f0f0;
 }
 
-/* Footer Calendario (Cancella / Oggi) */
+.days-grid span.is-today {
+  background: #212529 !important;
+  color: white !important;
+  font-weight: bold;
+}
+
 .datepicker-footer {
   display: flex;
   justify-content: space-between;
@@ -121,25 +126,41 @@
   cursor: pointer;
 }
 
-/* Icona input */
-.input-with-icon { position: relative; display: flex; align-items: center; }
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .calendar-icon-overlay {
   position: absolute;
   right: 10px;
   cursor: pointer;
   color: #6c757d;
+  z-index: 5;
 }
 
-/* Badge tabella */
-.bg-success-custom { background-color: #d4edda; color: #155724; }
-.bg-danger-custom { background-color: #f8d7da; color: #721c24; }
-.cursor-pointer { cursor: pointer; }
+.bg-success-custom {
+  background-color: #d4edda;
+  color: #155724;
+}
 
-/* MODAL OVERLAY */
+.bg-danger-custom {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -155,24 +176,24 @@
   position: relative;
 }
 
-/* Tabs */
 .tab-item {
   font-weight: bold;
   cursor: pointer;
   color: #333;
   padding-bottom: 5px;
 }
+
 .tab-item.active {
-  color: #f39c12;
-  border-bottom: 3px solid #f39c12;
+  color: #ff9500;
+  border-bottom: 3px solid #ff9500;
 }
 
-/* Pulsanti Popup */
 .btn-annulla {
   background-color: #2b2b2b;
   color: white;
   border-radius: 10px;
 }
+
 .btn-conferma {
   background-color: #ff9800;
   color: white;
@@ -180,28 +201,34 @@
   font-weight: bold;
 }
 
-.border-end { border-right: 1px solid #dee2e6 !important; }
+.border-end {
+  border-right: 1px solid #dee2e6 !important;
+}
 
-/* NUOVO: Pulizia input numerici */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-/* Adattamento mobile */
 @media (max-width: 768px) {
-  .border-end { border-right: none !important; border-bottom: 1px solid #dee2e6; padding-bottom: 20px; }
-  .custom-modal { max-height: 90vh; overflow-y: auto; }
+  .border-end {
+    border-right: none !important;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 20px;
+  }
+  .custom-modal {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
 }
 
-/* --- STILI CALENDARIO PICCOLO --- */
 .calendar-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
-  z-index: 12000; /* Sopra tutto */
-  width: 220px;   /* Dimensione compatta */
+  z-index: 12000;
+  width: 220px;
   background: white;
   border: 1px solid #ddd;
   margin-top: 5px;
@@ -212,7 +239,6 @@ input::-webkit-inner-spin-button {
   color: #333;
 }
 
-/* GRIGLIA FORZATA A 7 COLONNE */
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -235,57 +261,34 @@ input::-webkit-inner-spin-button {
 }
 
 .calendar-day:hover {
-  background-color: #f39c12; /* Colore giallo SyncPoint */
+  background-color: #f39c12;
   color: white;
 }
 
-/* Spazio per i giorni vuoti */
 .calendar-grid > div:not(.calendar-day) {
   height: 25px;
 }
 
-/* Stili esistenti corretti */
-.input-with-icon { position: relative; display: flex; align-items: center; }
-.calendar-icon-overlay {
-  position: absolute;
-  right: 10px;
-  cursor: pointer;
-  color: #6c757d;
-  z-index: 5;
+.datepicker-wrapper {
+  position: relative;
 }
 
-.datepicker-wrapper { position: relative; }
-
-/* Rendi gli input non modificabili a mano per evitare errori con il calendario */
 input[readonly] {
   background-color: #f8f9fa !important;
   cursor: pointer;
 }
 
 div.main-content {
-    padding-top: 5px !important;
+  padding-top: 5px !important;
 }
 
-/* Rimuove ogni margine superiore e riduce quello inferiore del titolo */
 .main-content h2.fw-bold {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-    margin-bottom: 5px !important; /* Ridotto al minimo per avvicinare i filtri */
-    line-height: 1 !important;
+  margin-top: -10px !important;
+  padding-top: 0 !important;
+  margin-bottom: 5px !important;
+  line-height: 1 !important;
 }
 
-/* Elimina lo spazio sopra la card dei filtri */
-.filter-card {
-    margin-top: 0 !important;
-    margin-bottom: 10px !important; /* Avvicina la tabella ai filtri */
-}
-
-/* Se vuoi "incollare" la scritta al bordo superiore, usa un margine negativo */
-.main-content h2.fw-bold {
-    margin-top: -10px !important; 
-}
-
-/* Icona piccola per stato ordine */
 .small-circle-icon {
-    font-size: 8px;
+  font-size: 8px;
 }

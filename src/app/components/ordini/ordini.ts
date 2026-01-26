@@ -2,6 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+interface Ordine {
+  id: string;
+  cliente: string;
+  dataInizio: string;
+  codiceOfferta: string;
+  stato: 'Ricevuto' | 'Fatto' | string;
+}
+
 @Component({
   selector: 'app-ordini',
   standalone: true,
@@ -10,29 +18,37 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './ordini.css',
 })
 export class OrdiniComponent implements OnInit {
-  filtroTesto: string = '';
-  filtroStato: string = '';
-  mostraModal: boolean = false;
-  mostraCalendario: boolean = false;
-  mostraErrore: boolean = false;
+  readonly monthNames = [
+    'Gennaio',
+    'Febbraio',
+    'Marzo',
+    'Aprile',
+    'Maggio',
+    'Giugno',
+    'Luglio',
+    'Agosto',
+    'Settembre',
+    'Ottobre',
+    'Novembre',
+    'Dicembre',
+  ];
 
-  isModifica: boolean = false;
-  indiceInModifica: number = -1;
+  filtroTesto = '';
+  filtroStato = '';
+  mostraModal = false;
+  mostraCalendario = false;
+  mostraErrore = false;
+
+  isModifica = false;
+  indiceInModifica = -1;
 
   currentMonth = new Date().getMonth();
   currentYear = new Date().getFullYear();
   calendarDays: (number | null)[] = [];
-  monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
 
-  nuovoOrdineDati = {
-    id: '',
-    cliente: '',
-    dataInizio: '',
-    stato: 'Ricevuto',
-    codiceOfferta: ''
-  };
+  nuovoOrdineDati: Ordine = this.creaOrdineVuoto();
 
-  elencoOrdini = [
+  elencoOrdini: Ordine[] = [
     { id: '1024', cliente: 'Azienda Alpha', dataInizio: '20/10/2025', codiceOfferta: '876702', stato: 'Fatto' },
     { id: '1025', cliente: 'Boutique Rossi', dataInizio: '30/09/2025', codiceOfferta: '213653', stato: 'Ricevuto' },
   ];
@@ -45,7 +61,7 @@ export class OrdiniComponent implements OnInit {
     this.calendarDays = [];
     const firstDayIndex = new Date(this.currentYear, this.currentMonth, 1).getDay();
     const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
-    const offset = (firstDayIndex === 0) ? 6 : firstDayIndex - 1;
+    const offset = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
     for (let i = 0; i < offset; i++) this.calendarDays.push(null);
     for (let i = 1; i <= daysInMonth; i++) this.calendarDays.push(i);
   }
@@ -53,14 +69,20 @@ export class OrdiniComponent implements OnInit {
   prevMonth(event: Event): void {
     event.stopPropagation();
     this.currentMonth--;
-    if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
+    if (this.currentMonth < 0) {
+      this.currentMonth = 11;
+      this.currentYear--;
+    }
     this.generateCalendar();
   }
 
   nextMonth(event: Event): void {
     event.stopPropagation();
     this.currentMonth++;
-    if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
+    if (this.currentMonth > 11) {
+      this.currentMonth = 0;
+      this.currentYear++;
+    }
     this.generateCalendar();
   }
 
@@ -82,8 +104,9 @@ export class OrdiniComponent implements OnInit {
     return this.nuovoOrdineDati.dataInizio === dateStr;
   }
 
-  formattaData(event: any): void {
-    let v = event.target.value.replace(/\D/g, '');
+  formattaData(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    let v = target.value.replace(/\D/g, '');
     if (v.length > 8) v = v.substring(0, 8);
     let final = '';
     if (v.length > 0) final += v.substring(0, 2);
@@ -98,7 +121,7 @@ export class OrdiniComponent implements OnInit {
     this.mostraModal = true;
   }
 
-  modificaOrdine(ordine: any): void {
+  modificaOrdine(ordine: Ordine): void {
     this.isModifica = true;
     this.indiceInModifica = this.elencoOrdini.findIndex(o => o.id === ordine.id);
     this.nuovoOrdineDati = { ...ordine };
@@ -133,7 +156,7 @@ export class OrdiniComponent implements OnInit {
     this.chiudiModal();
   }
 
-  eliminaOrdine(ordine: any): void {
+  eliminaOrdine(ordine: Ordine): void {
     if (confirm('Sei sicuro di voler eliminare questo ordine?')) {
       const index = this.elencoOrdini.findIndex(o => o.id === ordine.id);
       if (index !== -1) {
@@ -143,16 +166,10 @@ export class OrdiniComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.nuovoOrdineDati = {
-      id: '',
-      cliente: '',
-      dataInizio: '',
-      stato: 'Ricevuto',
-      codiceOfferta: ''
-    };
+    this.nuovoOrdineDati = this.creaOrdineVuoto();
   }
 
-  get ordiniFiltrati() {
+  get ordiniFiltrati(): Ordine[] {
     return this.elencoOrdini.filter(o =>
       (o.cliente + o.id).toLowerCase().includes(this.filtroTesto.toLowerCase()) &&
       (this.filtroStato === '' || o.stato === this.filtroStato)
@@ -161,5 +178,15 @@ export class OrdiniComponent implements OnInit {
 
   getBadgeClass(stato: string): string {
     return stato === 'Fatto' ? 'badge-success' : 'badge-warning';
+  }
+
+  private creaOrdineVuoto(): Ordine {
+    return {
+      id: '',
+      cliente: '',
+      dataInizio: '',
+      stato: 'Ricevuto',
+      codiceOfferta: '',
+    };
   }
 }

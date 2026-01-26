@@ -7,7 +7,7 @@
         <label class="label-filter">Cerca ordine</label>
         <div class="search-wrapper">
           <i class="bi bi-search"></i>
-          <input type="text" [(ngModel)]="filtroTesto" placeholder="Cerca...">
+          <input placeholder="Cerca..." type="text" [(ngModel)]="filtroTesto" />
         </div>
       </div>
 
@@ -24,7 +24,8 @@
 
       <div class="col-auto">
         <button class="btn btn-dark-custom py-2 px-4 d-flex align-items-center gap-2" (click)="nuovoOrdine()">
-          <i class="bi bi-plus-lg"></i> Aggiungi Ordine
+          <i class="bi bi-plus-lg"></i>
+          <span>Aggiungi Ordine</span>
         </button>
       </div>
     </div>
@@ -39,27 +40,29 @@
             <th>Cliente</th>
             <th>Data inizio</th>
             <th>Codice offerta</th>
-            <th class="text-center">Stato</th> <th class="text-center">Azioni</th> </tr>
+            <th class="text-center">Stato</th>
+            <th class="text-center">Azioni</th>
+          </tr>
         </thead>
         <tbody>
           @for (ordine of ordiniFiltrati; track $index) {
-            <tr>
-              <td class="ps-4 fw-bold">{{ ordine.id }}</td>
-              <td>{{ ordine.cliente }}</td>
-              <td>{{ ordine.dataInizio }}</td>
-              <td>{{ ordine.codiceOfferta }}</td>
-              <td class="text-center">
-                <span class="badge-custom" [ngClass]="getBadgeClass(ordine.stato)">
-                  {{ ordine.stato }}
-                </span>
-              </td>
-              <td class="text-center">
-                <div class="d-flex justify-content-center gap-2">
-                  <button (click)="eliminaOrdine(ordine)" class="btn btn-link text-dark p-1"><i class="bi bi-trash3"></i></button>
-                  <button (click)="modificaOrdine(ordine)" class="btn btn-link text-dark p-1"><i class="bi bi-pencil"></i></button>
-                </div>
-              </td>
-            </tr>
+          <tr>
+            <td class="ps-4 fw-bold">{{ ordine.id }}</td>
+            <td>{{ ordine.cliente }}</td>
+            <td>{{ ordine.dataInizio }}</td>
+            <td>{{ ordine.codiceOfferta }}</td>
+            <td class="text-center">
+              <span class="badge-custom" [ngClass]="getBadgeClass(ordine.stato)">
+                {{ ordine.stato }}
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="d-flex justify-content-center gap-2">
+                <button class="btn btn-link text-dark p-1" (click)="eliminaOrdine(ordine)"><i class="bi bi-trash3"></i></button>
+                <button class="btn btn-link text-dark p-1" (click)="modificaOrdine(ordine)"><i class="bi bi-pencil"></i></button>
+              </div>
+            </td>
+          </tr>
           }
         </tbody>
       </table>
@@ -72,27 +75,33 @@
       <h2 class="modal-title-custom">{{ isModifica ? 'Modifica ordine' : 'Aggiungi ordini' }}</h2>
 
       @if (mostraErrore) {
-        <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert" style="border-radius: 15px;">
-          <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
-          <div>Compila tutti i campi.</div>
-        </div>
+      <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert" style="border-radius: 15px;">
+        <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
+        <div>Compila tutti i campi.</div>
+      </div>
       }
-      
+
       <div class="row g-4 mt-2">
         <div class="col-md-6">
           <label class="label-custom">Codice ordine</label>
-          <input type="text" [(ngModel)]="nuovoOrdineDati.id" class="form-control input-modal-style" placeholder="Inserisci nome">
+          <input class="form-control input-modal-style" placeholder="Inserisci nome" type="text" [(ngModel)]="nuovoOrdineDati.id" />
         </div>
         <div class="col-md-6">
           <label class="label-custom">Cliente</label>
-          <input type="text" [(ngModel)]="nuovoOrdineDati.cliente" class="form-control input-modal-style" placeholder="Inserisci cognome">
+          <input class="form-control input-modal-style" placeholder="Inserisci cognome" type="text" [(ngModel)]="nuovoOrdineDati.cliente" />
         </div>
-        
+
         <div class="col-md-4">
           <label class="label-custom">Data inizio</label>
           <div class="date-container">
-            <input type="text" [(ngModel)]="nuovoOrdineDati.dataInizio" (input)="formattaData($event)"
-                   class="form-control input-modal-style" placeholder="gg/mm/aaaa" maxlength="10">
+            <input
+              class="form-control input-modal-style"
+              maxlength="10"
+              placeholder="gg/mm/aaaa"
+              type="text"
+              [(ngModel)]="nuovoOrdineDati.dataInizio"
+              (input)="formattaData($event)"
+            />
             <div class="calendar-wrapper" (click)="mostraCalendario = !mostraCalendario">
               <i class="bi bi-calendar3"></i>
             </div>
@@ -108,9 +117,9 @@
                 <div class="day-name">L</div><div class="day-name">M</div><div class="day-name">M</div>
                 <div class="day-name">G</div><div class="day-name">V</div><div class="day-name">S</div><div class="day-name">D</div>
                 @for (day of calendarDays; track $index) {
-                  <div class="calendar-day" [class.empty]="!day" [class.selected]="isSelected(day)" (click)="selectDate(day)">
-                    {{ day }}
-                  </div>
+                <div class="calendar-day" [class.empty]="!day" [class.selected]="isSelected(day)" (click)="selectDate(day)">
+                  {{ day }}
+                </div>
                 }
               </div>
             </div>
@@ -120,14 +129,14 @@
 
         <div class="col-md-4">
           <label class="label-custom">Stato</label>
-          <select [(ngModel)]="nuovoOrdineDati.stato" class="form-select input-modal-style">
+          <select class="form-select input-modal-style" [(ngModel)]="nuovoOrdineDati.stato">
             <option value="Ricevuto">Ricevuto</option>
             <option value="Fatto">Fatto</option>
           </select>
         </div>
         <div class="col-md-4">
           <label class="label-custom">Codice offerta</label>
-          <input type="text" [(ngModel)]="nuovoOrdineDati.codiceOfferta" class="form-control input-modal-style" placeholder="Inserisci cod. offerta">
+          <input class="form-control input-modal-style" placeholder="Inserisci cod. offerta" type="text" [(ngModel)]="nuovoOrdineDati.codiceOfferta" />
         </div>
       </div>
 

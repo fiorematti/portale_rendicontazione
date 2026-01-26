@@ -1,60 +1,96 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; 
+import { CommonModule, NgForOf, NgIf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+interface AttivitaItem {
+  codice: string;
+  cliente: string;
+  location: 'In sede' | 'Trasferta' | string;
+  ore: number;
+  approvato: boolean;
+}
+
+interface GiornoCalendario {
+  valore: number;
+  corrente: boolean;
+}
 
 @Component({
   selector: 'app-attivita',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgIf, NgForOf],
   templateUrl: './attivita.html',
   styleUrls: ['./attivita.css'],
 })
 export class Attivita implements OnInit {
-  giornoSelezionato: number = 14;
-  meseCorrente: number = 8; // Settembre (0-11)
-  annoCorrente: number = 2025;
-  
-  giorniCalendario: { valore: number, corrente: boolean }[] = [];
-  listaMesi = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  listaAnni: number[] = [];
+  readonly listaMesi = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  private readonly annoInizio = 2020;
+  private readonly annoFine = 2030;
 
-  listaAttivita = [
-    { codice: 'AAAA/xxxx', cliente: 'Nome cliente', location: 'Trasferta', ore: 6 }
+  giornoSelezionato = 14;
+  meseCorrente = 8; // Settembre (0-11)
+  annoCorrente = 2025;
+
+  giorniCalendario: GiornoCalendario[] = [];
+  listaAnni: number[] = [];
+  listaAttivita: AttivitaItem[] = [
+    { codice: 'AAAA/xxxx', cliente: 'Nome cliente', location: 'Trasferta', ore: 6, approvato: false },
   ];
 
-  nuovaAttivita = { codice: 'AAAA/xxxx', cliente: 'Nome cliente', location: 'In sede', ore: 0 };
-  mostraModal: boolean = false;
-  isModifica: boolean = false;
-  indiceInModifica: number = -1;
-  mostraErrore: boolean = false;
+  nuovaAttivita: AttivitaItem = this.creaAttivitaVuota();
+  mostraModal = false;
+  isModifica = false;
+  indiceInModifica = -1;
+  mostraErrore = false;
+  isDettaglioOpen = false;
+  attivitaDettaglio: AttivitaItem | null = null;
 
-  apriModal() { 
-    this.isModifica = false;
-    this.mostraErrore = false;
-    this.nuovaAttivita = { codice: '', cliente: '', location: '', ore: 0 };
-    this.mostraModal = true; 
+  ngOnInit(): void {
+    this.listaAnni = this.creaIntervalloAnni();
+    this.generaCalendario();
   }
 
-  modificaAttivita(index: number) {
+  apriModal(): void {
+    this.isModifica = false;
+    this.mostraErrore = false;
+    this.nuovaAttivita = this.creaAttivitaVuota();
+    this.mostraModal = true;
+  }
+
+  modificaAttivita(index: number): void {
     this.isModifica = true;
     this.indiceInModifica = index;
     this.nuovaAttivita = { ...this.listaAttivita[index] };
     this.mostraModal = true;
   }
 
-  chiudiModal() { 
-    this.mostraModal = false; 
+  apriDettaglio(attivita: AttivitaItem, index: number): void {
+    this.attivitaDettaglio = attivita;
+    this.indiceInModifica = index;
+    this.isDettaglioOpen = true;
+  }
+
+  chiudiDettaglio(): void {
+    this.isDettaglioOpen = false;
+    this.attivitaDettaglio = null;
+  }
+
+  modificaDaDettaglio(): void {
+    if (this.indiceInModifica < 0) return;
+    this.isDettaglioOpen = false;
+    this.modificaAttivita(this.indiceInModifica);
+  }
+
+  chiudiModal(): void {
+    this.mostraModal = false;
     this.isModifica = false;
     this.mostraErrore = false;
   }
 
-  confermaAggiunta() {
-    const { codice, cliente, location, ore } = this.nuovaAttivita;
-    const campiValidi = codice.trim() && cliente.trim() && location.trim() && Number(ore) > 0;
-
-    if (!campiValidi) {
+  confermaAggiunta(): void {
+    if (!this.isAttivitaValida(this.nuovaAttivita)) {
       this.mostraErrore = true;
-      setTimeout(() => this.mostraErrore = false, 4000);
+      setTimeout(() => (this.mostraErrore = false), 4000);
       return;
     }
 
@@ -63,18 +99,14 @@ export class Attivita implements OnInit {
     } else {
       this.listaAttivita.push({ ...this.nuovaAttivita });
     }
+
     this.chiudiModal();
   }
 
-  eliminaAttivita(index: number) {
-    if (confirm("Sei sicuro di voler eliminare questa attività?")) {
+  eliminaAttivita(index: number): void {
+    if (confirm('Sei sicuro di voler eliminare questa attività?')) {
       this.listaAttivita.splice(index, 1);
     }
-  }
-
-  ngOnInit() {
-    for (let i = 2020; i <= 2030; i++) this.listaAnni.push(i);
-    this.generaCalendario();
   }
 
   get totaleOreCalcolato(): string {
@@ -116,7 +148,24 @@ export class Attivita implements OnInit {
     this.generaCalendario();
   }
 
-  selezionaGiorno(giorno: { valore: number, corrente: boolean }): void {
+  selezionaGiorno(giorno: GiornoCalendario): void {
     if (giorno.corrente) this.giornoSelezionato = giorno.valore;
+  }
+
+  private creaAttivitaVuota(): AttivitaItem {
+    return { codice: '', cliente: '', location: '', ore: 0, approvato: false };
+  }
+
+  private creaIntervalloAnni(): number[] {
+    const anni: number[] = [];
+    for (let anno = this.annoInizio; anno <= this.annoFine; anno++) {
+      anni.push(anno);
+    }
+    return anni;
+  }
+
+  private isAttivitaValida(attivita: AttivitaItem): boolean {
+    const { codice, cliente, location, ore } = attivita;
+    return Boolean(codice.trim() && cliente.trim() && location.trim() && Number(ore) > 0);
   }
 }

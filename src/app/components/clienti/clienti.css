@@ -1,35 +1,33 @@
-/* Badge personalizzati */
 .badge-attivo {
-    background-color: #D1F7D6;
-    color: #1A5325;
+    background-color: #d1f7d6;
+    color: #1a5325;
     padding: 0.6em 1.2em;
 }
 
 .badge-non-attivo {
-    background-color: #FFD6D6;
-    color: #A30000;
+    background-color: #ffd6d6;
+    color: #a30000;
     padding: 0.6em 1.2em;
 }
 
-/* Input e Select */
-.form-control, .form-select {
-    border: 1px solid #EAEAEA;
+.form-control,
+.form-select {
+    border: 1px solid #eaeaea;
     border-radius: 8px;
 }
 
 .input-group-text {
-    border: 1px solid #EAEAEA;
+    border: 1px solid #eaeaea;
     border-radius: 8px 0 0 8px;
 }
 
-/* Bottoni Azione */
 .btn-dark {
-    background-color: #2D2D2D;
+    background-color: #2d2d2d;
     font-weight: 500;
 }
 
 .table thead th {
-    background-color: #F9F9F9;
+    background-color: #f9f9f9;
     color: #666;
     font-size: 0.85rem;
     text-transform: uppercase;
@@ -37,22 +35,21 @@
 }
 
 .btn-conferma {
-    background-color: #FF9800; 
+    background-color: #ff9500;
     border: none;
 }
 
 .btn-conferma:hover {
-    background-color: #e68900;
+    background-color: #ff9500;
 }
 
-/* Modal styles */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
