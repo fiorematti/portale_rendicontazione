@@ -1,10 +1,12 @@
-:root {
-  --sidebar-width: 62px;
-  --sidebar-width-open: 180px;
-  --sidebar-bg: #1a1a1a;
-  --sidebar-accent: #f39c12;
-  --sidebar-divider: #2c2c2c;
-  --text-muted: #8a8a8a;
+:host {
+  --sidebar-width-expanded: 200px;
+  --sidebar-compact-width: 56px;
+  --sidebar-bg: #000000;
+  --sidebar-divider: rgba(255, 255, 255, 0.1);
+  --sidebar-text: #ffffff;
+  --sidebar-muted: rgba(255, 255, 255, 0.6);
+  --sidebar-accent: #f9ad2d;
+  --sidebar-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
 }
 
 .topbar {
@@ -44,97 +46,221 @@
 
 .sidebar {
   position: fixed;
-  top: 110px;
+  top: 140px; /* aumentato per distanziare la sidebar dal titolo */
   left: 20px;
-  height: calc(100vh - 140px);
-  width: var(--sidebar-width);
-  background: var(--sidebar-bg);
-  border-radius: 28px;
+  bottom: 20px;
+  width: var(--sidebar-width-expanded);
+  background: var(--sidebar-bg, #000000);
+  border-radius: 20px;
   overflow: hidden;
-  transition: width 0.25s ease;
   display: flex;
   flex-direction: column;
   z-index: 900;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--sidebar-shadow, 0 12px 36px rgba(0, 0, 0, 0.4));
+  padding: 4px 0 8px;
+  transition: width 0.25s ease;
 }
 
-.sidebar:hover {
-  width: var(--sidebar-width-open);
+/* Fallback: if the mouse is NOT over the sidebar, force compact view */
+.sidebar:not(:hover) {
+  width: var(--sidebar-compact-width) !important;
+}
+
+.sidebar:not(:hover) .sidebar__list li a .link-text {
+  display: none !important;
+}
+
+/* Hide logout text when sidebar is closed/not hovered - show only icon */
+.sidebar:not(:hover) .logout-link .link-text {
+  display: none !important;
+}
+
+/* Logout label will follow the same hover rules as other items */
+
+.sidebar.collapsed {
+  width: var(--sidebar-compact-width);
+}
+
+.sidebar.collapsed .sidebar__list li a {
+  justify-content: center;
+  gap: 0;
+  padding: 8px 0;
+}
+
+.sidebar.collapsed .sidebar__list li a .link-text {
+  display: none;
+}
+
+.sidebar.collapsed .logout-link {
+  justify-content: center;
+  gap: 0;
+  padding: 8px 0;
+}
+
+.sidebar.collapsed .logout-link .link-text {
+  display: none;
 }
 
 .sidebar__nav {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  flex: 1 1 auto;
+  overflow: visible; /* show all items without internal scroll */
+  padding-top: 0px;
+  padding-left: 6px; /* reduce left padding so labels fit */
+  padding-right: 6px;
+}
+
+/* Nasconde la scrollbar mantenendo lo scroll */
+.sidebar__nav::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar__nav {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .sidebar__list {
   list-style: none;
-  margin: 8px 0;
+  margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px; /* tighter gaps to fit more items */
 }
 
 .sidebar__list li a {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 0;
-  color: var(--text-muted);
+  justify-content: flex-start;
+  gap: 8px; /* tightened gap */
+  padding: 6px 8px; /* tighter padding */
+  border-radius: 0;
+  color: var(--sidebar-text, #ffffff);
   text-decoration: none;
   white-space: nowrap;
-  transition: color 0.2s ease;
+  transition: background 0.15s ease, color 0.15s ease;
+  font-weight: 600;
+  position: relative;
+  font-size: 0.78rem; /* slightly smaller text */
+}
+
+.sidebar__list li a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0%;
+  background: var(--sidebar-accent, #f9ad2d);
+  border-radius: 0 3px 3px 0;
+  transition: height 0.2s ease;
 }
 
 .sidebar__list li a i {
-  width: var(--sidebar-width);
+  width: auto;
+  font-size: 0.98rem;
   text-align: center;
-  font-size: 1.15rem;
+  color: var(--sidebar-text, #ffffff);
 }
 
-.sidebar__list li a:hover,
+.sidebar__list li a .link-text {
+  display: inline-block;
+  color: var(--sidebar-text, #ffffff);
+}
+
+.sidebar__list li a:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar__list li a:hover i {
+  color: var(--sidebar-accent, #f9ad2d);
+}
+
+.sidebar__list li a:hover::before,
+.sidebar__list li a.active::before {
+  height: 60%;
+}
+
 .sidebar__list li a.active {
-  color: var(--sidebar-accent);
+  background: transparent;
+  color: var(--sidebar-accent, #f9ad2d);
 }
 
-.link-text {
-  opacity: 0;
-  font-size: 0.92rem;
-  transition: opacity 0.18s ease;
+.sidebar__list li a.active i {
+  color: var(--sidebar-accent, #f9ad2d);
 }
 
-.sidebar:hover .link-text {
-  opacity: 1;
+/* Testi visibili quando la sidebar è aperta */
+.sidebar__list li a i {
+  width: 20px; /* smaller icon container */
+  font-size: 1.05rem; /* slightly smaller icon */
 }
 
 .sidebar__divider {
   border: 0;
-  border-top: 1px solid var(--sidebar-divider);
-  margin: 6px 14px;
-  opacity: 0.7;
+  border-top: 1px solid var(--sidebar-divider, rgba(255, 255, 255, 0.1));
+  margin: 12px 12px;
+  opacity: 1;
 }
 
 .sidebar__logout {
-  border-top: 1px solid var(--sidebar-divider);
-  padding: 12px 0;
+  border-top: 1px solid var(--sidebar-divider, rgba(255, 255, 255, 0.1));
+  padding: 6px 8px 6px;
+  margin-top: auto; /* keep logout pinned to the bottom of the sidebar */
+  margin-bottom: 2px;
 }
 
 .logout-link {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #ff4d4d;
+  justify-content: flex-start;
+  gap: 8px;
+  color: #ff5f5f;
   text-decoration: none;
-  padding: 9px 0;
-  white-space: nowrap;
+  padding: 6px 10px;
+  border-radius: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+  font-size: 0.82rem;
 }
 
 .logout-link i {
-  width: var(--sidebar-width);
+  width: auto;
   text-align: center;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
+  color: #ff5f5f;
 }
 
-/* Scrollbar hidden visually */
+.logout-link .link-text {
+  display: inline-block;
+  color: var(--sidebar-text, #ffffff);
+}
+
+.sidebar:hover .logout-link,
+.sidebar:focus-within .logout-link {
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 14px 24px;
+}
+
+.sidebar:hover .logout-link i,
+.sidebar:focus-within .logout-link i {
+  width: 24px;
+}
+
+.sidebar:hover .logout-link .link-text,
+.sidebar:focus-within .logout-link .link-text {
+  display: inline-block !important;
+}
+
+.logout-link:hover {
+  background: rgba(255, 86, 86, 0.1);
+}
+
+.logout-link:hover i {
+  color: #ff8a8a;
+}
+
 .sidebar__nav::-webkit-scrollbar {
   display: none;
 }

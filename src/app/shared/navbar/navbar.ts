@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 @Component({
@@ -8,4 +8,23 @@ import { RouterModule } from '@angular/router';
   templateUrl: './navbar.html',
   styleUrls: ['./navbar.css'],
 })
-export class Navbar {}
+export class Navbar implements OnInit {
+  // default: collapsed (icons only). Hover to expand.
+  collapsed = true;
+
+  ngOnInit(): void {}
+
+  onSidebarEnter(): void {
+    this.collapsed = false;
+  }
+
+  onSidebarLeave(): void {
+    this.collapsed = true;
+  }
+
+  onLogout(event: Event): void {
+    event.preventDefault();
+    // Prevent navigation; implement actual logout logic here if needed
+    console.log('Logout clicked - navigation prevented');
+  }
+}

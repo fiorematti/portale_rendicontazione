@@ -17,3 +17,23 @@
 .calendar-container {
   max-height: 250px;
 }
+
+.content-area {
+  margin-left: 100px;
+  padding: 24px 32px 32px;
+  transition: margin-left 0.25s ease;
+}
+
+@media (max-width: 1024px) {
+  .content-area {
+    margin-left: 100px;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-area {
+    margin-left: 80px;
+    padding: 16px;
+  }
+}
