@@ -15,22 +15,12 @@ interface Ordine {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './ordini.html',
-  styleUrl: './ordini.css',
+  styleUrls: ['./ordini.css'],
 })
 export class OrdiniComponent implements OnInit {
   readonly monthNames = [
-    'Gennaio',
-    'Febbraio',
-    'Marzo',
-    'Aprile',
-    'Maggio',
-    'Giugno',
-    'Luglio',
-    'Agosto',
-    'Settembre',
-    'Ottobre',
-    'Novembre',
-    'Dicembre',
+    'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+    'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
   ];
 
   filtroTesto = '';
@@ -40,6 +30,7 @@ export class OrdiniComponent implements OnInit {
   mostraErrore = false;
 
   isModifica = false;
+  isDettaglio = false;
   indiceInModifica = -1;
 
   currentMonth = new Date().getMonth();
@@ -115,13 +106,22 @@ export class OrdiniComponent implements OnInit {
     this.nuovoOrdineDati.dataInizio = final;
   }
 
+  visualizzaDettaglio(ordine: Ordine): void {
+    this.isDettaglio = true;
+    this.isModifica = false;
+    this.nuovoOrdineDati = { ...ordine };
+    this.mostraModal = true;
+  }
+
   nuovoOrdine(): void {
+    this.isDettaglio = false;
     this.isModifica = false;
     this.mostraErrore = false;
     this.mostraModal = true;
   }
 
   modificaOrdine(ordine: Ordine): void {
+    this.isDettaglio = false;
     this.isModifica = true;
     this.indiceInModifica = this.elencoOrdini.findIndex(o => o.id === ordine.id);
     this.nuovoOrdineDati = { ...ordine };
@@ -129,9 +129,16 @@ export class OrdiniComponent implements OnInit {
     this.mostraModal = true;
   }
 
+  // Funzione chiamata dal tasto arancione nel dettaglio
+  passaAModifica(): void {
+    const ordineDaModificare = { ...this.nuovoOrdineDati };
+    this.modificaOrdine(ordineDaModificare);
+  }
+
   chiudiModal(): void {
     this.mostraModal = false;
     this.isModifica = false;
+    this.isDettaglio = false;
     this.indiceInModifica = -1;
     this.resetForm();
     this.mostraCalendario = false;
@@ -181,12 +188,6 @@ export class OrdiniComponent implements OnInit {
   }
 
   private creaOrdineVuoto(): Ordine {
-    return {
-      id: '',
-      cliente: '',
-      dataInizio: '',
-      stato: 'Ricevuto',
-      codiceOfferta: '',
-    };
+    return { id: '', cliente: '', dataInizio: '', stato: 'Ricevuto', codiceOfferta: '' };
   }
 }

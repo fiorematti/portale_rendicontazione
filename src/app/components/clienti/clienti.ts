@@ -36,6 +36,7 @@ export class ClientiComponent implements OnInit {
   clienteSelezionato: Cliente = this.creaClienteVuoto();
   mostraModal = false;
   isModifica = false;
+  isDettaglio = false; // Nuova variabile
   mostraErrore = false;
 
   filtroTesto = '';
@@ -72,16 +73,30 @@ export class ClientiComponent implements OnInit {
 
   aggiungiCliente(): void {
     this.isModifica = false;
+    this.isDettaglio = false;
     this.mostraErrore = false;
     this.clienteSelezionato = this.creaClienteVuoto();
     this.mostraModal = true;
   }
 
+  visualizzaDettaglio(cliente: Cliente): void {
+    this.isDettaglio = true;
+    this.isModifica = false;
+    this.clienteSelezionato = { ...cliente };
+    this.mostraModal = true;
+  }
+
   modificaCliente(cliente: Cliente): void {
+    this.isDettaglio = false;
     this.isModifica = true;
     this.mostraErrore = false;
     this.clienteSelezionato = { ...cliente };
     this.mostraModal = true;
+  }
+
+  passaAModifica(): void {
+    const cliente = { ...this.clienteSelezionato };
+    this.modificaCliente(cliente);
   }
 
   salvaModifica(): void {
@@ -108,6 +123,7 @@ export class ClientiComponent implements OnInit {
   chiudiModal(): void {
     this.mostraModal = false;
     this.isModifica = false;
+    this.isDettaglio = false;
     this.mostraErrore = false;
   }
 

@@ -105,7 +105,13 @@
 }
 
 .modal-card {
-    width: 500px;
+    background-color: rgba(248, 249, 250, 1);
+    width: 90%;
+    max-width: 600px;
+    border-radius: 30px;
+    padding: 40px;
+    border: none;
+    position: relative;
 }
 
 .azioni-col {

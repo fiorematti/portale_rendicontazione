@@ -1,3 +1,4 @@
+/* --- Badges --- */
 .badge-attivo {
     background-color: #d1f7d6;
     color: #1a5325;
@@ -10,6 +11,7 @@
     padding: 0.6em 1.2em;
 }
 
+/* --- Form e Input --- */
 .form-control,
 .form-select {
     border: 1px solid #eaeaea;
@@ -21,17 +23,10 @@
     border-radius: 8px 0 0 8px;
 }
 
+/* --- Pulsanti --- */
 .btn-dark {
     background-color: #2d2d2d;
     font-weight: 500;
-}
-
-.table thead th {
-    background-color: #f9f9f9;
-    color: #666;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 .btn-conferma {
@@ -43,6 +38,16 @@
     background-color: #ff9500;
 }
 
+/* --- Tabella --- */
+.table thead th {
+    background-color: #f9f9f9;
+    color: #666;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* --- Modale --- */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -57,6 +62,42 @@
 }
 
 .modal-card {
-    width: 500px;
+    background-color: rgba(248, 249, 250, 1);
+    width: 90%;
+    max-width: 450px; /* RIDOTTO DA 600px A 450px */
+    border-radius: 30px;
+    padding: 40px;
+    border: none;
+    position: relative;
 }
 
+/* --- Stili Dettaglio --- */
+.info-label {
+    color: #888;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+
+.info-value {
+    color: #1a1a1a;
+    font-weight: 800;
+    font-size: 1.6rem;
+    margin-bottom: 20px;
+}
+
+.input-modal-style {
+    background-color: rgba(226, 228, 231, 0.8) !important;
+    border: none !important;
+    border-radius: 18px !important;
+    padding: 15px 20px !important;
+    height: 60px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* RIMUOVI MARGINE ALL'ULTIMO ORDINE */
+.last-child-mb-0:last-child {
+    margin-bottom: 0 !important;
+}

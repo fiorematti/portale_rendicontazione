@@ -10,7 +10,6 @@
           <input placeholder="Cerca..." type="text" [(ngModel)]="filtroTesto" />
         </div>
       </div>
-
       <div class="col-md-2">
         <label class="label-filter">Stato ordine</label>
         <select class="select-filter-custom" [(ngModel)]="filtroStato">
@@ -19,9 +18,7 @@
           <option value="Fatto">Fatto</option>
         </select>
       </div>
-
       <div class="col-grow"></div>
-
       <div class="col-auto">
         <button class="btn btn-dark-custom py-2 px-4 d-flex align-items-center gap-2" (click)="nuovoOrdine()">
           <i class="bi bi-plus-lg"></i>
@@ -58,8 +55,9 @@
             </td>
             <td class="text-center">
               <div class="d-flex justify-content-center gap-2">
-                <button class="btn btn-link text-dark p-1" (click)="eliminaOrdine(ordine)"><i class="bi bi-trash3"></i></button>
+                <button class="btn btn-link text-dark p-1" (click)="visualizzaDettaglio(ordine)"><i class="bi bi-eye"></i></button>
                 <button class="btn btn-link text-dark p-1" (click)="modificaOrdine(ordine)"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-link text-dark p-1" (click)="eliminaOrdine(ordine)"><i class="bi bi-trash3"></i></button>
               </div>
             </td>
           </tr>
@@ -72,85 +70,102 @@
   @if (mostraModal) {
   <div class="modal-overlay" (click)="chiudiModal()">
     <div class="modal-card shadow-lg" (click)="$event.stopPropagation()">
-      <h2 class="modal-title-custom">{{ isModifica ? 'Modifica ordine' : 'Aggiungi ordini' }}</h2>
+      <h2 class="modal-title-custom">
+        {{ isDettaglio ? 'Dettaglio Ordine' : (isModifica ? 'Modifica ordine' : 'Aggiungi ordini') }}
+      </h2>
 
-      @if (mostraErrore) {
-      <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert" style="border-radius: 15px;">
-        <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
-        <div>Compila tutti i campi.</div>
-      </div>
-      }
-
-      <div class="row g-4 mt-2">
-        <div class="col-md-6">
-          <label class="label-custom">Codice ordine</label>
-          <input class="form-control input-modal-style" placeholder="Inserisci nome" type="text" [(ngModel)]="nuovoOrdineDati.id" />
-        </div>
-        <div class="col-md-6">
-          <label class="label-custom">Cliente</label>
-          <input class="form-control input-modal-style" placeholder="Inserisci cognome" type="text" [(ngModel)]="nuovoOrdineDati.cliente" />
-        </div>
-
-        <div class="col-md-4">
-          <label class="label-custom">Data inizio</label>
-          <div class="date-container">
-            <input
-              class="form-control input-modal-style"
-              maxlength="10"
-              placeholder="gg/mm/aaaa"
-              type="text"
-              [(ngModel)]="nuovoOrdineDati.dataInizio"
-              (input)="formattaData($event)"
-            />
-            <div class="calendar-wrapper" (click)="mostraCalendario = !mostraCalendario">
-              <i class="bi bi-calendar3"></i>
+      @if (isDettaglio) {
+        <div class="row g-5 mt-2">
+          <div class="col-md-6">
+            <div class="info-label">CODICE ORDINE</div>
+            <div class="info-value">{{ nuovoOrdineDati.id }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-label">CLIENTE</div>
+            <div class="info-value">{{ nuovoOrdineDati.cliente }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-label">DATA INIZIO</div>
+            <div class="info-value">{{ nuovoOrdineDati.dataInizio }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-label">CODICE OFFERTA</div>
+            <div class="info-value">{{ nuovoOrdineDati.codiceOfferta }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-label">STATO</div>
+            <div class="mt-2">
+              <span class="badge-custom" [ngClass]="getBadgeClass(nuovoOrdineDati.stato)">
+                {{ nuovoOrdineDati.stato }}
+              </span>
             </div>
-
-            @if (mostraCalendario) {
-            <div class="calendar-popup shadow border-0">
-              <div class="calendar-header d-flex justify-content-between align-items-center">
-                <i class="bi bi-chevron-left nav-arrow" (click)="prevMonth($event)"></i>
-                <span class="month-display">{{ nomeMeseAnno }}</span>
-                <i class="bi bi-chevron-right nav-arrow" (click)="nextMonth($event)"></i>
-              </div>
-              <div class="calendar-grid">
-                <div class="day-name">L</div><div class="day-name">M</div><div class="day-name">M</div>
-                <div class="day-name">G</div><div class="day-name">V</div><div class="day-name">S</div><div class="day-name">D</div>
-                @for (day of calendarDays; track $index) {
-                <div class="calendar-day" [class.empty]="!day" [class.selected]="isSelected(day)" (click)="selectDate(day)">
-                  {{ day }}
-                </div>
-                }
-              </div>
-            </div>
-            }
           </div>
         </div>
 
-        <div class="col-md-4">
-          <label class="label-custom">Stato</label>
-          <select class="form-select input-modal-style" [(ngModel)]="nuovoOrdineDati.stato">
-            <option value="Ricevuto">Ricevuto</option>
-            <option value="Fatto">Fatto</option>
-          </select>
+        <div class="d-flex justify-content-center gap-3 mt-5">
+          <button class="btn btn-modal-annulla" (click)="chiudiModal()">Chiudi</button>
+          <button class="btn btn-modal-conferma" (click)="passaAModifica()">Modifica</button>
         </div>
-        <div class="col-md-4">
-          <label class="label-custom">Codice offerta</label>
-          <input class="form-control input-modal-style" placeholder="Inserisci cod. offerta" type="text" [(ngModel)]="nuovoOrdineDati.codiceOfferta" />
-        </div>
-      </div>
-
-      @if (isModifica) {
-      <div class="d-flex justify-content-center gap-3 mt-4">
-        <button class="btn btn-danger rounded-pill px-4 py-2 fw-bold" (click)="eliminaOrdine(elencoOrdini[indiceInModifica]); chiudiModal()">Elimina</button>
-        <button class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-white" (click)="confermaOrdine()">Modifica</button>
-      </div>
       }
 
-      <div class="d-flex justify-content-center gap-3 mt-5">
-        <button class="btn btn-modal-annulla" (click)="chiudiModal()">Annulla</button>
-        <button class="btn btn-modal-conferma" (click)="confermaOrdine()">{{ isModifica ? 'Salva modifiche' : 'Conferma' }}</button>
-      </div>
+      @else {
+        @if (mostraErrore) {
+          <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert" style="border-radius: 15px;">
+            <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
+            <div>Compila tutti i campi.</div>
+          </div>
+        }
+
+        <div class="row g-4 mt-2">
+          <div class="col-md-6">
+            <label class="label-custom">Codice ordine</label>
+            <input class="form-control input-modal-style" placeholder="Es: 1024" type="text" [(ngModel)]="nuovoOrdineDati.id" />
+          </div>
+          <div class="col-md-6">
+            <label class="label-custom">Cliente</label>
+            <input class="form-control input-modal-style" placeholder="Inserisci cliente" type="text" [(ngModel)]="nuovoOrdineDati.cliente" />
+          </div>
+          <div class="col-md-4">
+            <label class="label-custom">Data inizio</label>
+            <div class="date-container">
+              <input class="form-control input-modal-style" maxlength="10" placeholder="gg/mm/aaaa" type="text" [(ngModel)]="nuovoOrdineDati.dataInizio" (input)="formattaData($event)" />
+              <div class="calendar-wrapper" (click)="mostraCalendario = !mostraCalendario">
+                <i class="bi bi-calendar3"></i>
+              </div>
+              @if (mostraCalendario) {
+              <div class="calendar-popup shadow border-0">
+                <div class="calendar-header d-flex justify-content-between align-items-center">
+                  <i class="bi bi-chevron-left nav-arrow" (click)="prevMonth($event)"></i>
+                  <span class="month-display">{{ nomeMeseAnno }}</span>
+                  <i class="bi bi-chevron-right nav-arrow" (click)="nextMonth($event)"></i>
+                </div>
+                <div class="calendar-grid">
+                  @for (day of calendarDays; track $index) {
+                  <div class="calendar-day" [class.empty]="!day" [class.selected]="isSelected(day)" (click)="selectDate(day)">{{ day }}</div>
+                  }
+                </div>
+              </div>
+              }
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="label-custom">Stato</label>
+            <select class="form-select input-modal-style" [(ngModel)]="nuovoOrdineDati.stato">
+              <option value="Ricevuto">Ricevuto</option>
+              <option value="Fatto">Fatto</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="label-custom">Codice offerta</label>
+            <input class="form-control input-modal-style" placeholder="Cod. Offerta" type="text" [(ngModel)]="nuovoOrdineDati.codiceOfferta" />
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-center gap-3 mt-5">
+          <button class="btn btn-modal-annulla" (click)="chiudiModal()">Annulla</button>
+          <button class="btn btn-modal-conferma" (click)="confermaOrdine()">{{ isModifica ? 'Salva modifiche' : 'Conferma' }}</button>
+        </div>
+      }
     </div>
   </div>
   }
