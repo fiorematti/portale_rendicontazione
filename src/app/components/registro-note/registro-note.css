@@ -80,17 +80,17 @@
 .modal-card {
   background-color: rgba(248, 249, 250, 1);
   width: 90%;
-  max-width: 850px;
-  border-radius: 45px;
-  padding: 60px;
+  max-width: 600px; /* smaller modal like other popups */
+  border-radius: 30px;
+  padding: 40px; /* reduced padding to make modal visually smaller */
   border: none;
   position: relative;
 }
 
 .modal-title-custom {
   font-weight: 800;
-  font-size: 2.8rem;
-  margin-bottom: 30px;
+  font-size: 2.2rem; /* reduced title size to match other modals */
+  margin-bottom: 20px;
 }
 
 /* INPUT E LABEL NELLA MODAL */
