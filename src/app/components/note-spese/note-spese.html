@@ -35,7 +35,14 @@
           <span class="day-name">L</span><span class="day-name">M</span><span class="day-name">M</span>
           <span class="day-name">G</span><span class="day-name">V</span><span class="day-name">S</span><span class="day-name">D</span>
           <div *ngFor="let vuoto of giorniVuoti"></div>
-          <div *ngFor="let giorno of giorniDelMese" class="calendar-day" (click)="selezionaGiorno(giorno)">{{ giorno }}</div>
+          <div
+            *ngFor="let giorno of giorniDelMese"
+            class="calendar-day"
+            [class.is-selected]="isGiornoSelezionato(giorno, 'filtro')"
+            (click)="selezionaGiorno(giorno)"
+          >
+            {{ giorno }}
+          </div>
         </div>
       </div>
     </div>
@@ -155,7 +162,14 @@
                     <span class="day-name">L</span><span class="day-name">M</span><span class="day-name">M</span>
                     <span class="day-name">G</span><span class="day-name">V</span><span class="day-name">S</span><span class="day-name">D</span>
                     <div *ngFor="let vuoto of giorniVuoti"></div>
-                    <div *ngFor="let giorno of giorniDelMese" class="calendar-day" (click)="selezionaGiorno(giorno)">{{ giorno }}</div>
+                    <div
+                      *ngFor="let giorno of giorniDelMese"
+                      class="calendar-day"
+                      [class.is-selected]="isGiornoSelezionato(giorno, 'popup')"
+                      (click)="selezionaGiorno(giorno)"
+                    >
+                      {{ giorno }}
+                    </div>
                   </div>
                 </div>
               </div>

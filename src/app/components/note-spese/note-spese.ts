@@ -157,8 +157,15 @@ export class NoteSpese implements OnInit {
 
   toggleCalendario(target: 'filtro' | 'popup'): void {
     if (this.isVisualizza && target === 'popup') return;
+    const opening = !this.mostraCalendario || this.targetData !== target;
     this.targetData = target;
-    this.mostraCalendario = !this.mostraCalendario;
+
+    if (opening) {
+      this.syncCalendarioConData(target);
+      this.mostraCalendario = true;
+    } else {
+      this.mostraCalendario = false;
+    }
   }
 
   generaCalendario(): void {
@@ -174,12 +181,23 @@ export class NoteSpese implements OnInit {
   selezionaGiorno(g: number): void {
     const d = `${String(g).padStart(2, '0')}/${String(this.dataVisualizzata.getMonth() + 1).padStart(2, '0')}/${this.dataVisualizzata.getFullYear()}`;
     if (this.targetData === 'filtro') this.filtroData = d; else this.nuovaSpesaData = d;
+    this.syncCalendarioConData(this.targetData);
     this.mostraCalendario = false;
   }
 
   cambiaMese(d: number): void {
     this.dataVisualizzata.setMonth(this.dataVisualizzata.getMonth() + d);
     this.generaCalendario();
+  }
+
+  isGiornoSelezionato(giorno: number, target: 'filtro' | 'popup'): boolean {
+    const data = this.parseDataString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData);
+    if (!data) return false;
+    return (
+      data.getDate() === giorno &&
+      data.getMonth() === this.dataVisualizzata.getMonth() &&
+      data.getFullYear() === this.dataVisualizzata.getFullYear()
+    );
   }
 
   formattaData(event: Event, campo: string): void {
@@ -271,5 +289,19 @@ export class NoteSpese implements OnInit {
       Number(dett.telepass || 0) +
       Number(dett.costo || 0)
     );
+  }
+
+  private parseDataString(valore: string): Date | null {
+    if (!valore || valore.length !== 10) return null;
+    const [giorno, mese, anno] = valore.split('/').map((part) => Number(part));
+    if (!giorno || !mese || !anno) return null;
+    const data = new Date(anno, mese - 1, giorno);
+    return Number.isNaN(data.getTime()) ? null : data;
+  }
+
+  private syncCalendarioConData(target: 'filtro' | 'popup'): void {
+    const data = this.parseDataString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData) || new Date();
+    this.dataVisualizzata = new Date(data.getFullYear(), data.getMonth(), 1);
+    this.generaCalendario();
   }
 }

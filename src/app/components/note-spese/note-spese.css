@@ -260,9 +260,16 @@ input::-webkit-inner-spin-button {
   transition: all 0.2s ease;
 }
 
+.calendar-day.is-selected {
+  background-color: #ff9800;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
 .calendar-day:hover {
-  background-color: #f39c12;
-  color: white;
+  background-color: #ff9800;
+  color: #fff;
 }
 
 .calendar-grid > div:not(.calendar-day) {
