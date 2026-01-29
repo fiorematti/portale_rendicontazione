@@ -18,9 +18,9 @@ interface Acquirente {
 })
 export class TariffaKmComponent {
 	listaAcquirenti: Acquirente[] = [
-		{ id: 1, utente: 'Nome Cognome', auto: 'Modello A', tariffaKm: 0.1234 },
-		{ id: 2, utente: 'Nome Cognome', auto: 'Modello B', tariffaKm: 0.1234 },
-		{ id: 3, utente: 'Nome Cognome', auto: 'Modello C', tariffaKm: 0.1234 },
+		{ id: 1, utente: 'Mario Neri', auto: 'Modello A', tariffaKm: 0.1234 },
+		{ id: 2, utente: 'Andrea Bianchi', auto: 'Modello B', tariffaKm: 0.1234 },
+		{ id: 3, utente: 'Luca Rossi', auto: 'Modello C', tariffaKm: 0.1234 },
 	];
 
 	filtroTesto = '';

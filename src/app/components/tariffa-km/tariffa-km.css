@@ -1,5 +1,5 @@
 .page-wrapper {
-	background: linear-gradient(180deg, #f4efe8 0%, #e6e0d7 100%);
+	background-color: #f4efe8;
 }
 
 .page-title {
@@ -113,7 +113,7 @@
 }
 
 .input-soft {
-	background: #f5f5f5;
+	background: rgba(226, 228, 231, 0.8);
 	border: 1px solid #dcdcdc;
 	border-radius: 10px;
 }

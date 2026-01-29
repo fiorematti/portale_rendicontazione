@@ -45,10 +45,10 @@
       <table class="table align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th class="ps-4 py-3">Cliente</th>
+            <th class="ps-4">Cliente</th>
             <th>Stato</th>
             <th>Ordini</th>
-            <th class="text-end pe-4">Azioni</th>
+            <th class="text-center pe-4">Azioni</th>
           </tr>
         </thead>
         <tbody>
@@ -70,7 +70,7 @@
                 }
               </div>
             </td>
-            <td class="text-end pe-4 text-nowrap">
+            <td class="text-center pe-4 text-nowrap">
               <button class="btn btn-link text-dark p-1" (click)="visualizzaDettaglio(cliente)"><i class="bi bi-eye"></i></button>
               <button class="btn btn-link text-dark p-1" (click)="modificaCliente(cliente)"><i class="bi bi-pencil"></i></button>
               <button class="btn btn-link text-dark p-1" (click)="eliminaCliente(cliente.id)"><i class="bi bi-trash3"></i></button>

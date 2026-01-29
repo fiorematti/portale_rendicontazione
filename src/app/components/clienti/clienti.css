@@ -41,7 +41,7 @@
 /* --- Tabella --- */
 .table thead th {
     background-color: #f9f9f9;
-    color: #666;
+    color: black;
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;

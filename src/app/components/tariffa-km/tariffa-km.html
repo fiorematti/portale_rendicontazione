@@ -31,7 +31,7 @@
 						<th class="ps-4">Utente</th>
 						<th>Auto</th>
 						<th>Tariffa chilometrica</th>
-						<th class="pe-4 text-end">Azioni</th>
+						<th class="pe-4 text-center">Azioni</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -40,7 +40,7 @@
 						<td class="ps-4 text-nowrap">{{ item.utente }}</td>
 						<td class="text-nowrap">{{ item.auto }}</td>
 						<td class="text-nowrap">{{ item.tariffaKm | number:'1.4-4' }}</td>
-						<td class="pe-4 text-end text-nowrap d-flex gap-2 justify-content-end align-items-center">
+						<td class="pe-4 text-center text-nowrap d-flex gap-2 justify-content-center align-items-center">
 							<button class="btn btn-link text-dark p-1" (click)="apriDettaglio(item)">
 								<i class="bi bi-eye"></i>
 							</button>
