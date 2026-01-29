@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; 
+import { FormsModule } from '@angular/forms';
 
 export interface Ordine {
   codice: string;
@@ -14,6 +14,16 @@ export interface Cliente {
   ordini: Ordine[];
 }
 
+type ModalMode = 'aggiungi' | 'modifica' | 'dettaglio';
+type FiltroStatoCliente = 'tutti' | 'attivo' | 'non-attivo';
+type FiltroStatoOrdini = 'tutti' | 'ok' | 'ko';
+
+const STATO_ORDINE_BY_FILTRO: Record<FiltroStatoOrdini, Ordine['stato'] | undefined> = {
+  tutti: undefined,
+  ok: 'completato',
+  ko: 'problema',
+};
+
 @Component({
   selector: 'app-clienti',
   standalone: true,
@@ -22,89 +32,75 @@ export interface Cliente {
   styleUrls: ['./clienti.css']
 })
 export class ClientiComponent implements OnInit {
-  readonly filtroStatoClienteDefault = 'tutti';
-  readonly filtroStatoOrdiniDefault = 'tutti';
+  readonly filtroStatoClienteDefault: FiltroStatoCliente = 'tutti';
+  readonly filtroStatoOrdiniDefault: FiltroStatoOrdini = 'tutti';
 
   listaClienti: Cliente[] = [
-    { id: 1, nome: 'Cliente 1', statoAttivo: true, ordini: [{ codice: 'AAAA/xxxx', stato: 'completato' }, { codice: 'AAAA/xxxx', stato: 'completato' }, { codice: 'AAAA/xxxx', stato: 'problema' }] },
-    { id: 2, nome: 'Cliente 2', statoAttivo: true, ordini: [{ codice: 'AAAA/xxxx', stato: 'problema' }] },
-    { id: 3, nome: 'Cliente 3', statoAttivo: true, ordini: [{ codice: 'AAAA/xxxx', stato: 'completato' }] },
-    { id: 4, nome: 'Cliente 4', statoAttivo: false, ordini: [{ codice: 'AAAA/xxxx', stato: 'problema' }] },
+    { id: 1, nome: 'Cliente 1', statoAttivo: true, ordini: [{ codice: 'AAAA/xxxx', stato: 'completato' }] },
+    { id: 2, nome: 'Cliente 2', statoAttivo: true, ordini: [{ codice: 'BBBB/yyyy', stato: 'problema' }] },
   ];
 
   listaClientiFiltrata: Cliente[] = [];
   clienteSelezionato: Cliente = this.creaClienteVuoto();
   mostraModal = false;
-  isModifica = false;
-  isDettaglio = false; // Nuova variabile
   mostraErrore = false;
+  ordineInput = '';
+  private modalMode: ModalMode = 'aggiungi';
 
   filtroTesto = '';
-  filtroStatoCliente = this.filtroStatoClienteDefault;
-  filtroStatoOrdini = this.filtroStatoOrdiniDefault;
+  filtroStatoCliente: FiltroStatoCliente = this.filtroStatoClienteDefault;
+  filtroStatoOrdini: FiltroStatoOrdini = this.filtroStatoOrdiniDefault;
 
   ngOnInit(): void {
     this.applicaFiltri();
   }
 
   applicaFiltri(): void {
-    this.listaClientiFiltrata = this.listaClienti.filter((cliente) => {
-      const matchNome = this.matchNome(cliente);
-      const matchStato = this.matchStatoCliente(cliente);
-      const matchOrdini = this.matchStatoOrdini(cliente);
-      return matchNome && matchStato && matchOrdini;
-    });
+    this.listaClientiFiltrata = this.listaClienti.filter((cliente) => this.isClienteVisibile(cliente));
   }
 
   cercaCliente(event: Event): void {
-    this.filtroTesto = (event.target as HTMLInputElement).value;
-    this.applicaFiltri();
+    const valore = (event.target as HTMLInputElement | null)?.value ?? '';
+    this.aggiornaFiltroTesto(valore);
   }
 
   filtraPerStato(event: Event): void {
-    this.filtroStatoCliente = (event.target as HTMLSelectElement).value;
-    this.applicaFiltri();
+    const valore = (event.target as HTMLSelectElement | null)?.value as FiltroStatoCliente;
+    this.aggiornaFiltroStatoCliente(valore);
   }
 
   filtraPerOrdini(event: Event): void {
-    this.filtroStatoOrdini = (event.target as HTMLSelectElement).value;
-    this.applicaFiltri();
+    const valore = (event.target as HTMLSelectElement | null)?.value as FiltroStatoOrdini;
+    this.aggiornaFiltroStatoOrdini(valore);
   }
 
   aggiungiCliente(): void {
-    this.isModifica = false;
-    this.isDettaglio = false;
-    this.mostraErrore = false;
-    this.clienteSelezionato = this.creaClienteVuoto();
-    this.mostraModal = true;
+    this.apriModal('aggiungi', this.creaClienteVuoto());
   }
 
   visualizzaDettaglio(cliente: Cliente): void {
-    this.isDettaglio = true;
-    this.isModifica = false;
-    this.clienteSelezionato = { ...cliente };
-    this.mostraModal = true;
+    this.apriModal('dettaglio', cliente);
   }
 
   modificaCliente(cliente: Cliente): void {
-    this.isDettaglio = false;
-    this.isModifica = true;
-    this.mostraErrore = false;
-    this.clienteSelezionato = { ...cliente };
-    this.mostraModal = true;
+    this.apriModal('modifica', cliente);
   }
 
   passaAModifica(): void {
-    const cliente = { ...this.clienteSelezionato };
-    this.modificaCliente(cliente);
+    this.apriModal('modifica', this.clienteSelezionato);
   }
 
   salvaModifica(): void {
-    if (!this.isNomeValido(this.clienteSelezionato.nome)) {
+    const nomePulito = this.clienteSelezionato.nome.trim();
+
+    if (!this.isNomeValido(nomePulito)) {
       this.mostraErrore = true;
       setTimeout(() => (this.mostraErrore = false), 4000);
       return;
     }
+
+    this.clienteSelezionato.nome = nomePulito;
+    this.clienteSelezionato.ordini = this.creaListaOrdini();
 
     if (this.clienteSelezionato.id === 0) {
       const nuovoId = this.generaNuovoId();
@@ -121,16 +117,32 @@ export class ClientiComponent implements OnInit {
   }
 
   chiudiModal(): void {
-    this.mostraModal = false;
-    this.isModifica = false;
-    this.isDettaglio = false;
-    this.mostraErrore = false;
+    this.resetModal();
   }
 
   eliminaCliente(id: number): void {
     if (confirm('Sei sicuro?')) {
       this.listaClienti = this.listaClienti.filter((c) => c.id !== id);
       this.applicaFiltri();
+    }
+  }
+
+  get isModifica(): boolean {
+    return this.modalMode === 'modifica';
+  }
+
+  get isDettaglio(): boolean {
+    return this.modalMode === 'dettaglio';
+  }
+
+  get titoloModal(): string {
+    switch (this.modalMode) {
+      case 'dettaglio':
+        return 'Dettaglio Cliente';
+      case 'modifica':
+        return 'Modifica Cliente';
+      default:
+        return 'Aggiungi Cliente';
     }
   }
 
@@ -152,16 +164,62 @@ export class ClientiComponent implements OnInit {
   }
 
   private matchStatoCliente(cliente: Cliente): boolean {
-    const statoCliente = cliente.statoAttivo ? 'attivo' : 'non-attivo';
-    return this.filtroStatoCliente === this.filtroStatoClienteDefault || statoCliente === this.filtroStatoCliente;
+    return this.filtroStatoCliente === this.filtroStatoClienteDefault || this.getStatoCliente(cliente) === this.filtroStatoCliente;
   }
 
   private matchStatoOrdini(cliente: Cliente): boolean {
-    if (this.filtroStatoOrdini === this.filtroStatoOrdiniDefault) return true;
-    return cliente.ordini.some((ordine) => {
-      if (this.filtroStatoOrdini === 'ok') return ordine.stato === 'completato';
-      if (this.filtroStatoOrdini === 'ko') return ordine.stato === 'problema';
+    const statoRichiesto = STATO_ORDINE_BY_FILTRO[this.filtroStatoOrdini];
+    if (!statoRichiesto) {
       return true;
-    });
+    }
+    return cliente.ordini.some((ordine) => ordine.stato === statoRichiesto);
+  }
+
+  private isClienteVisibile(cliente: Cliente): boolean {
+    return this.matchNome(cliente) && this.matchStatoCliente(cliente) && this.matchStatoOrdini(cliente);
+  }
+
+  private aggiornaFiltroTesto(valore: string): void {
+    this.filtroTesto = valore;
+    this.applicaFiltri();
+  }
+
+  private aggiornaFiltroStatoCliente(valore: FiltroStatoCliente): void {
+    this.filtroStatoCliente = valore;
+    this.applicaFiltri();
+  }
+
+  private aggiornaFiltroStatoOrdini(valore: FiltroStatoOrdini): void {
+    this.filtroStatoOrdini = valore;
+    this.applicaFiltri();
+  }
+
+  private creaListaOrdini(): Ordine[] {
+    const codice = this.ordineInput.trim();
+    return codice ? [{ codice, stato: 'completato' }] : [];
+  }
+
+  private getStatoCliente(cliente: Cliente): FiltroStatoCliente {
+    return cliente.statoAttivo ? 'attivo' : 'non-attivo';
+  }
+
+  private apriModal(modalMode: ModalMode, cliente: Cliente): void {
+    this.modalMode = modalMode;
+    this.mostraErrore = false;
+    this.clienteSelezionato = this.cloneCliente(cliente);
+    this.ordineInput = this.clienteSelezionato.ordini[0]?.codice ?? '';
+    this.mostraModal = true;
+  }
+
+  private resetModal(): void {
+    this.mostraModal = false;
+    this.modalMode = 'aggiungi';
+    this.mostraErrore = false;
+    this.ordineInput = '';
+    this.clienteSelezionato = this.creaClienteVuoto();
+  }
+
+  private cloneCliente(cliente: Cliente): Cliente {
+    return JSON.parse(JSON.stringify(cliente));
   }
 }

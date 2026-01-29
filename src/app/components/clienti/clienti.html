@@ -9,7 +9,12 @@
           <span class="input-group-text bg-light border-end-0">
             <i class="bi bi-search text-muted"></i>
           </span>
-          <input class="form-control bg-light border-start-0" placeholder="Cerca cliente..." type="text" (input)="cercaCliente($event)" />
+          <input
+            class="form-control bg-light border-start-0"
+            placeholder="Cerca cliente..."
+            type="text"
+            (input)="cercaCliente($event)"
+          />
         </div>
       </div>
 
@@ -53,29 +58,32 @@
         </thead>
         <tbody>
           @for (cliente of listaClientiFiltrata; track $index) {
-          <tr>
-            <td class="ps-4 fw-medium text-nowrap">{{ cliente.nome }}</td>
-            <td>
-              <span class="badge rounded-pill" [ngClass]="cliente.statoAttivo ? 'badge-attivo' : 'badge-non-attivo'">
-                {{ cliente.statoAttivo ? 'attivo' : 'non attivo' }}
-              </span>
-            </td>
-            <td>
-              <div class="d-flex flex-column gap-1 py-1">
-                @for (ordine of cliente.ordini; track $index) {
-                <span class="small d-flex align-items-center text-nowrap">
-                  <i class="bi bi-circle-fill me-2" [ngClass]="ordine.stato === 'completato' ? 'text-success' : 'text-danger'" style="font-size: 8px;"></i>
-                  {{ ordine.codice }}
+            <tr>
+              <td class="ps-4 fw-medium text-nowrap">{{ cliente.nome }}</td>
+              <td>
+                <span class="badge rounded-pill" [ngClass]="cliente.statoAttivo ? 'badge-attivo' : 'badge-non-attivo'">
+                  {{ cliente.statoAttivo ? 'attivo' : 'non attivo' }}
                 </span>
-                }
-              </div>
-            </td>
-            <td class="text-center pe-4 text-nowrap">
-              <button class="btn btn-link text-dark p-1" (click)="visualizzaDettaglio(cliente)"><i class="bi bi-eye"></i></button>
-              <button class="btn btn-link text-dark p-1" (click)="modificaCliente(cliente)"><i class="bi bi-pencil"></i></button>
-              <button class="btn btn-link text-dark p-1" (click)="eliminaCliente(cliente.id)"><i class="bi bi-trash3"></i></button>
-            </td>
-          </tr>
+              </td>
+              <td>
+                <div class="d-flex flex-column gap-1 py-1">
+                  @for (ordine of cliente.ordini; track $index) {
+                    <span class="small d-flex align-items-center text-nowrap">
+                      <i
+                        class="bi bi-circle-fill icon-dot me-2"
+                        [ngClass]="ordine.stato === 'completato' ? 'text-success' : 'text-danger'"
+                      ></i>
+                      {{ ordine.codice }}
+                    </span>
+                  }
+                </div>
+              </td>
+              <td class="text-center pe-4 text-nowrap">
+                <button class="btn btn-link text-dark p-1" (click)="visualizzaDettaglio(cliente)"><i class="bi bi-eye"></i></button>
+                <button class="btn btn-link text-dark p-1" (click)="modificaCliente(cliente)"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-link text-dark p-1" (click)="eliminaCliente(cliente.id)"><i class="bi bi-trash3"></i></button>
+              </td>
+            </tr>
           }
         </tbody>
       </table>
@@ -84,70 +92,88 @@
 </div>
 
 @if (mostraModal) {
-<div class="modal-overlay" (click)="chiudiModal()">
-  <div class="modal-card p-5 rounded-5 bg-white shadow-lg" (click)="$event.stopPropagation()">
-    
-    <h2 class="fw-bold mb-4" style="font-size: 2.2rem;">
-      {{ isDettaglio ? 'Dettaglio Cliente' : (isModifica ? 'Modifica Cliente' : 'Aggiungi Cliente') }}
-    </h2>
+  <div class="modal-overlay" (click)="chiudiModal()">
+    <div class="modal-card p-5 rounded-5 bg-white shadow-lg" (click)="$event.stopPropagation()">
+      <h2 class="modal-title">{{ titoloModal }}</h2>
 
-    @if (isDettaglio) {
-      <div class="row g-4">
-        <div class="col-12">
-          <div class="info-label text-uppercase text-muted fw-bold small">Nome Cliente</div>
-          <div class="info-value fw-bold fs-3 text-dark">{{ clienteSelezionato.nome }}</div>
-        </div>
-        <div class="col-12">
-          <div class="info-label text-uppercase text-muted fw-bold small">Stato</div>
-          <div class="mt-2">
-            <span class="badge rounded-pill" [ngClass]="clienteSelezionato.statoAttivo ? 'badge-attivo' : 'badge-non-attivo'">
-              {{ clienteSelezionato.statoAttivo ? 'Attivo' : 'Non attivo' }}
-            </span>
+      @if (isDettaglio) {
+        <div class="row g-4">
+          <div class="col-12">
+            <div class="info-label text-uppercase text-muted fw-bold small">Nome Cliente</div>
+            <div class="info-value fw-bold fs-3 text-dark">{{ clienteSelezionato.nome }}</div>
+          </div>
+          <div class="col-12">
+            <div class="info-label text-uppercase text-muted fw-bold small">Stato</div>
+            <div class="mt-2">
+              <span class="badge rounded-pill" [ngClass]="clienteSelezionato.statoAttivo ? 'badge-attivo' : 'badge-non-attivo'">
+                {{ clienteSelezionato.statoAttivo ? 'Attivo' : 'Non attivo' }}
+              </span>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="info-label text-uppercase text-muted fw-bold small">Ordini Collegati</div>
+            <div class="mt-2">
+              @for (ordine of clienteSelezionato.ordini; track $index) {
+                <div class="d-flex align-items-center mb-2 last-child-mb-0 fw-bold">
+                  <i
+                    class="bi bi-circle-fill icon-dot me-2"
+                    [ngClass]="ordine.stato === 'completato' ? 'text-success' : 'text-danger'"
+                  ></i>
+                  {{ ordine.codice }}
+                </div>
+              } @empty {
+                <div class="text-muted small">Nessun ordine presente.</div>
+              }
+            </div>
           </div>
         </div>
-        <div class="col-12">
-          <div class="info-label text-uppercase text-muted fw-bold small">Ordini Collegati</div>
-          <div class="mt-2">
-            @for (ordine of clienteSelezionato.ordini; track $index) {
-              <div class="d-flex align-items-center mb-2 last-child-mb-0 fw-bold">
-                <i class="bi bi-circle-fill me-2" [ngClass]="ordine.stato === 'completato' ? 'text-success' : 'text-danger'" style="font-size: 8px;"></i>
-                {{ ordine.codice }}
-              </div>
-            } @empty {
-              <div class="text-muted small">Nessun ordine presente.</div>
-            }
+        <div class="d-flex justify-content-center gap-3 mt-5">
+          <button class="btn btn-dark rounded-pill px-5 py-3 fw-bold" (click)="chiudiModal()">Chiudi</button>
+          <button class="btn btn-warning rounded-pill px-5 py-3 fw-bold text-white btn-conferma" (click)="passaAModifica()">Modifica</button>
+        </div>
+      } @else {
+        @if (mostraErrore) {
+          <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4 alert-rounded" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
+            <div>Inserisci un nome valido.</div>
+          </div>
+        }
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="fw-bold mb-1">Nome</label>
+            <input
+              class="form-control bg-light input-modal-style"
+              placeholder="Inserisci nome"
+              required
+              type="text"
+              [(ngModel)]="clienteSelezionato.nome"
+            />
+          </div>
+
+          <div class="col-12">
+            <label class="fw-bold mb-1">Stato</label>
+            <select class="form-select bg-light input-modal-style" [(ngModel)]="clienteSelezionato.statoAttivo">
+              <option [ngValue]="true">Attivo</option>
+              <option [ngValue]="false">Non attivo</option>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="fw-bold mb-1">Aggiungi Ordine (Codice)</label>
+            <input
+              class="form-control bg-light input-modal-style"
+              placeholder="Es: AAAA/2024"
+              type="text"
+              [(ngModel)]="ordineInput"
+            />
           </div>
         </div>
-      </div>
-      <div class="d-flex justify-content-center gap-3 mt-5">
-        <button class="btn btn-dark rounded-pill px-5 py-3 fw-bold" (click)="chiudiModal()">Chiudi</button>
-        <button class="btn btn-warning rounded-pill px-5 py-3 fw-bold text-white btn-conferma" (click)="passaAModifica()">Modifica</button>
-      </div>
-    } @else {
-      @if (mostraErrore) {
-        <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert" style="border-radius: 15px;">
-          <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
-          <div>Inserisci un nome valido.</div>
+
+        <div class="d-flex justify-content-center gap-3 mt-5">
+          <button class="btn btn-dark rounded-pill px-5 py-3 fw-bold" (click)="chiudiModal()">Annulla</button>
+          <button class="btn btn-warning btn-conferma rounded-pill px-5 py-3 fw-bold text-white" (click)="salvaModifica()">Conferma</button>
         </div>
       }
-      <div class="row g-3">
-        <div class="col-12">
-          <label class="fw-bold mb-1">Nome</label>
-          <input class="form-control bg-light input-modal-style" placeholder="Inserisci nome" required type="text" [(ngModel)]="clienteSelezionato.nome" />
-        </div>
-        <div class="col-12">
-          <label class="fw-bold mb-1">Stato</label>
-          <select class="form-select bg-light input-modal-style" [(ngModel)]="clienteSelezionato.statoAttivo">
-            <option [ngValue]="true">Attivo</option>
-            <option [ngValue]="false">Non attivo</option>
-          </select>
-        </div>
-      </div>
-      <div class="d-flex justify-content-center gap-3 mt-5">
-        <button class="btn btn-dark rounded-pill px-5 py-3 fw-bold" (click)="chiudiModal()">Annulla</button>
-        <button class="btn btn-warning btn-conferma rounded-pill px-5 py-3 fw-bold text-white" (click)="salvaModifica()">Conferma</button>
-      </div>
-    }
+    </div>
   </div>
-</div>
 }
