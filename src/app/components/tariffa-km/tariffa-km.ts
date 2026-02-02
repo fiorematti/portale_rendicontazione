@@ -6,6 +6,7 @@ interface Acquirente {
 	id: number;
 	utente: string;
 	auto: string;
+	targa: string;
 	tariffaKm: number;
 }
 
@@ -18,9 +19,9 @@ interface Acquirente {
 })
 export class TariffaKmComponent {
 	listaAcquirenti: Acquirente[] = [
-		{ id: 1, utente: 'Mario Neri', auto: 'Modello A', tariffaKm: 0.1234 },
-		{ id: 2, utente: 'Andrea Bianchi', auto: 'Modello B', tariffaKm: 0.1234 },
-		{ id: 3, utente: 'Luca Rossi', auto: 'Modello C', tariffaKm: 0.1234 },
+		{ id: 1, utente: 'Mario Neri', auto: 'Modello A', targa: 'AB123CD', tariffaKm: 0.1234 },
+		{ id: 2, utente: 'Andrea Bianchi', auto: 'Modello B', targa: 'EF456GH', tariffaKm: 0.1234 },
+		{ id: 3, utente: 'Luca Rossi', auto: 'Modello C', targa: 'IJ789KL', tariffaKm: 0.1234 },
 	];
 
 	filtroTesto = '';
@@ -35,7 +36,9 @@ export class TariffaKmComponent {
 		const filtro = this.filtroTesto.trim().toLowerCase();
 		if (!filtro) return this.listaAcquirenti;
 		return this.listaAcquirenti.filter((item) =>
-			item.utente.toLowerCase().includes(filtro) || item.auto.toLowerCase().includes(filtro)
+			item.utente.toLowerCase().includes(filtro) ||
+			item.auto.toLowerCase().includes(filtro) ||
+			item.targa.toLowerCase().includes(filtro)
 		);
 	}
 
@@ -57,9 +60,9 @@ export class TariffaKmComponent {
 	}
 
 	salvaAcquirente(): void {
-		const { utente, auto, tariffaKm, id } = this.acquirenteSelezionato;
+		const { utente, auto, targa, tariffaKm, id } = this.acquirenteSelezionato;
 		const tariffaValida = !Number.isNaN(Number(tariffaKm));
-		const campiValidi = Boolean(utente.trim() && auto.trim() && tariffaValida);
+		const campiValidi = Boolean(utente.trim() && auto.trim() && targa.trim() && tariffaValida);
 
 		if (!campiValidi) {
 			this.mostraErrore = true;
@@ -110,7 +113,7 @@ export class TariffaKmComponent {
 	}
 
 	private creaAcquirenteVuoto(): Acquirente {
-		return { id: 0, utente: '', auto: '', tariffaKm: 0 };
+		return { id: 0, utente: '', auto: '', targa: '', tariffaKm: 0 };
 	}
 
 	private generaId(): number {

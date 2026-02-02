@@ -9,7 +9,8 @@ import { RegistroNoteComponent } from './components/registro-note/registro-note'
 import { TariffaKmComponent } from './components/tariffa-km/tariffa-km';
 
 export const routes: Routes = [
-  { path: 'attivita', component: Attivita },
+  { path: '', redirectTo: 'attivita', pathMatch: 'full' },
+  { path: 'attivita', component: Attivita }, 
   { path: 'note-spese', component: NoteSpese},
   { path: 'utenti', component: UtentiComponent },
   { path: 'clienti', component: ClientiComponent },
@@ -17,6 +18,7 @@ export const routes: Routes = [
   { path: 'ordini', component: OrdiniComponent },
   { path: 'registro-attivita', component: RegistroAttivitaComponent },
   { path: 'registro-note', component: RegistroNoteComponent },
-  // Quando apri il sito, ti manda automaticamente su attività
-  { path: '', redirectTo: '/attivita', pathMatch: 'full' } 
+  // Quando apri il sito, viene reindirizzato alla pagina di login
+  { path: '**', redirectTo: 'attivita' }
+
 ];

@@ -30,6 +30,7 @@
 					<tr>
 						<th class="ps-4">Utente</th>
 						<th>Auto</th>
+						<th>Targa</th>
 						<th>Tariffa chilometrica</th>
 						<th class="pe-4 text-center">Azioni</th>
 					</tr>
@@ -39,6 +40,7 @@
 					<tr>
 						<td class="ps-4 text-nowrap">{{ item.utente }}</td>
 						<td class="text-nowrap">{{ item.auto }}</td>
+						<td class="text-nowrap">{{ item.targa }}</td>
 						<td class="text-nowrap">{{ item.tariffaKm | number:'1.4-4' }}</td>
 						<td class="pe-4 text-center text-nowrap d-flex gap-2 justify-content-center align-items-center">
 							<button class="btn btn-link text-dark p-1" (click)="apriDettaglio(item)">
@@ -53,9 +55,9 @@
 						</td>
 					</tr>
 					} @empty {
-					<tr>
-						<td colspan="4" class="text-center py-4 text-muted">Nessun acquirente trovato.</td>
-					</tr>
+						<tr>
+							<td colspan="5" class="text-center py-4 text-muted">Nessun acquirente trovato.</td>
+						</tr>
 					}
 				</tbody>
 			</table>
@@ -76,19 +78,23 @@
 		}
 
 		<div class="row g-3">
-			<div class="col-12">
-				<label class="form-label fw-bold">Utente</label>
-				<input type="text" class="form-control input-soft" [(ngModel)]="acquirenteSelezionato.utente" placeholder="Nome Cognome" />
-			</div>
-			<div class="col-12">
-				<label class="form-label fw-bold">Auto</label>
-				<input type="text" class="form-control input-soft" [(ngModel)]="acquirenteSelezionato.auto" placeholder="Modello" />
-			</div>
-			<div class="col-12">
-				<label class="form-label fw-bold">Tariffa chilometrica</label>
-				<input type="number" step="0.0001" class="form-control input-soft" [(ngModel)]="acquirenteSelezionato.tariffaKm" placeholder="0.1234" />
-			</div>
-		</div>
+    <div class="col-12">
+        <label class="form-label fw-bold mb-1 small">Utente</label>
+        <input type="text" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.utente" placeholder="Nome Cognome" />
+    </div>
+    <div class="col-12">
+        <label class="form-label fw-bold mb-1 small">Auto</label>
+        <input type="text" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.auto" placeholder="Modello" />
+    </div>
+	<div class="col-12">
+		<label class="form-label fw-bold mb-1 small">Targa</label>
+		<input type="text" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.targa" placeholder="AB123CD" />
+	</div>
+    <div class="col-12">
+        <label class="form-label fw-bold mb-1 small">Tariffa chilometrica</label>
+        <input type="number" step="0.0001" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.tariffaKm" placeholder="0.1234" />
+    </div>
+</div>
 
 		<div class="d-flex justify-content-center gap-3 mt-4">
 			<button type="button" class="btn btn-dark px-4" (click)="chiudiModal()">Annulla</button>
@@ -110,12 +116,14 @@
 				<thead>
 					<tr>
 						<th>Auto</th>
+						<th>Targa</th>
 						<th>Tariffa chilometrica</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
 						<td>{{ acquirenteDettaglio?.auto }}</td>
+						<td>{{ acquirenteDettaglio?.targa }}</td>
 						<td>{{ acquirenteDettaglio?.tariffaKm | number:'1.4-4' }}</td>
 					</tr>
 				</tbody>

@@ -46,7 +46,7 @@
 
 .sidebar {
   position: fixed;
-  top: 140px; /* aumentato per distanziare la sidebar dal titolo */
+  top: 140px; /* per aumentare lo spazio tra la sidebar e il titolo */
   left: 20px;
   bottom: 20px;
   width: var(--sidebar-width-expanded);
@@ -61,7 +61,7 @@
   transition: width 0.25s ease;
 }
 
-/* Fallback: if the mouse is NOT over the sidebar, force compact view */
+
 .sidebar:not(:hover) {
   width: var(--sidebar-compact-width) !important;
 }
@@ -70,12 +70,11 @@
   display: none !important;
 }
 
-/* Hide logout text when sidebar is closed/not hovered - show only icon */
+
 .sidebar:not(:hover) .logout-link .link-text {
   display: none !important;
 }
 
-/* Logout label will follow the same hover rules as other items */
 
 .sidebar.collapsed {
   width: var(--sidebar-compact-width);
@@ -103,9 +102,9 @@
 
 .sidebar__nav {
   flex: 1 1 auto;
-  overflow: visible; /* show all items without internal scroll */
+  overflow: visible; 
   padding-top: 0px;
-  padding-left: 6px; /* reduce left padding so labels fit */
+  padding-left: 6px; 
   padding-right: 6px;
 }
 
@@ -125,15 +124,15 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px; /* tighter gaps to fit more items */
+  gap: 2px; 
 }
 
 .sidebar__list li a {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px; /* tightened gap */
-  padding: 6px 8px; /* tighter padding */
+  gap: 8px;
+  padding: 6px 8px; 
   border-radius: 0;
   color: var(--sidebar-text, #ffffff);
   text-decoration: none;
@@ -141,7 +140,7 @@
   transition: background 0.15s ease, color 0.15s ease;
   font-weight: 600;
   position: relative;
-  font-size: 0.78rem; /* slightly smaller text */
+  font-size: 0.78rem; 
 }
 
 .sidebar__list li a::before {
@@ -191,10 +190,10 @@
   color: var(--sidebar-accent, #f9ad2d);
 }
 
-/* Testi visibili quando la sidebar è aperta */
+/* serve per il tsto visibile quando la sidebar è aperta */
 .sidebar__list li a i {
-  width: 20px; /* smaller icon container */
-  font-size: 1.05rem; /* slightly smaller icon */
+  width: 20px; 
+  font-size: 1.05rem; 
 }
 
 .sidebar__divider {
@@ -207,7 +206,7 @@
 .sidebar__logout {
   border-top: 1px solid var(--sidebar-divider, rgba(255, 255, 255, 0.1));
   padding: 6px 8px 6px;
-  margin-top: auto; /* keep logout pinned to the bottom of the sidebar */
+  margin-top: auto; 
   margin-bottom: 2px;
 }
 
