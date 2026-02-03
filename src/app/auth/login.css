@@ -8,13 +8,7 @@
 	--danger: #ff6b6b;
 }
 
-.login-page {
-	min-height: calc(100vh - 72px);
-	display: grid;
-	place-items: center;
-	background: white;
-	padding: 32px;
-}
+
 
 .login-card {
 	width: min(960px, 100%);
@@ -23,7 +17,7 @@
 	border-radius: 18px;
 	padding: 36px;
 	box-shadow: 0 25px 80px rgba(0, 0, 0, 0.45);
-	color: var(--text);
+	color: black;
 }
 
 .header {
@@ -63,7 +57,9 @@
 	border-radius: 12px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .btn:disabled {
@@ -72,13 +68,27 @@
 }
 
 .btn.primary {
-	background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-	color: #08202f;
-	box-shadow: 0 10px 30px rgba(77, 208, 225, 0.35);
+	background: #ffffff;
+	color: #000000;
+	border: 1px solid #000000;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .btn.primary:hover {
 	transform: translateY(-1px);
+	box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+.btn .btn-inner {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.ms-logo {
+	width: 20px;
+	height: 20px;
+	display: block;
 }
 
 .btn.ghost {
@@ -88,9 +98,13 @@
 }
 
 .btn.danger {
-	background: rgba(255, 107, 107, 0.12);
-	color: #ffd9d9;
-	border: 1px solid rgba(255, 107, 107, 0.45);
+	background: #ff6b6b;
+	color: #000000;
+	border: 1px solid #ff6b6b;
+}
+
+.btn.danger:hover {
+	filter: brightness(0.95);
 }
 
 .btn.link {
@@ -139,6 +153,17 @@ textarea {
 .link-row {
 	margin-top: 12px;
 	text-align: right;
+}
+
+.btn.portal {
+	background: #000000;
+	color: #ffffff;
+	border: 1px solid #000000;
+}
+
+.btn.portal:hover {
+	filter: brightness(0.95);
+	transform: translateY(-1px);
 }
 
 @media (max-width: 640px) {

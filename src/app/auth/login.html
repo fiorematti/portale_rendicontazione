@@ -1,20 +1,29 @@
-<div class="login-page">
+
 	<div class="login-card">
-		<div class="header">
-			<p class="eyebrow">Single Sign-On</p>
+		<div class="header">>
 			<h1>Accesso con Microsoft Entra</h1>
 			<p class="subtitle">Autenticati per accedere al portale.</p>
 		</div>
 
 		<div class="button-grid">
-			<button class="btn primary" (click)="login()">Login Microsoft</button>
+			<button class="btn primary" (click)="login()">
+				<span class="btn-inner">
+					<svg class="ms-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+						<rect x="1" y="1" width="10" height="10" fill="#f65314"/>
+						<rect x="13" y="1" width="10" height="10" fill="#7cbb00"/>
+						<rect x="1" y="13" width="10" height="10" fill="#00a1f1"/>
+						<rect x="13" y="13" width="10" height="10" fill="#ffbb00"/>
+					</svg>
+					<span>Login con Microsoft</span>
+				</span>
+			</button>
 			<button class="btn danger" (click)="logout()">Logout</button>
 		</div>
 
 		<div class="status" *ngIf="status">{{ status }}</div>
 
 		<div class="link-row" *ngIf="isAuthenticated">
-			<button class="btn link" (click)="goToApp()">Vai al portale</button>
+			<button class="btn portal" (click)="goToApp()">Vai al portale</button>
 		</div>
 	</div>
-</div>
+
