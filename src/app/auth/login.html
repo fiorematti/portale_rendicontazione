@@ -1,0 +1,20 @@
+<div class="login-page">
+	<div class="login-card">
+		<div class="header">
+			<p class="eyebrow">Single Sign-On</p>
+			<h1>Accesso con Microsoft Entra</h1>
+			<p class="subtitle">Autenticati per accedere al portale.</p>
+		</div>
+
+		<div class="button-grid">
+			<button class="btn primary" (click)="login()">Login Microsoft</button>
+			<button class="btn danger" (click)="logout()">Logout</button>
+		</div>
+
+		<div class="status" *ngIf="status">{{ status }}</div>
+
+		<div class="link-row" *ngIf="isAuthenticated">
+			<button class="btn link" (click)="goToApp()">Vai al portale</button>
+		</div>
+	</div>
+</div>

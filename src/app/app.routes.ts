@@ -7,18 +7,19 @@ import { OrdiniComponent } from './components/ordini/ordini';
 import { RegistroAttivitaComponent } from './components/registro-attivita/registro-attivita';
 import { RegistroNoteComponent } from './components/registro-note/registro-note';
 import { TariffaKmComponent } from './components/tariffa-km/tariffa-km';
+import { LoginComponent } from './auth/login';
+import { authGuard } from './auth/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'attivita', pathMatch: 'full' },
-  { path: 'attivita', component: Attivita }, 
-  { path: 'note-spese', component: NoteSpese},
-  { path: 'utenti', component: UtentiComponent },
-  { path: 'clienti', component: ClientiComponent },
-  { path: 'tariffa-km', component: TariffaKmComponent },
-  { path: 'ordini', component: OrdiniComponent },
-  { path: 'registro-attivita', component: RegistroAttivitaComponent },
-  { path: 'registro-note', component: RegistroNoteComponent },
-  // Quando apri il sito, viene reindirizzato alla pagina di login
-  { path: '**', redirectTo: 'attivita' }
-
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
+  { path: 'attivita', component: Attivita, canActivate: [authGuard] }, 
+  { path: 'note-spese', component: NoteSpese, canActivate: [authGuard]},
+  { path: 'utenti', component: UtentiComponent, canActivate: [authGuard] },
+  { path: 'clienti', component: ClientiComponent, canActivate: [authGuard] },
+  { path: 'tariffa-km', component: TariffaKmComponent, canActivate: [authGuard] },
+  { path: 'ordini', component: OrdiniComponent, canActivate: [authGuard] },
+  { path: 'registro-attivita', component: RegistroAttivitaComponent, canActivate: [authGuard] },
+  { path: 'registro-note', component: RegistroNoteComponent, canActivate: [authGuard] },
+  { path: '**', redirectTo: 'login' }
 ];

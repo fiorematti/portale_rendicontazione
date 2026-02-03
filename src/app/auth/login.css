@@ -1,0 +1,152 @@
+:root {
+	--bg: #0b1f33;
+	--panel: #0f2c45;
+	--accent: #4dd0e1;
+	--accent-strong: #00bfa6;
+	--text: #e8f0f6;
+	--muted: #97a6b8;
+	--danger: #ff6b6b;
+}
+
+.login-page {
+	min-height: calc(100vh - 72px);
+	display: grid;
+	place-items: center;
+	background: white;
+	padding: 32px;
+}
+
+.login-card {
+	width: min(960px, 100%);
+	background:  white;
+	border: 1px solid rgba(77, 208, 225, 0.18);
+	border-radius: 18px;
+	padding: 36px;
+	box-shadow: 0 25px 80px rgba(0, 0, 0, 0.45);
+	color: var(--text);
+}
+
+.header {
+	margin-bottom: 24px;
+}
+
+.eyebrow {
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	font-size: 12px;
+	color: var(--accent);
+	margin: 0 0 8px;
+}
+
+.header h1 {
+	margin: 0 0 8px;
+	font-size: 30px;
+	font-weight: 700;
+}
+
+.subtitle {
+	margin: 0;
+	color: var(--muted);
+	font-size: 15px;
+}
+
+.button-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.btn {
+	border: none;
+	padding: 14px 16px;
+	border-radius: 12px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease;
+}
+
+.btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.btn.primary {
+	background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+	color: #08202f;
+	box-shadow: 0 10px 30px rgba(77, 208, 225, 0.35);
+}
+
+.btn.primary:hover {
+	transform: translateY(-1px);
+}
+
+.btn.ghost {
+	background: rgba(255, 255, 255, 0.05);
+	color: var(--text);
+	border: 1px solid rgba(77, 208, 225, 0.35);
+}
+
+.btn.danger {
+	background: rgba(255, 107, 107, 0.12);
+	color: #ffd9d9;
+	border: 1px solid rgba(255, 107, 107, 0.45);
+}
+
+.btn.link {
+	background: transparent;
+	color: var(--accent);
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.btn:hover:not(:disabled) {
+	box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+}
+
+.status {
+	margin: 8px 0 12px;
+	color: var(--muted);
+	font-size: 14px;
+}
+
+.token-panel {
+	margin-top: 12px;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(77, 208, 225, 0.2);
+	border-radius: 12px;
+	padding: 12px;
+}
+
+.token-label {
+	font-size: 13px;
+	color: var(--muted);
+	margin-bottom: 8px;
+}
+
+textarea {
+	width: 100%;
+	min-height: 140px;
+	background: #081a2c;
+	color: var(--text);
+	border: 1px solid rgba(77, 208, 225, 0.2);
+	border-radius: 10px;
+	padding: 12px;
+	resize: vertical;
+	font-family: Consolas, Monaco, 'SFMono-Regular', Menlo, monospace;
+}
+
+.link-row {
+	margin-top: 12px;
+	text-align: right;
+}
+
+@media (max-width: 640px) {
+	.login-card {
+		padding: 24px;
+	}
+
+	.button-grid {
+		grid-template-columns: 1fr;
+	}
+}
