@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -16,6 +17,7 @@ export class Navbar implements OnInit {
   showSidebar = true;
 
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   ngOnInit(): void {
     this.updateSidebar(this.router.url);
@@ -34,8 +36,7 @@ export class Navbar implements OnInit {
 
   onLogout(event: Event): void {
     event.preventDefault();
-    // Prevent navigation; implement actual logout logic here if needed
-    console.log('Logout clicked - navigation prevented');
+    this.auth.logout();
   }
 
   private updateSidebar(url: string): void {

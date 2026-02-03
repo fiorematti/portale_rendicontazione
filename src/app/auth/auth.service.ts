@@ -67,7 +67,7 @@ export class AuthService {
 	// caneclla il token locale, avvia il logout tramite redirect e ritorna all'app
 	logout(): void {
 		this.token$.next(null);
-		this.msal.logoutRedirect({ postLogoutRedirectUri: 'http://localhost:4200' });
+		this.msal.logoutRedirect({ postLogoutRedirectUri: 'http://localhost:4200/login' });
 	}
 
 	// Fa un check se l'utente è autenticato
