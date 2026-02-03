@@ -91,6 +91,19 @@
 	display: block;
 }
 
+
+.button-grid .btn.primary,
+.button-grid .btn.danger {
+	padding: 10px 12px;
+	font-size: 14px;
+	border-radius: 10px;
+}
+
+.button-grid .btn.primary .ms-logo {
+	width: 16px;
+	height: 16px;
+}
+
 .btn.ghost {
 	background: rgba(255, 255, 255, 0.05);
 	color: var(--text);

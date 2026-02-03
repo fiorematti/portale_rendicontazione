@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { AccountInfo } from '@azure/msal-browser'; //Rappresenta un account Microsoft autenticato
 import { MsalService } from '@azure/msal-angular'; // è una libreria MSAL Microsoft Authentication Library per Angular che facilita l'integrazione dell'autenticazione Microsoft nelle applicazioni Angular
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -12,7 +13,7 @@ export class AuthService {
 	// garantisce che l'inizializzazione avvenga una sola volta
 	private initPromise: Promise<void> | null = null; //serve per evitare che initialize() venga eseguito più volte contemporaneamente
 
-	constructor(private readonly msal: MsalService) { //Angular inietta MsalService e avvia subito l'inizializzazione del sistema di autenticazione
+	constructor(private readonly msal: MsalService, private readonly router: Router) { //Angular inietta MsalService e Router e avvia subito l'inizializzazione del sistema di autenticazione
 		this.initialize();
 	}
 
@@ -27,6 +28,12 @@ export class AuthService {
 				if (result?.account) { // imposta l'account attivo e salva il token in memoria
 					this.msal.instance.setActiveAccount(result.account);
 					if (result.accessToken) this.token$.next(result.accessToken);
+					// dopo un redirect di login, porta l'utente alla pagina principale
+					try {
+						this.router.navigate(['/attivita']);
+					} catch (e) {
+						// ignore navigation errors during init
+					}
 				} else { //recupera account gia presente nella cache msal
 					const account = this.getAccount();
 					if (account) this.msal.instance.setActiveAccount(account);
