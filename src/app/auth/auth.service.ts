@@ -7,38 +7,47 @@ import { Router } from '@angular/router';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 	// Permessi scope richiesti dall app
-	private readonly scopes = ['User.Read'];
+	private readonly scopes = ['api://37bdcadd-4948-4dff-9c60-a3d119fa4ab5/user_impersonation'];
 	// Snapshot (copia) del token di accesso memorizzato in cache
 	private readonly token$ = new BehaviorSubject<string | null>(null); //mantiene l'ultimo acceess token valido inizialmente null aggiornato quando arriva un token valido BehaviorSubject permette di avere uno stato osservabile e aggiornabile
 	// garantisce che l'inizializzazione avvenga una sola volta
 	private initPromise: Promise<void> | null = null; //serve per evitare che initialize() venga eseguito più volte contemporaneamente
+	private initialized = false; // evita accessi a MSAL prima che abbia terminato l'init
 
 	constructor(private readonly msal: MsalService, private readonly router: Router) { //Angular inietta MsalService e Router e avvia subito l'inizializzazione del sistema di autenticazione
 		this.initialize();
 	}
 
 	//serve per preparare MSAL e gestire eventuali redirect login
-	initialize(): Promise<void> { 
+	async initialize(): Promise<void> { 
 		if (this.initPromise) return this.initPromise;
 
-		this.initPromise = this.msal.instance //inizializza la libreria MSAL
-			.initialize()
-			.then(() => this.msal.instance.handleRedirectPromise())
-			.then((result) => {
-				if (result?.account) { // imposta l'account attivo e salva il token in memoria
-					this.msal.instance.setActiveAccount(result.account);
-					if (result.accessToken) this.token$.next(result.accessToken);
-					// dopo un redirect di login, porta l'utente alla pagina principale
-					try {
-						this.router.navigate(['/attivita']);
-					} catch (e) {
-						// ignore navigation errors during init
-					}
-				} else { //recupera account gia presente nella cache msal
-					const account = this.getAccount();
-					if (account) this.msal.instance.setActiveAccount(account);
+		this.initPromise = (async () => {
+			await this.msal.instance.initialize(); // richiesto da msal-browser 3.x prima di leggere la cache
+			const result = await this.msal.instance.handleRedirectPromise();
+			this.initialized = true; // da qui in poi le letture cache sono sicure
+			if (result?.account) { // imposta l'account attivo e salva il token in memoria
+				this.msal.instance.setActiveAccount(result.account);
+				if (result.accessToken) {
+					this.token$.next(result.accessToken);
+					console.log('MSAL redirect access token', result.accessToken);
 				}
-			});
+				// dopo un redirect di login, porta l'utente alla pagina principale
+				try {
+					this.router.navigate(['/attivita']);
+				} catch (e) {
+					// ignore navigation errors during init
+				}
+			} else { //recupera account gia presente nella cache msal
+				const account = this.getAccount();
+				if (account) this.msal.instance.setActiveAccount(account);
+			}
+		})();
+
+		this.initPromise.catch(() => {
+			this.initialized = false;
+			this.initPromise = null; // consente un nuovo tentativo se l'init fallisce
+		});
 
 		return this.initPromise;
 	}
@@ -58,6 +67,9 @@ export class AuthService {
 				this.msal.acquireTokenSilent({ account, scopes: this.scopes })
 			);
 			this.token$.next(result.accessToken);
+			console.log('MSAL silent access token', result.accessToken);
+			
+
 			return result.accessToken;
 		} catch (error) {
 			return null;
@@ -89,6 +101,7 @@ export class AuthService {
 
 	// Recupera l'account attivo o utilizza il primo disponibile
 	private getAccount(): AccountInfo | null {
+		if (!this.initialized) return null;
 		return this.msal.instance.getActiveAccount() ?? this.msal.instance.getAllAccounts()[0] ?? null;
 	}
 }
