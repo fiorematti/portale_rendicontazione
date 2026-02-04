@@ -15,10 +15,12 @@ export class LoginComponent implements OnInit {
 
 	constructor(private readonly auth: AuthService, private readonly router: Router) {}
 
+	// Inizializza il componente e verifica lo stato di autenticazione
 	async ngOnInit(): Promise<void> {
 		await this.auth.initialize();
 		if (this.auth.isAuthenticated()) {
-			this.status = 'Sei già autenticato con Microsoft Entra.';
+			this.status = 'Sei già autenticato con Microsoft Entra. Recupero sessione...';
+			await this.auth.acquireToken();
 		}
 	}
 
