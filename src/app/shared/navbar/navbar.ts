@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../auth/auth.service';
+import { User } from '../../dto/userdto';
 
 @Component({
   selector: 'app-navbar',
@@ -15,6 +16,7 @@ export class Navbar implements OnInit {
   // default: collapsed (icons only). Hover to expand.
   collapsed = true;
   showSidebar = true;
+  userName = '';
 
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
@@ -24,6 +26,10 @@ export class Navbar implements OnInit {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => this.updateSidebar(e.urlAfterRedirects));
+
+    	this.auth.userChanges().subscribe((user: User | null) => {
+    		this.userName = user ? `${user.name} ${user.surname}` : '';
+    	});
   }
 
   onSidebarEnter(): void {

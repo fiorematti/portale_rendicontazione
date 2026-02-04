@@ -14,6 +14,7 @@ export class AuthService {
 	private readonly scopes = ['api://37bdcadd-4948-4dff-9c60-a3d119fa4ab5/user_impersonation'];
 	// Snapshot (copia) del token di accesso memorizzato in cache
 	private readonly token$ = new BehaviorSubject<string | null>(null); //mantiene l'ultimo acceess token valido inizialmente null aggiornato quando arriva un token valido BehaviorSubject permette di avere uno stato osservabile e aggiornabile
+	private readonly user$ = new BehaviorSubject<User | null>(null);
 	// garantisce che l'inizializzazione avvenga una sola volta
 	private initPromise: Promise<void> | null = null; //serve per evitare che initialize() venga eseguito più volte contemporaneamente
 	private initialized = false; // evita accessi a MSAL prima che abbia terminato l'init
@@ -108,10 +109,20 @@ export class AuthService {
 		return this.token$.value;
 	}
 
+	userSnapshot(): User | null {
+		return this.user$.value;
+	}
+
+	userChanges() {
+		return this.user$.asObservable();
+	}
+
 	// Chiamata di login Microsoft: ritorna l'entità User mappata dal DTO API
 	async fetchMicrosoftLogin(): Promise<User> {
 		const dto = await firstValueFrom(this.http.get<AuthResponse>('/api/Auth/microsoft-login'));
-		return mapAuthResponseToUser(dto);
+		const user = mapAuthResponseToUser(dto);
+		this.user$.next(user);
+		return user;
 	}
 
 	// Recupera e imposta l'account attivo
