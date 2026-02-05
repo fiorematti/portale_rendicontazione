@@ -3,14 +3,27 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface AttivitaItem {
-  idAttivita: number; 
+  idAttivita: number;
   codiceOrdine: string;
   nominativoCliente: string;
-  stato_Approvazione?: string;
-  approvato?: boolean;
   location: string;
   ore: number;
   dataAttivita: string;
+}
+
+export interface AddAttivitaPayload {
+  codiceOrdine: string;
+  luogo: string;
+  dataInizio: string; // YYYY-MM-DD
+  dataFine: string; // YYYY-MM-DD
+  ricorrenza: number[];
+  oreLavoro: number;
+}
+
+export interface AddAttivitaResponse {
+  esito: string;
+  skippedDates: string[];
+  motivazione?: string | null;
 }
 
 // "idAttivita": 1,
@@ -23,10 +36,15 @@ export interface AttivitaItem {
 
 @Injectable({ providedIn: 'root' })
 export class AttivitaService {
-  private apiUrl = 'http://localhost:5000/api/Attivita/utente/getAttivitaById'; // usa environment
+  private baseUrl = 'http://localhost:5000/api/Attivita/utente'; // usa environment
   constructor(private http: HttpClient) {}
+
   getAttivita(data: string): Observable<AttivitaItem[]> {
     const params = new HttpParams().set('data', data);
-    return this.http.get<AttivitaItem[]>(this.apiUrl, { params });
+    return this.http.get<AttivitaItem[]>(`${this.baseUrl}/getAttivitaById`, { params });
+  }
+
+  addAttivita(payload: AddAttivitaPayload): Observable<AddAttivitaResponse> {
+    return this.http.post<AddAttivitaResponse>(`${this.baseUrl}/addAttivita`, payload);
   }
 }

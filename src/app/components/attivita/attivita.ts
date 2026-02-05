@@ -94,13 +94,38 @@ export class Attivita implements OnInit {
       return;
     }
 
-    if (this.isModifica) {
-      this.listaAttivita[this.indiceInModifica] = { ...this.nuovaAttivita };
-    } else {
-      this.listaAttivita.push({ ...this.nuovaAttivita });
-    }
+    const dataInizio = this.dataSelezionataISO();
+    const payload = {
+      codiceOrdine: this.nuovaAttivita.codiceOrdine,
+      luogo: this.nuovaAttivita.location || this.nuovaAttivita.location,
+      dataInizio,
+      dataFine: dataInizio, // dataFine deve essere valorizzata con dataInizio
+      ricorrenza: [],
+      oreLavoro: this.nuovaAttivita.ore,
+    };
 
-    this.chiudiModal();
+    console.log('addAttivita payload:', payload);
+    this.attivitaService.addAttivita(payload).subscribe({
+      next: (res: any) => {
+        console.log('addAttivita response:', res);
+        // se l'API risponde con esito positivo ricarichiamo la lista
+        if (res && res.esito) {
+          this.chiudiModal();
+          this.aggiornaAttivitaPerData();
+        } else {
+          this.errorMsg = 'Errore nella creazione dell\'attività';
+        }
+        // se ci sono skippedDates, possiamo mostrare motivazione
+        if (res?.skippedDates && res.skippedDates.length) {
+          this.errorMsg = `Alcune date non sono state aggiunte: ${res.skippedDates.join(', ')}`;
+        }
+      },
+      error: (err: any) => {
+        console.error('addAttivita error:', err);
+        if (err && err.error) console.error('addAttivita error.body:', err.error);
+        this.errorMsg = 'Errore durante la creazione dell\'attività';
+      }
+    });
   }
 
   eliminaAttivita(index: number): void {
@@ -161,8 +186,6 @@ export class Attivita implements OnInit {
       idAttivita: 0,
       codiceOrdine: '',
       nominativoCliente: '',
-      stato_Approvazione: '',
-      approvato: false,
       location: '',
       ore: 0,
       dataAttivita: this.dataSelezionataISO(),
@@ -211,17 +234,12 @@ export class Attivita implements OnInit {
     this.errorMsg = '';
     const data = this.dataSelezionataISO();
     this.attivitaService.getAttivita(data).subscribe({
-      next: res => {
+      next: (res: AttivitaItem[] | null) => {
         const selected = data;
         this.listaAttivita = (res ?? [])
-          .map(item => ({
-            ...item,
-            approvato: (item.stato_Approvazione || '').toLowerCase() === 'approvato' || (item.stato_Approvazione || '').toLowerCase() === 'validato',
-            dataAttivita: item.dataAttivita,
-          }))
-          .filter(item => (item.dataAttivita || '').slice(0, 10) === selected);
+          .filter((item: AttivitaItem) => (item.dataAttivita || '').slice(0, 10) === selected);
       },
-      error: err => { this.errorMsg = 'Errore caricamento dati'; console.error(err); },
+      error: (err: any) => { this.errorMsg = 'Errore caricamento dati'; console.error(err); },
       complete: () => { this.isLoading = false; }
     });
   }
