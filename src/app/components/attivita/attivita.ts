@@ -1,14 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AttivitaService, AttivitaItem } from './attivitaservice';
 
-interface AttivitaItem {
-  codice: string;
-  cliente: string;
-  location: 'In sede' | 'Trasferta' | string;
-  ore: number;
-  approvato: boolean;
-}
 
 interface GiornoCalendario {
   valore: number;
@@ -27,15 +21,16 @@ export class Attivita implements OnInit {
   private readonly annoInizio = 2020;
   private readonly annoFine = 2030;
 
-  giornoSelezionato = 14;
-  meseCorrente = 8; // Settembre (0-11)
-  annoCorrente = 2025;
+  giornoSelezionato = 1;
+  meseCorrente = 0; // verrà aggiornato a runtime
+  annoCorrente = 2000; // verrà aggiornato a runtime
 
   giorniCalendario: GiornoCalendario[] = [];
   listaAnni: number[] = [];
-  listaAttivita: AttivitaItem[] = [
-    { codice: 'AAAA/xxxx', cliente: 'Nome cliente', location: 'Trasferta', ore: 6, approvato: false },
-  ];
+  listaAttivita: AttivitaItem[] = [];
+
+  isLoading = false;
+  errorMsg = '';
 
   nuovaAttivita: AttivitaItem = this.creaAttivitaVuota();
   mostraModal = false;
@@ -45,9 +40,14 @@ export class Attivita implements OnInit {
   isDettaglioOpen = false;
   attivitaDettaglio: AttivitaItem | null = null;
 
+  constructor(private attivitaService: AttivitaService) {}
+
+
   ngOnInit(): void {
+    this.impostaDataOggi();
     this.listaAnni = this.creaIntervalloAnni();
     this.generaCalendario();
+    this.loadAttivita();
   }
 
   apriModal(): void {
@@ -146,14 +146,27 @@ export class Attivita implements OnInit {
     this.meseCorrente = data.getMonth();
     this.annoCorrente = data.getFullYear();
     this.generaCalendario();
+    this.aggiornaAttivitaPerData();
   }
 
   selezionaGiorno(giorno: GiornoCalendario): void {
-    if (giorno.corrente) this.giornoSelezionato = giorno.valore;
+    if (giorno.corrente) {
+      this.giornoSelezionato = giorno.valore;
+      this.aggiornaAttivitaPerData();
+    }
   }
 
   private creaAttivitaVuota(): AttivitaItem {
-    return { codice: '', cliente: '', location: '', ore: 0, approvato: false };
+    return {
+      idAttivita: 0,
+      codiceOrdine: '',
+      nominativoCliente: '',
+      stato_Approvazione: '',
+      approvato: false,
+      location: '',
+      ore: 0,
+      dataAttivita: this.dataSelezionataISO(),
+    };
   }
 
   private creaIntervalloAnni(): number[] {
@@ -164,8 +177,53 @@ export class Attivita implements OnInit {
     return anni;
   }
 
-  private isAttivitaValida(attivita: AttivitaItem): boolean {
-    const { codice, cliente, location, ore } = attivita;
-    return Boolean(codice.trim() && cliente.trim() && location.trim() && Number(ore) > 0);
+  private impostaDataOggi(): void {
+    const oggi = new Date();
+    this.giornoSelezionato = oggi.getDate();
+    this.meseCorrente = oggi.getMonth();
+    this.annoCorrente = oggi.getFullYear();
   }
+
+  onCambioMeseAnno(): void {
+    this.generaCalendario();
+    this.aggiornaAttivitaPerData();
+  }
+
+  private isAttivitaValida(attivita: AttivitaItem): boolean {
+    const { codiceOrdine, nominativoCliente, location, ore } = attivita;
+    return Boolean(codiceOrdine.trim() && nominativoCliente.trim() && location.trim() && Number(ore) > 0);
+  }
+
+  private dataSelezionataISO(): string {
+    const month = this.meseCorrente + 1;
+    const mm = month < 10 ? `0${month}` : `${month}`;
+    const dd = this.giornoSelezionato < 10 ? `0${this.giornoSelezionato}` : `${this.giornoSelezionato}`;
+    return `${this.annoCorrente}-${mm}-${dd}`;
+    
+  }
+
+  private aggiornaAttivitaPerData(): void {
+    this.loadAttivita();
+  }
+
+  private loadAttivita(): void {
+    this.isLoading = true;
+    this.errorMsg = '';
+    const data = this.dataSelezionataISO();
+    this.attivitaService.getAttivita(data).subscribe({
+      next: res => {
+        const selected = data;
+        this.listaAttivita = (res ?? [])
+          .map(item => ({
+            ...item,
+            approvato: (item.stato_Approvazione || '').toLowerCase() === 'approvato' || (item.stato_Approvazione || '').toLowerCase() === 'validato',
+            dataAttivita: item.dataAttivita,
+          }))
+          .filter(item => (item.dataAttivita || '').slice(0, 10) === selected);
+      },
+      error: err => { this.errorMsg = 'Errore caricamento dati'; console.error(err); },
+      complete: () => { this.isLoading = false; }
+    });
+  }
+
 }

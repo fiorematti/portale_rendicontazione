@@ -19,10 +19,10 @@
         <div class="calendar-card-mini p-2 border rounded-4 bg-light shadow-sm">
           <div class="d-flex justify-content-center align-items-center mb-2 px-1">
             <div class="d-flex align-items-center gap-1">
-              <select class="calendar-select fw-bold" [(ngModel)]="meseCorrente" (change)="generaCalendario()">
+              <select class="calendar-select fw-bold" [(ngModel)]="meseCorrente" (change)="onCambioMeseAnno()">
                 <option *ngFor="let m of listaMesi; let i = index" [value]="i">{{ m }}</option>
               </select>
-              <select class="calendar-select fw-bold" [(ngModel)]="annoCorrente" (change)="generaCalendario()">
+              <select class="calendar-select fw-bold" [(ngModel)]="annoCorrente" (change)="onCambioMeseAnno()">
                 <option *ngFor="let a of listaAnni" [value]="a">{{ a }}</option>
               </select>
             </div>
@@ -64,8 +64,8 @@
       </thead>
       <tbody>
         <tr *ngFor="let item of listaAttivita; let i = index" class="border-bottom">
-          <td class="ps-4 text-muted">{{ item.codice }}</td>
-          <td>{{ item.cliente }}</td>
+          <td class="ps-4 text-muted">{{ item.codiceOrdine }}</td>
+          <td>{{ item.nominativoCliente }}</td>
           <td>{{ item.location }}</td>
           <td>{{ item.ore }}:00</td>
           <td class="text-center">
@@ -85,6 +85,9 @@
             </button>
           </td>
         </tr>
+        <tr *ngIf="!isLoading && listaAttivita.length === 0">
+          <td colspan="6" class="text-center text-muted py-4">Nessuna attività trovata.</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -98,11 +101,11 @@
     <div class="row g-3 mb-3">
       <div class="col-6 text-start">
         <label class="fw-bold text-muted d-block">Codice ordine</label>
-        <span class="fw-bold">{{ attivitaDettaglio?.codice }}</span>
+        <span class="fw-bold">{{ attivitaDettaglio?.codiceOrdine }}</span>
       </div>
       <div class="col-6 text-start">
         <label class="fw-bold text-muted d-block">Cliente</label>
-        <span class="fw-bold">{{ attivitaDettaglio?.cliente }}</span>
+        <span class="fw-bold">{{ attivitaDettaglio?.nominativoCliente }}</span>
       </div>
       <div class="col-6 text-start">
         <label class="fw-bold text-muted d-block">Location</label>
@@ -140,15 +143,11 @@
     <div class="row g-3">
       <div class="col-6 text-start">
         <label class="fw-bold mb-1">Codice ordine</label>
-        <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.codice">
-          <option value="AAAA/xxxx">AAAA/xxxx</option>
-        </select>
+        <input type="text" class="form-control bg-light" [(ngModel)]="nuovaAttivita.codiceOrdine" placeholder="Inserisci codice ordine">
       </div>
       <div class="col-6 text-start">
         <label class="fw-bold mb-1">Cliente</label>
-        <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.cliente">
-          <option value="Nome cliente">Nome cliente</option>
-        </select>
+        <input type="text" class="form-control bg-light" [(ngModel)]="nuovaAttivita.nominativoCliente" placeholder="Inserisci cliente">
       </div>
       <div class="col-6 text-start">
         <label class="fw-bold mb-1">Location</label>
@@ -163,9 +162,10 @@
       </div>
       <div class="col-6 text-start">
         <label class="fw-bold mb-1">Stato approvazione</label>
-        <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.approvato">
-          <option [ngValue]="true">Approvato</option>
-          <option [ngValue]="false">Non approvato</option>
+        <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.stato_Approvazione">
+          <option value="approvato">Approvato</option>
+          <option value="validato">Validato</option>
+          <option value="non validato">Non validato</option>
         </select>
       </div>
     </div>
