@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AttivitaService, AttivitaItem } from './attivitaservice';
+import { AttivitaService, AttivitaItem, AddAttivitaPayload, UpdateAttivitaPayload } from './attivitaservice';
 
 
 interface GiornoCalendario {
@@ -99,15 +99,7 @@ export class Attivita implements OnInit {
       return;
     }
 
-    const dataInizio = this.dataSelezionataISO();
-    const payload = {
-      codiceOrdine: this.nuovaAttivita.codiceOrdine,
-      luogo: this.nuovaAttivita.location || this.nuovaAttivita.location,
-      dataInizio,
-      dataFine: dataInizio, // dataFine deve essere valorizzata con dataInizio
-      ricorrenza: [],
-      oreLavoro: this.nuovaAttivita.ore,
-    };
+    const payload = this.buildAddPayload();
 
     this.attivitaService.addAttivita(payload).subscribe({
       next: (res: any) => {
@@ -134,21 +126,14 @@ export class Attivita implements OnInit {
     const target = this.listaAttivita[idx];
     if (!target) return;
 
-    const dataAttivita = (this.nuovaAttivita.dataAttivita || this.dataSelezionataISO()).slice(0, 10);
-    const payload = {
-      idAttivita: this.nuovaAttivita.idAttivita,
-      codiceOrdine: this.nuovaAttivita.codiceOrdine,
-      luogo: this.nuovaAttivita.location,
-      dataAttivita,
-      oreLavoro: this.nuovaAttivita.ore,
-    };
+    const payload = this.buildUpdatePayload();
+    const dataAttivita = payload.dataAttivita;
 
     this.isLoading = true;
     this.errorMsg = '';
     this.attivitaService.updateAttivita(payload).subscribe({
       next: (res) => {
-        const esitoOk = (res?.esito || '').toLowerCase().includes('riuscita');
-        if (esitoOk) {
+        if (this.esitoRiuscito(res?.esito)) {
           this.listaAttivita[idx] = { ...this.nuovaAttivita, dataAttivita };
           this.chiudiModal();
           this.aggiornaAttivitaPerData();
@@ -175,8 +160,7 @@ export class Attivita implements OnInit {
     this.errorMsg = '';
     this.attivitaService.deleteAttivita(target.idAttivita).subscribe({
       next: (res) => {
-        const esitoOk = (res?.esito || '').toLowerCase().includes('riuscita');
-        if (esitoOk) {
+        if (this.esitoRiuscito(res?.esito)) {
           this.listaAttivita.splice(index, 1);
         } else {
           this.errorMsg = res?.motivazione || 'Eliminazione non riuscita';
@@ -300,6 +284,33 @@ export class Attivita implements OnInit {
       error: (err: any) => { this.errorMsg = 'Errore caricamento dati'; console.error(err); },
       complete: () => { this.isLoading = false; }
     });
+  }
+
+  private buildAddPayload(): AddAttivitaPayload {
+    const dataInizio = this.dataSelezionataISO();
+    return {
+      codiceOrdine: this.nuovaAttivita.codiceOrdine,
+      luogo: this.nuovaAttivita.location,
+      dataInizio,
+      dataFine: dataInizio, // dataFine deve essere valorizzata con dataInizio
+      ricorrenza: [],
+      oreLavoro: this.nuovaAttivita.ore,
+    };
+  }
+
+  private buildUpdatePayload(): UpdateAttivitaPayload {
+    const dataAttivita = (this.nuovaAttivita.dataAttivita || this.dataSelezionataISO()).slice(0, 10);
+    return {
+      idAttivita: this.nuovaAttivita.idAttivita,
+      codiceOrdine: this.nuovaAttivita.codiceOrdine,
+      luogo: this.nuovaAttivita.location,
+      dataAttivita,
+      oreLavoro: this.nuovaAttivita.ore,
+    };
+  }
+
+  private esitoRiuscito(esito?: string): boolean {
+    return (esito || '').toLowerCase().includes('riuscita');
   }
 
 }

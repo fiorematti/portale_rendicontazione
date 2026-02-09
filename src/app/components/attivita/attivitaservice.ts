@@ -55,7 +55,7 @@ export interface DeleteAttivitaResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AttivitaService {
-  private baseUrl = 'http://localhost:5000/api/Attivita/utente'; // usa environment
+  private readonly baseUrl = 'http://localhost:5000/api/Attivita/utente'; // usa environment
   constructor(private http: HttpClient) {}
 
   getAttivita(data: string): Observable<AttivitaItem[]> {
@@ -73,7 +73,6 @@ export class AttivitaService {
 
   deleteAttivita(idAttivita: number): Observable<DeleteAttivitaResponse> {
     const params = new HttpParams().set('IdAttivita', idAttivita.toString());
-    console.log('deleteAttivita params:', params.toString());
     return this.http.delete<DeleteAttivitaResponse>(`${this.baseUrl}/DeleteAttivita`, { params });
   }
 }
