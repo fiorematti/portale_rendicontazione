@@ -252,7 +252,7 @@
   color: var(--sidebar-text, #ffffff);
 }
 
-/* Make logout icon align/center like other sidebar items when sidebar is collapsed */
+/* icona logout */
 .sidebar:not(:hover) .logout-link,
 .sidebar.collapsed .logout-link {
   justify-content: center;

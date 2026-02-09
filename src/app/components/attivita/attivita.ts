@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AttivitaService, AttivitaItem, AddAttivitaPayload, UpdateAttivitaPayload } from './attivitaservice';
+import { AttivitaService, AttivitaItem, AddAttivitaPayload, UpdateAttivitaPayload, ClienteApiItem, OrdineApiItem } from './attivitaservice';
 
 
 interface GiornoCalendario {
@@ -29,6 +29,12 @@ export class Attivita implements OnInit {
   listaAnni: number[] = [];
   listaAttivita: AttivitaItem[] = [];
 
+  clientiOptions: ClienteApiItem[] = [];
+  ordiniOptions: OrdineApiItem[] = [];
+  selectedClienteId: number | null = null;
+  selectedCodice: string | null = null;
+  private clientiLoaded = false;
+
   isLoading = false;
   errorMsg = '';
 
@@ -47,6 +53,7 @@ export class Attivita implements OnInit {
     this.impostaDataOggi();
     this.listaAnni = this.creaIntervalloAnni();
     this.generaCalendario();
+    this.loadClienti();
     this.loadAttivita();
   }
 
@@ -54,6 +61,9 @@ export class Attivita implements OnInit {
     this.isModifica = false;
     this.mostraErrore = false;
     this.nuovaAttivita = this.creaAttivitaVuota();
+    this.selectedClienteId = null;
+    this.selectedCodice = null;
+    this.ordiniOptions = [];
     this.mostraModal = true;
   }
 
@@ -61,6 +71,9 @@ export class Attivita implements OnInit {
     this.isModifica = true;
     this.indiceInModifica = index;
     this.nuovaAttivita = { ...this.listaAttivita[index] };
+    this.selectedClienteId = this.findClienteIdByNome(this.nuovaAttivita.nominativoCliente);
+    this.selectedCodice = this.nuovaAttivita.codiceOrdine || null;
+    this.loadOrdiniByCliente(this.selectedClienteId, true);
     this.mostraModal = true;
   }
 
@@ -311,6 +324,60 @@ export class Attivita implements OnInit {
 
   private esitoRiuscito(esito?: string): boolean {
     return (esito || '').toLowerCase().includes('riuscita');
+  }
+
+  onClienteChange(): void {
+    if (this.selectedClienteId == null) return;
+    this.syncClienteFromId(this.selectedClienteId);
+    this.loadOrdiniByCliente(this.selectedClienteId);
+  }
+
+  onCodiceChange(): void {
+    if (!this.selectedCodice) return;
+    const ordine = this.ordiniOptions.find(o => o.codiceOrdine === this.selectedCodice);
+    this.nuovaAttivita.codiceOrdine = this.selectedCodice;
+    if (ordine && ordine.idCliente) {
+      this.selectedClienteId = ordine.idCliente;
+      this.syncClienteFromId(ordine.idCliente);
+    }
+  }
+
+  private findClienteIdByNome(nome: string): number | null {
+    const found = this.clientiOptions.find(c => c.nominativo === nome);
+    return found ? found.idCliente : null;
+  }
+
+  private loadClienti(): void {
+    if (this.clientiLoaded) return;
+    this.attivitaService.getClienti().subscribe({
+      next: (res) => {
+        this.clientiOptions = res || [];
+        this.clientiLoaded = true;
+      },
+      error: (err) => { console.error('getClienti error:', err); }
+    });
+  }
+
+  private loadOrdiniByCliente(idCliente: number | null, keepSelection: boolean = false): void {
+    this.ordiniOptions = [];
+    if (idCliente == null) return;
+    this.attivitaService.getOrdini(idCliente).subscribe({
+      next: (res) => {
+        const list = (res || []).filter(o => !idCliente || o.idCliente === idCliente);
+        this.ordiniOptions = list;
+        if (keepSelection && this.selectedCodice) {
+          const exists = list.some(o => o.codiceOrdine === this.selectedCodice);
+          if (!exists) this.selectedCodice = null;
+        }
+      },
+      error: (err) => { console.error('getOrdini error:', err); }
+    });
+  }
+
+  private syncClienteFromId(idCliente: number): void {
+    const cliente = this.clientiOptions.find(c => c.idCliente === idCliente);
+    if (!cliente) return;
+    this.nuovaAttivita.nominativoCliente = cliente.nominativo;
   }
 
 }

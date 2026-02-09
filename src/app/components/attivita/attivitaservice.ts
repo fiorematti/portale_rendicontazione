@@ -45,6 +45,18 @@ export interface DeleteAttivitaResponse {
   motivazione: string | null;
 }
 
+export interface ClienteApiItem {
+  idCliente: number;
+  nominativo: string;
+}
+
+export interface OrdineApiItem {
+  codiceOrdine: string;
+  idCliente: number;
+  codiceOfferta?: string | null;
+  descrizione?: string | null;
+}
+
 // "idAttivita": 1,
 //     "codiceOrdine": "1234",
 //     "nominativoCliente": "cliente1",
@@ -74,5 +86,21 @@ export class AttivitaService {
   deleteAttivita(idAttivita: number): Observable<DeleteAttivitaResponse> {
     const params = new HttpParams().set('IdAttivita', idAttivita.toString());
     return this.http.delete<DeleteAttivitaResponse>(`${this.baseUrl}/DeleteAttivita`, { params });
+  }
+
+  getClienti(idCliente?: number): Observable<ClienteApiItem[]> {
+    let params = new HttpParams();
+    if (idCliente !== undefined && idCliente !== null) {
+      params = params.set('IdCliente', idCliente.toString());
+    }
+    return this.http.get<ClienteApiItem[]>(`http://localhost:5000/api/Utente/utente/getClienteByUtente`, { params });
+  }
+
+  getOrdini(idCliente?: number): Observable<OrdineApiItem[]> {
+    let params = new HttpParams();
+    if (idCliente !== undefined && idCliente !== null) {
+      params = params.set('IdCliente', idCliente.toString());
+    }
+    return this.http.get<OrdineApiItem[]>(`http://localhost:5000/api/Ordini`, { params });
   }
 }
