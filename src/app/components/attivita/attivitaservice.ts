@@ -26,6 +26,19 @@ export interface AddAttivitaResponse {
   motivazione?: string | null;
 }
 
+export interface UpdateAttivitaPayload {
+  idAttivita: number;
+  codiceOrdine: string;
+  luogo: string;
+  dataAttivita: string; // YYYY-MM-DD
+  oreLavoro: number;
+}
+
+export interface UpdateAttivitaResponse {
+  esito: string;
+  motivazione: string | null;
+}
+
 export interface DeleteAttivitaResponse {
   esito: string;
   skippedDates: string[];
@@ -52,6 +65,10 @@ export class AttivitaService {
 
   addAttivita(payload: AddAttivitaPayload): Observable<AddAttivitaResponse> {
     return this.http.post<AddAttivitaResponse>(`${this.baseUrl}/addAttivita`, payload);
+  }
+
+  updateAttivita(payload: UpdateAttivitaPayload): Observable<UpdateAttivitaResponse> {
+    return this.http.put<UpdateAttivitaResponse>(`${this.baseUrl}/UpdateAttivita`, payload);
   }
 
   deleteAttivita(idAttivita: number): Observable<DeleteAttivitaResponse> {

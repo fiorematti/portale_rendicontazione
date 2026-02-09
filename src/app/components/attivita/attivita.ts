@@ -94,6 +94,11 @@ export class Attivita implements OnInit {
       return;
     }
 
+    if (this.isModifica) {
+      this.confermaModifica();
+      return;
+    }
+
     const dataInizio = this.dataSelezionataISO();
     const payload = {
       codiceOrdine: this.nuovaAttivita.codiceOrdine,
@@ -104,18 +109,14 @@ export class Attivita implements OnInit {
       oreLavoro: this.nuovaAttivita.ore,
     };
 
-    console.log('addAttivita payload:', payload);
     this.attivitaService.addAttivita(payload).subscribe({
       next: (res: any) => {
-        console.log('addAttivita response:', res);
-        // se l'API risponde con esito positivo ricarichiamo la lista
         if (res && res.esito) {
           this.chiudiModal();
           this.aggiornaAttivitaPerData();
         } else {
           this.errorMsg = 'Errore nella creazione dell\'attività';
         }
-        // se ci sono skippedDates, possiamo mostrare motivazione
         if (res?.skippedDates && res.skippedDates.length) {
           this.errorMsg = `Alcune date non sono state aggiunte: ${res.skippedDates.join(', ')}`;
         }
@@ -124,6 +125,43 @@ export class Attivita implements OnInit {
         console.error('addAttivita error:', err);
         if (err && err.error) console.error('addAttivita error.body:', err.error);
         this.errorMsg = 'Errore durante la creazione dell\'attività';
+      }
+    });
+  }
+
+  private confermaModifica(): void {
+    const idx = this.indiceInModifica;
+    const target = this.listaAttivita[idx];
+    if (!target) return;
+
+    const dataAttivita = (this.nuovaAttivita.dataAttivita || this.dataSelezionataISO()).slice(0, 10);
+    const payload = {
+      idAttivita: this.nuovaAttivita.idAttivita,
+      codiceOrdine: this.nuovaAttivita.codiceOrdine,
+      luogo: this.nuovaAttivita.location,
+      dataAttivita,
+      oreLavoro: this.nuovaAttivita.ore,
+    };
+
+    this.isLoading = true;
+    this.errorMsg = '';
+    this.attivitaService.updateAttivita(payload).subscribe({
+      next: (res) => {
+        const esitoOk = (res?.esito || '').toLowerCase().includes('riuscita');
+        if (esitoOk) {
+          this.listaAttivita[idx] = { ...this.nuovaAttivita, dataAttivita };
+          this.chiudiModal();
+          this.aggiornaAttivitaPerData();
+        } else {
+          this.errorMsg = res?.motivazione || 'Aggiornamento non riuscito';
+        }
+      },
+      error: (err) => {
+        console.error('updateAttivita error:', err);
+        this.errorMsg = 'Errore durante la modifica dell\'attività';
+      },
+      complete: () => {
+        this.isLoading = false;
       }
     });
   }
