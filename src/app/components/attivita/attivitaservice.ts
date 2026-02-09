@@ -26,6 +26,12 @@ export interface AddAttivitaResponse {
   motivazione?: string | null;
 }
 
+export interface DeleteAttivitaResponse {
+  esito: string;
+  skippedDates: string[];
+  motivazione: string | null;
+}
+
 // "idAttivita": 1,
 //     "codiceOrdine": "1234",
 //     "nominativoCliente": "cliente1",
@@ -46,5 +52,11 @@ export class AttivitaService {
 
   addAttivita(payload: AddAttivitaPayload): Observable<AddAttivitaResponse> {
     return this.http.post<AddAttivitaResponse>(`${this.baseUrl}/addAttivita`, payload);
+  }
+
+  deleteAttivita(idAttivita: number): Observable<DeleteAttivitaResponse> {
+    const params = new HttpParams().set('IdAttivita', idAttivita.toString());
+    console.log('deleteAttivita params:', params.toString());
+    return this.http.delete<DeleteAttivitaResponse>(`${this.baseUrl}/DeleteAttivita`, { params });
   }
 }

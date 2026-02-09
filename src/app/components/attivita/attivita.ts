@@ -129,9 +129,29 @@ export class Attivita implements OnInit {
   }
 
   eliminaAttivita(index: number): void {
-    if (confirm('Sei sicuro di voler eliminare questa attività?')) {
-      this.listaAttivita.splice(index, 1);
-    }
+    const target = this.listaAttivita[index];
+    if (!target) return;
+    if (!confirm('Sei sicuro di voler eliminare questa attività?')) return;
+
+    this.isLoading = true;
+    this.errorMsg = '';
+    this.attivitaService.deleteAttivita(target.idAttivita).subscribe({
+      next: (res) => {
+        const esitoOk = (res?.esito || '').toLowerCase().includes('riuscita');
+        if (esitoOk) {
+          this.listaAttivita.splice(index, 1);
+        } else {
+          this.errorMsg = res?.motivazione || 'Eliminazione non riuscita';
+        }
+      },
+      error: (err) => {
+        console.error('deleteAttivita error:', err);
+        this.errorMsg = 'Errore durante l\'eliminazione dell\'attività';
+      },
+      complete: () => {
+        this.isLoading = false;
+      }
+    });
   }
 
   get totaleOreCalcolato(): string {
