@@ -23,6 +23,7 @@ export class Attivita implements OnInit {
   readonly listaMesi = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   private readonly annoInizio = 2020;
   private readonly annoFine = 2030;
+  private readonly maxOreGiornaliere = 8;
 
   giornoSelezionato = 1;
   meseCorrente = 0; // verrà aggiornato a runtime
@@ -72,6 +73,7 @@ export class Attivita implements OnInit {
     this.selectedClienteId = null;
     this.selectedCodice = null;
     this.ordiniOptions = [];
+    this.errorMsg = '';
     this.mostraModal = true;
   }
 
@@ -122,6 +124,13 @@ export class Attivita implements OnInit {
       return;
     }
 
+    const oreRichieste = Number(this.nuovaAttivita.ore) || 0;
+    const totaleGiorno = this.totaleOreGiornata();
+    if (this.eccedeLimiteGiornaliero(oreRichieste, -1)) {
+      this.setLimiteOreMsg(totaleGiorno, oreRichieste);
+      return;
+    }
+
     if (this.isModifica) {
       this.confermaModifica();
       return;
@@ -156,6 +165,13 @@ export class Attivita implements OnInit {
     const idx = this.indiceInModifica;
     const target = this.listaAttivita[idx];
     if (!target) return;
+
+    const oreRichieste = Number(this.nuovaAttivita.ore) || 0;
+    const totaleGiorno = this.totaleOreGiornata(idx);
+    if (this.eccedeLimiteGiornaliero(oreRichieste, idx)) {
+      this.setLimiteOreMsg(totaleGiorno, oreRichieste);
+      return;
+    }
 
     const payload = this.buildUpdatePayload();
     const dataAttivita = payload.dataAttivita;
@@ -210,7 +226,7 @@ export class Attivita implements OnInit {
   }
 
   get totaleOreCalcolato(): string {
-    const totale = this.listaAttivita.reduce((acc, item) => acc + item.ore, 0);
+    const totale = this.totaleOreGiornata();
     return `${totale}:00`;
   }
 
@@ -410,6 +426,30 @@ export class Attivita implements OnInit {
     const cliente = this.clientiOptions.find(c => c.idCliente === idCliente);
     if (!cliente) return;
     this.nuovaAttivita.nominativoCliente = cliente.nominativo;
+  }
+
+  private totaleOreGiornata(excludeIndex: number = -1): number {
+    return this.listaAttivita.reduce((acc, item, idx) => {
+      const ore = Number(item.ore) || 0;
+      return idx === excludeIndex ? acc : acc + ore;
+    }, 0);
+  }
+
+  private eccedeLimiteGiornaliero(oreDaAggiungere: number, excludeIndex: number): boolean {
+    return this.totaleOreGiornata(excludeIndex) + oreDaAggiungere > this.maxOreGiornaliere;
+  }
+
+  private setLimiteOreMsg(totaleAttuale: number, oreRichieste: number): void {
+    const restante = this.maxOreGiornaliere - totaleAttuale;
+    this.errorMsg = restante <= 0
+      ? `Hai già raggiunto il limite massimo di ${this.maxOreGiornaliere} ore per il giorno selezionato.`
+      : `Limite giornaliero di ${this.maxOreGiornaliere} ore superato: ore già inserite ${totaleAttuale}. Ore disponibili: ${restante}.`;
+    // Mantieni il messaggio più visibile: dura 10 secondi o fino a chiusura manuale
+    setTimeout(() => (this.errorMsg = ''), 10000);
+  }
+
+  clearErrorMsg(): void {
+    this.errorMsg = '';
   }
 
 }

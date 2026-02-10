@@ -11,6 +11,8 @@ interface Spesa {
 }
 
 interface DettaglioSpesa {
+  idCliente?: number | null;
+  nominativoCliente?: string | null;
   codiceOrdine: string;
   vitto?: number | null;
   alloggio?: number | null;
@@ -34,6 +36,19 @@ interface DettaglioSpesa {
 })
 export class NoteSpese implements OnInit {
   private readonly filtroDefault = 'Tutti';
+  readonly clientiOptions: { idCliente: number; nominativo: string }[] = [
+    { idCliente: 1, nominativo: 'Cliente Alpha' },
+    { idCliente: 2, nominativo: 'Cliente Beta' },
+    { idCliente: 3, nominativo: 'Cliente Gamma' },
+  ];
+
+  private readonly ordiniOptions: { codiceOrdine: string; idCliente: number }[] = [
+    { codiceOrdine: 'AAAA/xxxx', idCliente: 1 },
+    { codiceOrdine: 'BBBB/yyyy', idCliente: 2 },
+    { codiceOrdine: 'CCCC/zzzz', idCliente: 3 },
+    { codiceOrdine: 'ALPH/001', idCliente: 1 },
+    { codiceOrdine: 'BETA/010', idCliente: 2 },
+  ];
 
   listaSpese: Spesa[] = [
     { data: '14/01/2026', codice: 'AAAA/xxxx', richiesto: '215,00€', validato: '190,00€', pagato: true },
@@ -92,8 +107,12 @@ export class NoteSpese implements OnInit {
   private caricaDatiNellaModal(spesa: Spesa): void {
     this.nuovaSpesaData = spesa.data;
     const importoPulito = this.parseImporto(spesa.richiesto);
+    const ordine = this.ordiniOptions.find(o => o.codiceOrdine === spesa.codice);
+    const cliente = ordine ? this.clientiOptions.find(c => c.idCliente === ordine.idCliente) : null;
     
     this.dettagliSpesa = [{
+      idCliente: ordine?.idCliente ?? null,
+      nominativoCliente: cliente?.nominativo ?? null,
       codiceOrdine: spesa.codice,
       vitto: importoPulito,
       alloggio: 0, 
@@ -133,7 +152,13 @@ export class NoteSpese implements OnInit {
 
   resetNuovaSpesa(): void {
     this.nuovaSpesaData = '';
-    this.dettagliSpesa = [{ codiceOrdine: 'AAAA/xxxx', vitto: null, auto: 'Modello auto' }];
+    this.dettagliSpesa = [{
+      idCliente: 1,
+      nominativoCliente: 'Cliente Alpha',
+      codiceOrdine: 'AAAA/xxxx',
+      vitto: null,
+      auto: 'Modello auto'
+    }];
     this.tabAttiva = 0;
     this.rigaSelezionata = null;
     this.mostraErrore = false;
@@ -222,11 +247,44 @@ export class NoteSpese implements OnInit {
   }
 
   selezionaTab(i: number): void { this.tabAttiva = i; }
-  aggiungiTab(): void { this.dettagliSpesa.push({ codiceOrdine: this.dettagliSpesa[0].codiceOrdine, vitto: 0 }); }
+  aggiungiTab(): void {
+    const first = this.dettagliSpesa[0];
+    this.dettagliSpesa.push({
+      idCliente: first?.idCliente ?? null,
+      nominativoCliente: first?.nominativoCliente ?? null,
+      codiceOrdine: first?.codiceOrdine || '',
+      vitto: 0
+    });
+  }
   eliminaDettaglioCorrente(): void {
     this.dettagliSpesa.splice(this.tabAttiva, 1);
     if (this.dettagliSpesa.length === 0) this.chiudiModal();
     else this.tabAttiva = 0;
+  }
+
+  ordiniDisponibili(dett: DettaglioSpesa): { codiceOrdine: string; idCliente: number }[] {
+    if (!dett || dett.idCliente == null) return this.ordiniOptions;
+    return this.ordiniOptions.filter(o => o.idCliente === dett.idCliente);
+  }
+
+  onClienteChange(dett: DettaglioSpesa): void {
+    if (!dett) return;
+    const cliente = this.clientiOptions.find(c => c.idCliente === dett.idCliente);
+    dett.nominativoCliente = cliente ? cliente.nominativo : null;
+    const ordini = this.ordiniDisponibili(dett);
+    const codiceValido = ordini.some(o => o.codiceOrdine === dett.codiceOrdine);
+    if (!codiceValido) dett.codiceOrdine = ordini[0]?.codiceOrdine || '';
+  }
+
+  onCodiceChange(dett: DettaglioSpesa, codice: string): void {
+    if (!dett) return;
+    dett.codiceOrdine = codice;
+    const ordine = this.ordiniOptions.find(o => o.codiceOrdine === codice);
+    if (ordine) {
+      dett.idCliente = ordine.idCliente;
+      const cliente = this.clientiOptions.find(c => c.idCliente === ordine.idCliente);
+      dett.nominativoCliente = cliente ? cliente.nominativo : dett.nominativoCliente;
+    }
   }
 
   private apriModalConModalita(mode: 'aggiungi' | 'visualizza' | 'modifica'): void {
