@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 
 interface Spesa {
+  id?: number | null;
   data: string;
   codice: string;
   richiesto: string;
@@ -76,6 +77,7 @@ export class NoteSpese implements OnInit {
   isClientiLoading = false;
   isOrdiniLoading = false;
   isSpeseLoading = false;
+  deletingSpesaId: number | null = null;
 
   rigaSelezionata: Spesa | null = null;
 
@@ -112,9 +114,34 @@ export class NoteSpese implements OnInit {
 
   eliminaSpesa(indexTable: number): void {
     const spesaDaEliminare = this.speseFiltrate[indexTable];
+    if (!spesaDaEliminare) return;
     const indexReale = this.listaSpese.indexOf(spesaDaEliminare);
-    if (confirm("Sei sicuro di voler eliminare questa nota spesa?")) {
-      this.listaSpese.splice(indexReale, 1);
+    if (!confirm('Sei sicuro di voler eliminare questa nota spesa?')) return;
+
+    if (spesaDaEliminare.id != null) {
+      const url = `http://localhost:5000/api/SpesaNota/Utente/DeleteSpesa?id=${spesaDaEliminare.id}`;
+      this.deletingSpesaId = spesaDaEliminare.id;
+      this.http.delete<any>(url).subscribe({
+        next: (res) => {
+          const esitoOk = typeof res?.esito === 'string' ? res.esito.toLowerCase().includes('riuscita') : true;
+          if (esitoOk) {
+            if (indexReale >= 0) this.listaSpese.splice(indexReale, 1);
+            this.rebuildFiltroOrdiniOptions();
+          } else {
+            this.loadErrore = res?.motivazione || 'Eliminazione non riuscita.';
+          }
+        },
+        error: (err) => {
+          console.error('DeleteSpesa error:', err);
+          this.loadErrore = 'Errore durante l\'eliminazione della spesa.';
+        },
+        complete: () => {
+          this.deletingSpesaId = null;
+        }
+      });
+    } else {
+      if (indexReale >= 0) this.listaSpese.splice(indexReale, 1);
+      this.rebuildFiltroOrdiniOptions();
     }
   }
 
@@ -350,6 +377,7 @@ export class NoteSpese implements OnInit {
 
   private creaSpesaDaDettaglio(dett: DettaglioSpesa, totale: string): Spesa {
     return {
+      id: null,
       data: this.nuovaSpesaData,
       codice: dett.codiceOrdine,
       richiesto: totale,
@@ -367,8 +395,10 @@ export class NoteSpese implements OnInit {
       next: (res) => {
         console.log('[NoteSpese] loadSpese response:', res);
         const mapped = (res || []).map(item => {
+          const id = item?.id ?? item?.idSpesa ?? item?.idSpesaNota ?? null;
           const idCliente = item?.idCliente ?? item?.idClienteOrdine ?? item?.clienteId ?? null;
           return {
+            id,
             data: this.formatDateIt(item.dataNotificazione),
             codice: item.codiceOrdine || '',
             richiesto: this.formattaTotaleNumber(item.totaleComplessivo || 0),
