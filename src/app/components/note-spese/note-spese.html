@@ -195,33 +195,51 @@
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Vitto</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" [(ngModel)]="dettagliSpesa[tabAttiva].vitto" />
+                    type="number" min="0"
+                    (keydown)="blockNegative($event)"
+                    [(ngModel)]="dettagliSpesa[tabAttiva].vitto"
+                    (ngModelChange)="dettagliSpesa[tabAttiva].vitto = clampNonNegative($event)" />
                 </div>
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Alloggio</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" [(ngModel)]="dettagliSpesa[tabAttiva].alloggio" />
+                    type="number" min="0"
+                    (keydown)="blockNegative($event)"
+                    [(ngModel)]="dettagliSpesa[tabAttiva].alloggio"
+                    (ngModelChange)="dettagliSpesa[tabAttiva].alloggio = clampNonNegative($event)" />
                 </div>
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Hotel</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" [(ngModel)]="dettagliSpesa[tabAttiva].hotel" />
+                    type="number" min="0"
+                    (keydown)="blockNegative($event)"
+                    [(ngModel)]="dettagliSpesa[tabAttiva].hotel"
+                    (ngModelChange)="dettagliSpesa[tabAttiva].hotel = clampNonNegative($event)" />
                 </div>
 
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Aereo</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" [(ngModel)]="dettagliSpesa[tabAttiva].aereo" />
+                    type="number" min="0"
+                    (keydown)="blockNegative($event)"
+                    [(ngModel)]="dettagliSpesa[tabAttiva].aereo"
+                    (ngModelChange)="dettagliSpesa[tabAttiva].aereo = clampNonNegative($event)" />
                 </div>
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Trasporti</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" [(ngModel)]="dettagliSpesa[tabAttiva].trasporti" />
+                    type="number" min="0"
+                    (keydown)="blockNegative($event)"
+                    [(ngModel)]="dettagliSpesa[tabAttiva].trasporti"
+                    (ngModelChange)="dettagliSpesa[tabAttiva].trasporti = clampNonNegative($event)" />
                 </div>
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Varie</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" [(ngModel)]="dettagliSpesa[tabAttiva].varie" />
+                    type="number" min="0"
+                    (keydown)="blockNegative($event)"
+                    [(ngModel)]="dettagliSpesa[tabAttiva].varie"
+                    (ngModelChange)="dettagliSpesa[tabAttiva].varie = clampNonNegative($event)" />
                 </div>
               </div>
             </div>
@@ -240,17 +258,23 @@
               <div class="col-6">
                 <label class="small fw-bold mb-0">Km</label>
                 <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].km" />
+                  min="0" (keydown)="blockNegative($event)"
+                  [(ngModel)]="dettagliSpesa[tabAttiva].km"
+                  (ngModelChange)="dettagliSpesa[tabAttiva].km = clampNonNegative($event)" />
               </div>
               <div class="col-6">
                 <label class="small fw-bold mb-0">Parking</label>
                 <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].parking" />
+                  min="0" (keydown)="blockNegative($event)"
+                  [(ngModel)]="dettagliSpesa[tabAttiva].parking"
+                  (ngModelChange)="dettagliSpesa[tabAttiva].parking = clampNonNegative($event)" />
               </div>
               <div class="col-6">
                 <label class="small fw-bold mb-0">Telepass</label>
                 <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].telepass" />
+                  min="0" (keydown)="blockNegative($event)"
+                  [(ngModel)]="dettagliSpesa[tabAttiva].telepass"
+                  (ngModelChange)="dettagliSpesa[tabAttiva].telepass = clampNonNegative($event)" />
               </div>
             </div>
           </div>

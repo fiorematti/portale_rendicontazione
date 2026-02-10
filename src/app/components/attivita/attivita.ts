@@ -308,6 +308,19 @@ export class Attivita implements OnInit {
     return Boolean(codiceOrdine.trim() && nominativoCliente.trim() && location.trim() && Number(ore) > 0);
   }
 
+  clampNonNegative(value: number | string | null | undefined): number {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return n;
+  }
+
+  blockNegative(event: KeyboardEvent): void {
+    const blockedKeys = ['-', '+', 'e', 'E'];
+    if (blockedKeys.includes(event.key)) {
+      event.preventDefault();
+    }
+  }
+
   private dataSelezionataISO(): string {
     const month = this.meseCorrente + 1;
     const mm = month < 10 ? `0${month}` : `${month}`;

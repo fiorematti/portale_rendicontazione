@@ -411,6 +411,19 @@ export class NoteSpese implements OnInit {
     return n.toFixed(2).replace('.', ',') + '€';
   }
 
+  clampNonNegative(value: number | string | null | undefined): number {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return n;
+  }
+
+  blockNegative(event: KeyboardEvent): void {
+    const blockedKeys = ['-', '+', 'e', 'E'];
+    if (blockedKeys.includes(event.key)) {
+      event.preventDefault();
+    }
+  }
+
   private sommaDettaglio(dett: DettaglioSpesa): number {
     return (
       Number(dett.vitto || 0) +

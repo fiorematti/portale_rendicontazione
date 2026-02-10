@@ -165,7 +165,10 @@
       </div>
       <div class="col-6 text-start">
         <label class="fw-bold mb-1">Ore</label>
-        <input type="number" class="form-control bg-light" [(ngModel)]="nuovaAttivita.ore">
+        <input type="number" class="form-control bg-light" min="0"
+          (keydown)="blockNegative($event)"
+          [(ngModel)]="nuovaAttivita.ore"
+          (ngModelChange)="nuovaAttivita.ore = clampNonNegative($event)">
       </div>
       
     </div>
