@@ -68,6 +68,7 @@
         <thead>
           <tr>
             <th class="ps-4">Data</th>
+            <th>Codice ordine</th>
             <th>Totale complessivo</th>
             <th>Totale annullato</th>
             <th class="text-center">Pagato</th>
@@ -77,6 +78,7 @@
         <tbody>
           <tr *ngFor="let spesa of speseFiltrate; let i = index">
             <td class="ps-4">{{ spesa.data }}</td>
+            <td>{{ spesa.codice }}</td>
             <td>{{ spesa.richiesto }}</td>
             <td>{{ spesa.validato }}</td>
             <td class="text-center">
