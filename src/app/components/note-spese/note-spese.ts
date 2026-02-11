@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NoteSpeseService, SpesaNotaResponse } from './note-spese.service';
 
 interface Spesa {
+  idSpesa: number;
   data: string;
   codice: string;
   richiesto: string;
@@ -35,11 +37,9 @@ interface DettaglioSpesa {
 export class NoteSpese implements OnInit {
   private readonly filtroDefault = 'Tutti';
 
-  listaSpese: Spesa[] = [
-    { data: '14/01/2026', codice: 'AAAA/xxxx', richiesto: '215,00€', validato: '190,00€', pagato: true },
-    { data: '15/01/2026', codice: 'BBBB/yyyy', richiesto: '120,00€', validato: '120,00€', pagato: true },
-    { data: '16/01/2026', codice: 'CCCC/zzzz', richiesto: '45,00€', validato: '40,00€', pagato: false },
-  ];
+  listaSpese: Spesa[] = [];
+  loading = false;
+  errore: string | null = null;
 
   filtroPagate = this.filtroDefault;
   filtroData = '';
@@ -64,9 +64,28 @@ export class NoteSpese implements OnInit {
   get isVisualizza(): boolean { return this.modalMode === 'visualizza'; }
   get isModifica(): boolean { return this.modalMode === 'modifica'; }
 
+  constructor(private readonly noteSpeseService: NoteSpeseService) {}
+
   ngOnInit(): void {
     this.generaCalendario();
     this.resetNuovaSpesa();
+    this.caricaSpese();
+  }
+
+  caricaSpese(): void {
+    this.loading = true;
+    this.errore = null;
+    const anno = new Date().getFullYear();
+    this.noteSpeseService.getSpeseByYear(anno).subscribe({
+      next: (data) => {
+        this.listaSpese = data.map((s) => this.mapSpesaFromApi(s));
+        this.loading = false;
+      },
+      error: (err) => {
+        this.errore = 'Errore durante il caricamento delle spese.';
+        this.loading = false;
+      },
+    });
   }
 
   visualizzaDettaglio(spesa: Spesa): void {
@@ -254,6 +273,7 @@ export class NoteSpese implements OnInit {
 
   private creaSpesaDaDettaglio(dett: DettaglioSpesa, totale: string): Spesa {
     return {
+      idSpesa: 0,
       data: this.nuovaSpesaData,
       codice: dett.codiceOrdine,
       richiesto: totale,
@@ -303,5 +323,26 @@ export class NoteSpese implements OnInit {
     const data = this.parseDataString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData) || new Date();
     this.dataVisualizzata = new Date(data.getFullYear(), data.getMonth(), 1);
     this.generaCalendario();
+  }
+
+  private mapSpesaFromApi(s: SpesaNotaResponse): Spesa {
+    return {
+      idSpesa: s.idSpesa,
+      data: this.formattaDataApi(s.dataNotificazione),
+      codice: s.codiceOrdine,
+      richiesto: this.formattaValuta(s.totaleComplessivo),
+      validato: '0,00€',
+      pagato: s.statoPagamento,
+    };
+  }
+
+  private formattaDataApi(dateStr: string): string {
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  private formattaValuta(valore: number): string {
+    return valore.toFixed(2).replace('.', ',') + '€';
   }
 }
