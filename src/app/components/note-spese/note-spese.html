@@ -79,6 +79,15 @@
       <table class="table align-middle">
         <thead>
           <tr>
+            <th class="ps-4">Data</th>
+            <th>Codice</th>
+            <th>Richiesto</th>
+            <th class="text-center">Stato</th>
+            <th class="text-center">Azioni</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let spesa of speseFiltrate; let i = index">
             <td class="ps-4">{{ spesa.data }}</td>
             <td>{{ spesa.codice }}</td>
             <td>{{ spesa.richiesto }}</td>
