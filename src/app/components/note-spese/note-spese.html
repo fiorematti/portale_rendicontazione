@@ -1,6 +1,7 @@
 <div class="main-content">
   <h2 class="fw-bold mb-4">Note Spese</h2>
 
+  <!-- Filtri: stato pagamento, data, cliente, codice ordine -->
   <div class="filter-card d-flex flex-wrap align-items-end gap-3 p-3 mb-4 shadow-sm bg-white rounded-4">
     <div class="filter-group">
       <label class="fw-bold mb-1">Pagate</label>
@@ -62,6 +63,7 @@
     </button>
   </div>
 
+  <!-- Tabella elenco note spese con stato e azioni -->
   <div class="table-container shadow-sm p-3 bg-white rounded-5">
     <div *ngIf="loading" class="text-center py-4">
       <div class="spinner-border text-warning" role="status">
@@ -107,6 +109,7 @@
     </div>
   </div>
 
+  <!-- Modal per aggiunta/visualizzazione/modifica spesa -->
   <div class="modal-overlay" *ngIf="mostraModal">
     <div class="custom-modal shadow-lg rounded-4">
       <div class="p-4">
@@ -158,6 +161,7 @@
           <div>{{ loadErrore }}</div>
         </div>
 
+        <!-- Tabs dettagli e form per singolo dettaglio -->
         <div class="d-flex align-items-center gap-3 mb-4 border-bottom pb-2">
           <span *ngFor="let dett of dettagliSpesa; let i = index" class="tab-item" [class.active]="tabAttiva === i"
             (click)="selezionaTab(i)">
@@ -298,6 +302,7 @@
             </div>
           </div>
 
+          <!-- Footer azioni in base alla modalità -->
           <div class="d-flex justify-content-center gap-3">
             <ng-container *ngIf="modalMode === 'aggiungi'">
               <button class="btn btn-dark px-5 py-2 fw-bold rounded-3" (click)="chiudiModal()" [disabled]="salvaInCorso">Annulla</button>
