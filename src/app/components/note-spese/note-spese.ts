@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { NoteSpeseService, DettaglioApiResponse } from './note-spese.service';
 
 interface Spesa {
   id?: number | null;
@@ -76,6 +77,7 @@ export class NoteSpese implements OnInit {
   isOrdiniLoading = false;
   isSpeseLoading = false;
   deletingSpesaId: number | null = null;
+  isDettaglioLoading = false;
 
   rigaSelezionata: Spesa | null = null;
 
@@ -89,7 +91,7 @@ export class NoteSpese implements OnInit {
   get isVisualizza(): boolean { return this.modalMode === 'visualizza'; }
   get isModifica(): boolean { return this.modalMode === 'modifica'; }
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private noteSpeseService: NoteSpeseService) {}
 
   ngOnInit(): void {
     this.generaCalendario();
@@ -100,8 +102,52 @@ export class NoteSpese implements OnInit {
 
   visualizzaDettaglio(spesa: Spesa): void {
     this.rigaSelezionata = spesa;
-    this.caricaDatiNellaModal(spesa);
+    this.nuovaSpesaData = spesa.data;
     this.apriModalConModalita('visualizza');
+
+    if (spesa.id != null) {
+      this.isDettaglioLoading = true;
+      this.noteSpeseService.getDettagliBySpesa(spesa.id).subscribe({
+        next: (res) => {
+          if (res && res.length > 0) {
+            this.dettagliSpesa = res.map(item => this.mapDettaglioApiToDettaglioSpesa(item, spesa));
+          } else {
+            this.caricaDatiNellaModal(spesa);
+          }
+          this.tabAttiva = 0;
+        },
+        error: (err) => {
+          console.error('[NoteSpese] getDettagliBySpesa error:', err);
+          this.caricaDatiNellaModal(spesa);
+        },
+        complete: () => {
+          this.isDettaglioLoading = false;
+        }
+      });
+    } else {
+      this.caricaDatiNellaModal(spesa);
+    }
+  }
+
+  private mapDettaglioApiToDettaglioSpesa(item: DettaglioApiResponse, spesa: Spesa): DettaglioSpesa {
+    const ordine = this.findOrdineByCodice(spesa.codice);
+    const cliente = ordine ? this.clientiOptions.find(c => c.idCliente === ordine.idCliente) : null;
+    return {
+      idCliente: ordine?.idCliente ?? spesa.idCliente ?? null,
+      nominativoCliente: cliente?.nominativo ?? null,
+      codiceOrdine: spesa.codice,
+      vitto: item.vitto ?? 0,
+      alloggio: 0,
+      hotel: item.hotel ?? 0,
+      trasporti: item.trasportiLocali ?? 0,
+      aereo: item.aereo ?? 0,
+      varie: item.spesaVaria ?? 0,
+      auto: item.idAuto != null ? String(item.idAuto) : 'Modello auto',
+      km: item.km ?? 0,
+      parking: item.parking ?? 0,
+      telepass: item.telepass ?? 0,
+      costo: 0
+    };
   }
 
   apriModifica(spesa: Spesa): void {
