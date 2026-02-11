@@ -40,12 +40,19 @@
     </div>
 
     <div class="filter-group">
+      <label class="fw-bold mb-1">Cliente</label>
+      <select class="form-select custom-select" [(ngModel)]="filtroCliente">
+        <option [ngValue]="'Tutti'">Tutti</option>
+        <option *ngIf="isClientiLoading" [ngValue]="'Tutti'">Caricamento clienti...</option>
+        <option *ngIf="!isClientiLoading && !clientiOptions.length" [ngValue]="'Tutti'">Nessun cliente disponibile</option>
+        <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
       <label class="fw-bold mb-1">Codice ordine</label>
       <select class="form-select custom-select" [(ngModel)]="filtroOrdine">
-        <option value="Tutti">Tutti</option>
-        <option value="AAAA/xxxx">AAAA/xxxx</option>
-        <option value="BBBB/yyyy">BBBB/yyyy</option>
-        <option value="CCCC/zzzz">CCCC/zzzz</option>
+        <option *ngFor="let c of filtroOrdiniOptions" [value]="c">{{ c }}</option>
       </select>
     </div>
 
@@ -72,19 +79,8 @@
       <table class="table align-middle">
         <thead>
           <tr>
-            <th class="ps-4">ID Spesa</th>
-            <th>Codice Ordine</th>
-            <th>Data Notificazione</th>
-            <th>Totale Complessivo</th>
-            <th class="text-center">Stato Pagamento</th>
-            <th class="text-center">Azioni</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let spesa of speseFiltrate; let i = index">
-            <td class="ps-4">{{ spesa.idSpesa }}</td>
+            <td class="ps-4">{{ spesa.data }}</td>
             <td>{{ spesa.codice }}</td>
-            <td>{{ spesa.data }}</td>
             <td>{{ spesa.richiesto }}</td>
             <td class="text-center">
               <span class="badge rounded-pill" [ngClass]="spesa.pagato ? 'bg-success-custom' : 'bg-danger-custom'">
@@ -105,15 +101,52 @@
   <div class="modal-overlay" *ngIf="mostraModal">
     <div class="custom-modal shadow-lg rounded-4">
       <div class="p-4">
-        <h2 class="fw-bold mb-3">
-          {{ modalMode === 'aggiungi' ? 'Aggiungi spesa' : (modalMode === 'visualizza' ? 'Dettaglio spesa' : 'Modifica
-          spesa') }}
-        </h2>
+        <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+          <h2 class="fw-bold m-0">
+            {{ modalMode === 'aggiungi' ? 'Aggiungi spesa' : (modalMode === 'visualizza' ? 'Dettaglio spesa' : 'Modifica spesa') }}
+          </h2>
 
-        <div *ngIf="mostraErrore" class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4"
+          <div *ngIf="dettagliSpesa[tabAttiva]" class="d-flex align-items-center gap-3">
+            <div style="min-width:220px;">
+              <label class="small fw-bold">Cliente</label>
+              <select class="form-select custom-select" [disabled]="modalMode === 'visualizza'"
+                [(ngModel)]="dettagliSpesa[tabAttiva].idCliente" (change)="onClienteChange(dettagliSpesa[tabAttiva])">
+                <option [ngValue]="null">Seleziona cliente</option>
+                <option *ngIf="isClientiLoading" [ngValue]="null">Caricamento clienti...</option>
+                <option *ngIf="!isClientiLoading && !clientiOptions.length" [ngValue]="null">Nessun cliente disponibile</option>
+                <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
+              </select>
+            </div>
+            <div style="min-width:220px;">
+              <label class="small fw-bold">Codice ordine</label>
+              <select class="form-select custom-select" [disabled]="modalMode === 'visualizza'"
+                [(ngModel)]="dettagliSpesa[tabAttiva].codiceOrdine"
+                (change)="onCodiceChange(dettagliSpesa[tabAttiva], dettagliSpesa[tabAttiva].codiceOrdine)">
+                <option [ngValue]="''">Seleziona codice</option>
+                <option *ngIf="isOrdiniLoading" [ngValue]="dettagliSpesa[tabAttiva].codiceOrdine">Caricamento ordini...</option>
+                <option *ngIf="!isOrdiniLoading && !ordiniDisponibili(dettagliSpesa[tabAttiva]).length" [ngValue]="''">Nessun ordine disponibile</option>
+                <option *ngFor="let o of ordiniDisponibili(dettagliSpesa[tabAttiva])" [ngValue]="o.codiceOrdine">{{ o.codiceOrdine }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="mostraErrore" class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-3"
           role="alert" style="border-radius: 15px;">
           <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
           <div>Compila tutti i campi.</div>
+        </div>
+
+        <div *ngIf="salvaErrore" class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-3"
+          role="alert" style="border-radius: 15px;">
+          <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+          <div>{{ salvaErrore }}</div>
+        </div>
+
+        <div *ngIf="loadErrore" class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-3"
+          role="alert" style="border-radius: 15px;">
+          <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+          <div>{{ loadErrore }}</div>
         </div>
 
         <div class="d-flex align-items-center gap-3 mb-4 border-bottom pb-2">
@@ -128,6 +161,7 @@
         <div class="row" *ngIf="dettagliSpesa[tabAttiva]">
           <div class="col-md-7 border-end pe-4">
             <div class="row g-3">
+              
               <div class="col-6 position-relative">
                 <label class="small fw-bold">Data</label>
                 <div class="input-with-icon">
@@ -158,42 +192,55 @@
                   </div>
                 </div>
               </div>
-              <div class="col-4">
-                <label class="small fw-bold">Codice ordine</label>
-                <input class="form-control custom-input" [disabled]="modalMode === 'visualizza'" type="text"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].codiceOrdine" />
-              </div>
               <div class="row g-2">
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Vitto</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" [(ngModel)]="dettagliSpesa[tabAttiva].vitto" />
+                    type="number" min="0"
+                    (keydown)="blockNegative($event)"
+                    [(ngModel)]="dettagliSpesa[tabAttiva].vitto"
+                    (ngModelChange)="dettagliSpesa[tabAttiva].vitto = clampNonNegative($event)" />
                 </div>
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Alloggio</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" [(ngModel)]="dettagliSpesa[tabAttiva].alloggio" />
+                    type="number" min="0"
+                    (keydown)="blockNegative($event)"
+                    [(ngModel)]="dettagliSpesa[tabAttiva].alloggio"
+                    (ngModelChange)="dettagliSpesa[tabAttiva].alloggio = clampNonNegative($event)" />
                 </div>
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Hotel</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" [(ngModel)]="dettagliSpesa[tabAttiva].hotel" />
+                    type="number" min="0"
+                    (keydown)="blockNegative($event)"
+                    [(ngModel)]="dettagliSpesa[tabAttiva].hotel"
+                    (ngModelChange)="dettagliSpesa[tabAttiva].hotel = clampNonNegative($event)" />
                 </div>
 
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Aereo</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" [(ngModel)]="dettagliSpesa[tabAttiva].aereo" />
+                    type="number" min="0"
+                    (keydown)="blockNegative($event)"
+                    [(ngModel)]="dettagliSpesa[tabAttiva].aereo"
+                    (ngModelChange)="dettagliSpesa[tabAttiva].aereo = clampNonNegative($event)" />
                 </div>
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Trasporti</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" [(ngModel)]="dettagliSpesa[tabAttiva].trasporti" />
+                    type="number" min="0"
+                    (keydown)="blockNegative($event)"
+                    [(ngModel)]="dettagliSpesa[tabAttiva].trasporti"
+                    (ngModelChange)="dettagliSpesa[tabAttiva].trasporti = clampNonNegative($event)" />
                 </div>
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Varie</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" [(ngModel)]="dettagliSpesa[tabAttiva].varie" />
+                    type="number" min="0"
+                    (keydown)="blockNegative($event)"
+                    [(ngModel)]="dettagliSpesa[tabAttiva].varie"
+                    (ngModelChange)="dettagliSpesa[tabAttiva].varie = clampNonNegative($event)" />
                 </div>
               </div>
             </div>
@@ -212,17 +259,23 @@
               <div class="col-6">
                 <label class="small fw-bold mb-0">Km</label>
                 <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].km" />
+                  min="0" (keydown)="blockNegative($event)"
+                  [(ngModel)]="dettagliSpesa[tabAttiva].km"
+                  (ngModelChange)="dettagliSpesa[tabAttiva].km = clampNonNegative($event)" />
               </div>
               <div class="col-6">
                 <label class="small fw-bold mb-0">Parking</label>
                 <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].parking" />
+                  min="0" (keydown)="blockNegative($event)"
+                  [(ngModel)]="dettagliSpesa[tabAttiva].parking"
+                  (ngModelChange)="dettagliSpesa[tabAttiva].parking = clampNonNegative($event)" />
               </div>
               <div class="col-6">
                 <label class="small fw-bold mb-0">Telepass</label>
                 <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].telepass" />
+                  min="0" (keydown)="blockNegative($event)"
+                  [(ngModel)]="dettagliSpesa[tabAttiva].telepass"
+                  (ngModelChange)="dettagliSpesa[tabAttiva].telepass = clampNonNegative($event)" />
               </div>
             </div>
           </div>
@@ -238,9 +291,11 @@
 
           <div class="d-flex justify-content-center gap-3">
             <ng-container *ngIf="modalMode === 'aggiungi'">
-              <button class="btn btn-dark px-5 py-2 fw-bold rounded-3" (click)="chiudiModal()">Annulla</button>
+              <button class="btn btn-dark px-5 py-2 fw-bold rounded-3" (click)="chiudiModal()" [disabled]="salvaInCorso">Annulla</button>
               <button class="btn btn-warning text-white px-5 py-2 fw-bold rounded-3"
-                (click)="confermaSpesa()">Conferma</button>
+                (click)="confermaSpesa()" [disabled]="salvaInCorso">
+                {{ salvaInCorso ? 'Salvataggio...' : 'Conferma' }}
+              </button>
             </ng-container>
 
             <ng-container *ngIf="modalMode === 'visualizza'">

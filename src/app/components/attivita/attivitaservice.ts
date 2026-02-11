@@ -20,6 +20,7 @@ export interface AddAttivitaPayload {
   oreLavoro: number;
 }
 
+// Risposta del backend dopo una POST di creazione attività.
 export interface AddAttivitaResponse {
   esito: string;
   skippedDates: string[];
@@ -33,6 +34,8 @@ export interface UpdateAttivitaPayload {
   dataAttivita: string; // YYYY-MM-DD
   oreLavoro: number;
 }
+
+// Update: risposta attesa dal server dopo PUT
 
 export interface UpdateAttivitaResponse {
   esito: string;
@@ -50,12 +53,17 @@ export interface ClienteApiItem {
   nominativo: string;
 }
 
+// Rappresenta il record cliente usato per popolare il select nel modal.
+
 export interface OrdineApiItem {
   codiceOrdine: string;
   idCliente: number;
   codiceOfferta?: string | null;
   descrizione?: string | null;
 }
+
+// Rappresenta un ordine. `codiceOrdine` è la stringa mostrata nel select;
+// `idCliente` viene usato per filtrare gli ordini relativi a un cliente.
 
 // "idAttivita": 1,
 //     "codiceOrdine": "1234",
@@ -71,24 +79,31 @@ export class AttivitaService {
   constructor(private http: HttpClient) {}
 
   getAttivita(data: string): Observable<AttivitaItem[]> {
+    // GET /getAttivitaById?data=YYYY-MM-DD restituisce la lista di `AttivitaItem` per la data richiesta
     const params = new HttpParams().set('data', data);
     return this.http.get<AttivitaItem[]>(`${this.baseUrl}/getAttivitaById`, { params });
   }
 
   addAttivita(payload: AddAttivitaPayload): Observable<AddAttivitaResponse> {
+    // POST /addAttivita payload: AddAttivitaPayload Restituisce `AddAttivitaResponse` con esito e eventuali date saltate
     return this.http.post<AddAttivitaResponse>(`${this.baseUrl}/addAttivita`, payload);
   }
 
   updateAttivita(payload: UpdateAttivitaPayload): Observable<UpdateAttivitaResponse> {
+    // PUT /UpdateAttivita
     return this.http.put<UpdateAttivitaResponse>(`${this.baseUrl}/UpdateAttivita`, payload);
   }
 
   deleteAttivita(idAttivita: number): Observable<DeleteAttivitaResponse> {
+    // DELETE /DeleteAttivita?IdAttivita={id}
+    // Usa query param per inviare l'id dell'attività da eliminare.
     const params = new HttpParams().set('IdAttivita', idAttivita.toString());
     return this.http.delete<DeleteAttivitaResponse>(`${this.baseUrl}/DeleteAttivita`, { params });
   }
 
   getClienti(idCliente?: number): Observable<ClienteApiItem[]> {
+    // GET /api/Utente/utente/getClienteByUtente?IdCliente={optional}
+    // Se viene passato `idCliente` filtra il risultato sul singolo id, altrimenti ritorna tutti i clienti
     let params = new HttpParams();
     if (idCliente !== undefined && idCliente !== null) {
       params = params.set('IdCliente', idCliente.toString());
@@ -97,6 +112,8 @@ export class AttivitaService {
   }
 
   getOrdini(idCliente?: number): Observable<OrdineApiItem[]> {
+    // GET /api/Ordini?IdCliente={optional}
+    // Se viene passato `idCliente` il backend dovrebbe restituire gli ordini associati
     let params = new HttpParams();
     if (idCliente !== undefined && idCliente !== null) {
       params = params.set('IdCliente', idCliente.toString());
