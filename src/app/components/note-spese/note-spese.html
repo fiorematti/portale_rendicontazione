@@ -63,27 +63,28 @@
   </div>
 
   <div class="table-container shadow-sm p-3 bg-white rounded-5">
-    <div class="table-responsive">
+    <div *ngIf="loading" class="text-center py-4">
+      <div class="spinner-border text-warning" role="status">
+        <span class="visually-hidden">Caricamento...</span>
+      </div>
+      <p class="mt-2 text-muted">Caricamento spese...</p>
+    </div>
+
+    <div *ngIf="errore" class="alert alert-danger border-0 shadow-sm d-flex align-items-center m-3" role="alert" style="border-radius: 15px;">
+      <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
+      <div>{{ errore }}</div>
+    </div>
+
+    <div class="table-responsive" *ngIf="!loading && !errore">
       <table class="table align-middle">
         <thead>
           <tr>
-            <th class="ps-4">Data</th>
-            <th>Codice ordine</th>
-            <th>Totale complessivo</th>
-            <th>Totale annullato</th>
-            <th class="text-center">Pagato</th>
-            <th class="text-center">Azioni</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let spesa of speseFiltrate; let i = index">
             <td class="ps-4">{{ spesa.data }}</td>
             <td>{{ spesa.codice }}</td>
             <td>{{ spesa.richiesto }}</td>
-            <td>{{ spesa.validato }}</td>
             <td class="text-center">
               <span class="badge rounded-pill" [ngClass]="spesa.pagato ? 'bg-success-custom' : 'bg-danger-custom'">
-                {{ spesa.pagato ? 'SI' : 'NO' }}
+                {{ spesa.pagato ? 'Pagato' : 'Da Pagare' }}
               </span>
             </td>
             <td class="text-center">

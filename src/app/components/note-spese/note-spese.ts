@@ -52,11 +52,9 @@ export class NoteSpese implements OnInit {
   readonly clientiOptions: ClienteApiItem[] = [];
   private ordiniCache: Record<number, OrdineApiItem[]> = {};
 
-  listaSpese: Spesa[] = [
-    { data: '14/01/2026', codice: 'AAAA/xxxx', richiesto: '215,00€', validato: '190,00€', pagato: true },
-    { data: '15/01/2026', codice: 'BBBB/yyyy', richiesto: '120,00€', validato: '120,00€', pagato: true },
-    { data: '16/01/2026', codice: 'CCCC/zzzz', richiesto: '45,00€', validato: '40,00€', pagato: false },
-  ];
+  listaSpese: Spesa[] = [];
+  loading = false;
+  errore: string | null = null;
 
   filtroPagate = this.filtroDefault;
   filtroData = '';
@@ -98,6 +96,23 @@ export class NoteSpese implements OnInit {
     this.loadClienti();
     this.loadSpese();
     this.resetNuovaSpesa();
+    this.caricaSpese();
+  }
+
+  caricaSpese(): void {
+    this.loading = true;
+    this.errore = null;
+    const anno = new Date().getFullYear();
+    this.noteSpeseService.getSpeseByYear(anno).subscribe({
+      next: (data) => {
+        this.listaSpese = data.map((s) => this.mapSpesaFromApi(s));
+        this.loading = false;
+      },
+      error: (err) => {
+        this.errore = 'Errore durante il caricamento delle spese.';
+        this.loading = false;
+      },
+    });
   }
 
   visualizzaDettaglio(spesa: Spesa): void {
