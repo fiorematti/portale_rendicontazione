@@ -337,12 +337,13 @@ export class NoteSpese implements OnInit {
   }
 
   private formattaDataApi(dateStr: string): string {
-    const parts = dateStr.split('-');
+    const isoDate = dateStr.split('T')[0];
+    const parts = isoDate.split('-');
     if (parts.length !== 3) return dateStr;
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
 
   private formattaValuta(valore: number): string {
-    return valore.toFixed(2).replace('.', ',') + '€';
+    return new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(valore) + '€';
   }
 }
