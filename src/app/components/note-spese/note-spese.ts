@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, NgForOf, NgIf } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 
@@ -43,7 +43,7 @@ interface DettaglioSpesa {
 @Component({
   selector: 'app-note-spese',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIf, NgForOf, HttpClientModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './note-spese.html',
   styleUrl: './note-spese.css',
 })
@@ -96,23 +96,6 @@ export class NoteSpese implements OnInit {
     this.loadClienti();
     this.loadSpese();
     this.resetNuovaSpesa();
-    this.caricaSpese();
-  }
-
-  caricaSpese(): void {
-    this.loading = true;
-    this.errore = null;
-    const anno = new Date().getFullYear();
-    this.noteSpeseService.getSpeseByYear(anno).subscribe({
-      next: (data) => {
-        this.listaSpese = data.map((s) => this.mapSpesaFromApi(s));
-        this.loading = false;
-      },
-      error: (err) => {
-        this.errore = 'Errore durante il caricamento delle spese.';
-        this.loading = false;
-      },
-    });
   }
 
   visualizzaDettaglio(spesa: Spesa): void {
