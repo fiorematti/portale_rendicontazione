@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NoteSpeseService, DettaglioApiResponse, AddSpesaRequest, UpdateSpesaRequest } from './note-spese.service';
@@ -45,7 +45,7 @@ interface DettaglioSpesa {
   templateUrl: './note-spese.html',
   styleUrl: './note-spese.css',
 })
-export class NoteSpese implements OnInit {
+export class NoteSpese implements OnInit, OnDestroy {
   private readonly filtroDefault = 'Tutti';
   readonly clientiOptions: ClienteApiItem[] = [];
   private ordiniCache: Record<number, OrdineApiItem[]> = {};
@@ -99,6 +99,10 @@ export class NoteSpese implements OnInit {
     this.loadClienti();
     this.loadSpese();
     this.resetNuovaSpesa();
+  }
+
+  ngOnDestroy(): void {
+    this.setBodyScrollLock(false);
   }
 
   visualizzaDettaglio(spesa: Spesa): void {
@@ -328,6 +332,7 @@ export class NoteSpese implements OnInit {
     this.mostraCalendario = false;
     this.rigaSelezionata = null;
     this.mostraErrore = false;
+    this.setBodyScrollLock(false);
   }
 
   get totaleCalcolato(): number {
@@ -442,6 +447,7 @@ export class NoteSpese implements OnInit {
   private apriModalConModalita(mode: 'aggiungi' | 'visualizza' | 'modifica'): void {
     this.modalMode = mode;
     this.mostraModal = true;
+    this.setBodyScrollLock(true);
   }
 
   private isDettaglioValido(dett: DettaglioSpesa | undefined): boolean {
@@ -689,4 +695,24 @@ export class NoteSpese implements OnInit {
     };
   }
 
+  private formatDateISO(valore: string): string {
+    const data = this.parseDataString(valore) || new Date();
+    const yyyy = data.getFullYear();
+    const mm = String(data.getMonth() + 1).padStart(2, '0');
+    const dd = String(data.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  private setBodyScrollLock(lock: boolean): void {
+    const body = document.body;
+    const html = document.documentElement;
+    if (!body || !html) return;
+    if (lock) {
+      body.classList.add('modal-open');
+      html.classList.add('modal-open');
+    } else {
+      body.classList.remove('modal-open');
+      html.classList.remove('modal-open');
+    }
+  }
 }
