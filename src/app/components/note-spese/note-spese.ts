@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NoteSpeseService } from './note-spese.service';
 
 interface Spesa {
   data: string;
@@ -34,6 +35,8 @@ interface DettaglioSpesa {
 })
 export class NoteSpese implements OnInit {
   private readonly filtroDefault = 'Tutti';
+
+  constructor(private readonly noteSpeseService: NoteSpeseService) {}
 
   listaSpese: Spesa[] = [
     { data: '14/01/2026', codice: 'AAAA/xxxx', richiesto: '215,00€', validato: '190,00€', pagato: true },
@@ -123,9 +126,26 @@ export class NoteSpese implements OnInit {
     if (this.isAggiungi) {
       this.listaSpese.unshift(this.creaSpesaDaDettaglio(dett, totaleStringa));
     } else if (this.rigaSelezionata) {
-      this.rigaSelezionata.data = this.nuovaSpesaData;
-      this.rigaSelezionata.codice = dett.codiceOrdine;
-      this.rigaSelezionata.richiesto = totaleStringa;
+      const codiceOriginale = this.rigaSelezionata.codice;
+      const notaAggiornata = {
+        data: this.nuovaSpesaData,
+        codice: dett.codiceOrdine,
+        richiesto: totaleStringa,
+        validato: this.rigaSelezionata.validato,
+        pagato: this.rigaSelezionata.pagato,
+      };
+      this.noteSpeseService.aggiornaNotaSpesa(codiceOriginale, notaAggiornata).subscribe({
+        next: () => {
+          if (this.rigaSelezionata) {
+            this.rigaSelezionata.data = this.nuovaSpesaData;
+            this.rigaSelezionata.codice = dett.codiceOrdine;
+            this.rigaSelezionata.richiesto = totaleStringa;
+          }
+        },
+        error: (err) => {
+          console.error('Errore durante l\'aggiornamento della nota spesa', err);
+        },
+      });
     }
 
     this.chiudiModal();
