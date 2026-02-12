@@ -28,6 +28,25 @@ export interface DettaglioApiResponse {
   idSpesaNavigation: any;
 }
 
+export interface AddSpesaDettaglio {
+  dataDettaglio: string;
+  vitto: number;
+  hotel: number;
+  trasportiLocali: number;
+  aereo: number;
+  spesaVaria: number;
+  idAuto: number | null;
+  km: number;
+  telepass: number;
+  parking: number;
+}
+
+export interface AddSpesaRequest {
+  codiceOrdine: string;
+  dataNotificazione: string;
+  dettagli: AddSpesaDettaglio[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class NoteSpeseService {
   private readonly baseUrl = '/api/SpesaNota/Utente';
@@ -42,5 +61,9 @@ export class NoteSpeseService {
   getDettagliBySpesa(idSpesa: number): Observable<DettaglioApiResponse[]> {
     const params = new HttpParams().set('idSpesa', idSpesa.toString());
     return this.http.get<DettaglioApiResponse[]>('/api/Dettaglio/getDettagliBySpesa', { params });
+  }
+
+  addSpesa(request: AddSpesaRequest): Observable<boolean> {
+    return this.http.post<boolean>(`${this.baseUrl}/AddSpesa`, request);
   }
 }
