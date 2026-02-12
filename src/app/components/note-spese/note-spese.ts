@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { NoteSpeseService, DettaglioApiResponse, AddSpesaRequest } from './note-spese.service';
+import { NoteSpeseService, DettaglioApiResponse, AddSpesaRequest, UpdateSpesaRequest } from './note-spese.service';
 
 interface Spesa {
   id?: number | null;
@@ -25,6 +25,7 @@ interface OrdineApiItem {
 }
 
 interface DettaglioSpesa {
+  idDettaglio?: number;
   idCliente?: number | null;
   nominativoCliente?: string | null;
   codiceOrdine: string;
@@ -136,6 +137,7 @@ export class NoteSpese implements OnInit {
     const ordine = this.findOrdineByCodice(spesa.codice);
     const cliente = ordine ? this.clientiOptions.find(c => c.idCliente === ordine.idCliente) : null;
     return {
+      idDettaglio: item.idDettaglio ?? 0,
       idCliente: ordine?.idCliente ?? spesa.idCliente ?? null,
       nominativoCliente: cliente?.nominativo ?? null,
       codiceOrdine: spesa.codice,
@@ -155,8 +157,31 @@ export class NoteSpese implements OnInit {
 
   apriModifica(spesa: Spesa): void {
     this.rigaSelezionata = spesa;
-    this.caricaDatiNellaModal(spesa);
+    this.nuovaSpesaData = spesa.data;
     this.apriModalConModalita('modifica');
+
+    if (spesa.id != null) {
+      this.isDettaglioLoading = true;
+      this.noteSpeseService.getDettagliBySpesa(spesa.id).subscribe({
+        next: (res) => {
+          if (res && res.length > 0) {
+            this.dettagliSpesa = res.map(item => this.mapDettaglioApiToDettaglioSpesa(item, spesa));
+          } else {
+            this.caricaDatiNellaModal(spesa);
+          }
+          this.tabAttiva = 0;
+        },
+        error: (err) => {
+          console.error('[NoteSpese] getDettagliBySpesa error:', err);
+          this.caricaDatiNellaModal(spesa);
+        },
+        complete: () => {
+          this.isDettaglioLoading = false;
+        }
+      });
+    } else {
+      this.caricaDatiNellaModal(spesa);
+    }
   }
 
   eliminaSpesa(indexTable: number): void {
@@ -242,6 +267,27 @@ export class NoteSpese implements OnInit {
         error: (err) => {
           console.error('AddSpesa error', err);
           this.salvaErrore = 'Errore durante il salvataggio della spesa.';
+        },
+        complete: () => { this.salvaInCorso = false; }
+      });
+    } else if (this.isModifica && this.rigaSelezionata) {
+      const payload = this.buildUpdatePayload();
+      this.noteSpeseService.updateSpesa(payload).subscribe({
+        next: (res) => {
+          const esitoOk = typeof res?.esito === 'string' && res.esito.toLowerCase().includes('riuscita');
+          if (esitoOk) {
+            const totaleStringa = this.formattaTotale(this.totaleCalcolato);
+            this.rigaSelezionata!.data = this.nuovaSpesaData;
+            this.rigaSelezionata!.codice = dett.codiceOrdine;
+            this.rigaSelezionata!.richiesto = totaleStringa;
+            this.chiudiModal();
+          } else {
+            this.salvaErrore = res?.motivazione || 'Aggiornamento non riuscito.';
+          }
+        },
+        error: (err) => {
+          console.error('UpdateSpesa error', err);
+          this.salvaErrore = 'Errore durante l\'aggiornamento della spesa.';
         },
         complete: () => { this.salvaInCorso = false; }
       });
@@ -654,6 +700,29 @@ export class NoteSpese implements OnInit {
     return {
       codiceOrdine: this.dettagliSpesa[0]?.codiceOrdine || '',
       dataNotificazione,
+      dettagli
+    };
+  }
+
+  private buildUpdatePayload(): UpdateSpesaRequest {
+    const dettagli = this.dettagliSpesa.map(d => ({
+      idDettaglio: d.idDettaglio ?? 0,
+      daEliminare: false,
+      dataDettaglio: this.formatDateISO(this.nuovaSpesaData),
+      vitto: Number(d.vitto || 0),
+      hotel: Number(d.hotel || 0),
+      trasportiLocali: Number(d.trasporti || 0),
+      aereo: Number(d.aereo || 0),
+      spesaVaria: Number(d.varie || 0),
+      idAuto: d.auto ? Number(d.auto) || null : null,
+      km: Number(d.km || 0),
+      telepass: Number(d.telepass || 0),
+      parking: Number(d.parking || 0)
+    }));
+
+    return {
+      codiceOrdine: this.dettagliSpesa[0]?.codiceOrdine || '',
+      idSpesa: this.rigaSelezionata?.id ?? 0,
       dettagli
     };
   }
