@@ -41,6 +41,7 @@ export class Attivita implements OnInit {
   selectedClienteId: number | null = null;
   selectedCodice: string | null = null;
   private clientiLoaded = false;
+  private locationLoaded = false;
 
 
   isLoading = false;
@@ -64,6 +65,7 @@ export class Attivita implements OnInit {
     this.listaAnni = this.creaIntervalloAnni();
     this.generaCalendario();
     this.loadClienti();
+    this.loadLocation();
     this.loadAttivita();
   }
 
@@ -76,7 +78,6 @@ export class Attivita implements OnInit {
     this.ordiniOptions = [];
     this.errorMsg = '';
     this.mostraModal = true;
-    this.loadLocation();
   }
 
   modificaAttivita(index: number): void {
@@ -87,7 +88,6 @@ export class Attivita implements OnInit {
     this.selectedCodice = this.nuovaAttivita.codiceOrdine || null;
     this.loadOrdiniByCliente(this.selectedClienteId, true);
     this.mostraModal = true;
-    this.loadLocation();
   }
 
   apriDettaglio(attivita: AttivitaItem, index: number): void {
@@ -334,9 +334,11 @@ export class Attivita implements OnInit {
   }
 
   private loadLocation(): void {
+    if (this.locationLoaded) return;
     this.attivitaService.getLocation().subscribe({
       next: (res) => {
         this.locationOptions = res || [];
+        this.locationLoaded = true;
       },
       error: (err) => { console.error('getLocation error:', err); }
     });
