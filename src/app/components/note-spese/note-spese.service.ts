@@ -47,6 +47,32 @@ export interface AddSpesaRequest {
   dettagli: AddSpesaDettaglio[];
 }
 
+export interface UpdateSpesaDettaglio {
+  idDettaglio: number;
+  daEliminare: boolean;
+  dataDettaglio: string;
+  vitto: number;
+  hotel: number;
+  trasportiLocali: number;
+  aereo: number;
+  spesaVaria: number;
+  idAuto: number | null;
+  km: number;
+  telepass: number;
+  parking: number;
+}
+
+export interface UpdateSpesaRequest {
+  codiceOrdine: string;
+  idSpesa: number;
+  dettagli: UpdateSpesaDettaglio[];
+}
+
+export interface UpdateSpesaResponse {
+  esito: string;
+  motivazione: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NoteSpeseService {
   private readonly baseUrl = '/api/SpesaNota/Utente';
@@ -65,5 +91,9 @@ export class NoteSpeseService {
 
   addSpesa(request: AddSpesaRequest): Observable<boolean> {
     return this.http.post<boolean>(`${this.baseUrl}/AddSpesa`, request);
+  }
+
+  updateSpesa(request: UpdateSpesaRequest): Observable<UpdateSpesaResponse> {
+    return this.http.put<UpdateSpesaResponse>(`${this.baseUrl}/UpdateSpesa`, request);
   }
 }
