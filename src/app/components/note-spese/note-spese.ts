@@ -7,7 +7,7 @@ import { ClienteApiItem } from '../../dto/cliente.dto';
 import { OrdineApiItem } from '../../dto/ordine.dto';
 import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
 import { parseDateString, formatDateIt, formatDateISO, sanitizeDateInput } from '../../shared/utils/date.utils';
-import { generateCalendarDays, navigateMonth } from '../../shared/utils/calendar.utils';
+import { navigateMonth } from '../../shared/utils/calendar.utils';
 
 interface Spesa {
   id?: number | null;
@@ -350,8 +350,9 @@ export class NoteSpese implements OnInit {
   generaCalendario(): void {
     const anno = this.dataVisualizzata.getFullYear();
     const mese = this.dataVisualizzata.getMonth();
-    const allDays = generateCalendarDays(anno, mese);
-    this.giorniVuoti = Array(allDays.indexOf(1)).fill(0);
+    const firstDayIndex = new Date(anno, mese, 1).getDay();
+    const offset = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+    this.giorniVuoti = Array(offset).fill(0);
     const numGiorni = new Date(anno, mese + 1, 0).getDate();
     this.giorniDelMese = Array.from({ length: numGiorni }, (_, i) => i + 1);
   }

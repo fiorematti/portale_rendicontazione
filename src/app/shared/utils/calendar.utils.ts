@@ -1,10 +1,6 @@
-export interface CalendarDay {
-  value: number | null;
-}
-
 /**
  * Generates calendar days for a given month/year.
- * Returns an array of CalendarDay objects with null for offset days.
+ * Returns an array with null for offset days and day numbers for actual days.
  */
 export function generateCalendarDays(year: number, month: number): (number | null)[] {
   const days: (number | null)[] = [];
