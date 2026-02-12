@@ -1,8 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { NoteSpeseService, DettaglioApiResponse, AddSpesaRequest, UpdateSpesaRequest } from './note-spese.service';
+import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
+import { ClienteApiItem } from '../../dto/cliente.dto';
+import { OrdineApiItem } from '../../dto/ordine.dto';
+import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
+import { parseDateString, formatDateIt, formatDateISO, sanitizeDateInput } from '../../shared/utils/date.utils';
+import { generateCalendarDays, navigateMonth } from '../../shared/utils/calendar.utils';
 
 interface Spesa {
   id?: number | null;
@@ -12,16 +17,6 @@ interface Spesa {
   validato: string;
   pagato: boolean;
   idCliente?: number | null;
-}
-
-interface ClienteApiItem {
-  idCliente: number;
-  nominativo: string;
-}
-
-interface OrdineApiItem {
-  codiceOrdine: string;
-  idCliente: number;
 }
 
 interface DettaglioSpesa {
@@ -46,7 +41,7 @@ interface DettaglioSpesa {
 @Component({
   selector: 'app-note-spese',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './note-spese.html',
   styleUrl: './note-spese.css',
 })
@@ -94,7 +89,10 @@ export class NoteSpese implements OnInit {
   get isVisualizza(): boolean { return this.modalMode === 'visualizza'; }
   get isModifica(): boolean { return this.modalMode === 'modifica'; }
 
-  constructor(private http: HttpClient, private noteSpeseService: NoteSpeseService) {}
+  constructor(
+    private readonly noteSpeseService: NoteSpeseService,
+    private readonly clientiOrdiniService: ClientiOrdiniService
+  ) {}
 
   ngOnInit(): void {
     this.generaCalendario();
@@ -190,9 +188,8 @@ export class NoteSpese implements OnInit {
     if (!confirm('Sei sicuro di voler eliminare questa nota spesa?')) return;
 
     if (spesaDaEliminare.id != null) {
-      const url = `http://localhost:5000/api/SpesaNota/Utente/DeleteSpesa?id=${spesaDaEliminare.id}`;
       this.deletingSpesaId = spesaDaEliminare.id;
-      this.http.delete<any>(url).subscribe({
+      this.noteSpeseService.deleteSpesa(spesaDaEliminare.id).subscribe({
         next: (res) => {
           const esitoOk = typeof res?.esito === 'string' ? res.esito.toLowerCase().includes('riuscita') : true;
           if (esitoOk) {
@@ -353,9 +350,8 @@ export class NoteSpese implements OnInit {
   generaCalendario(): void {
     const anno = this.dataVisualizzata.getFullYear();
     const mese = this.dataVisualizzata.getMonth();
-    let primoGiorno = new Date(anno, mese, 1).getDay();
-    primoGiorno = primoGiorno === 0 ? 6 : primoGiorno - 1;
-    this.giorniVuoti = Array(primoGiorno).fill(0);
+    const allDays = generateCalendarDays(anno, mese);
+    this.giorniVuoti = Array(allDays.indexOf(1)).fill(0);
     const numGiorni = new Date(anno, mese + 1, 0).getDate();
     this.giorniDelMese = Array.from({ length: numGiorni }, (_, i) => i + 1);
   }
@@ -368,12 +364,13 @@ export class NoteSpese implements OnInit {
   }
 
   cambiaMese(d: number): void {
-    this.dataVisualizzata.setMonth(this.dataVisualizzata.getMonth() + d);
+    const nav = navigateMonth(this.dataVisualizzata.getMonth(), this.dataVisualizzata.getFullYear(), d);
+    this.dataVisualizzata = new Date(nav.year, nav.month, 1);
     this.generaCalendario();
   }
 
   isGiornoSelezionato(giorno: number, target: 'filtro' | 'popup'): boolean {
-    const data = this.parseDataString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData);
+    const data = parseDateString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData);
     if (!data) return false;
     return (
       data.getDate() === giorno &&
@@ -384,10 +381,7 @@ export class NoteSpese implements OnInit {
 
   formattaData(event: Event, campo: string): void {
     const target = event.target as HTMLInputElement;
-    let v = target.value.replace(/\D/g, '');
-    if (v.length > 8) v = v.substring(0, 8);
-    if (v.length >= 5) v = v.replace(/(\d{2})(\d{2})(\d{1,4})/, '$1/$2/$3');
-    else if (v.length >= 3) v = v.replace(/(\d{2})(\d{1,2})/, '$1/$2');
+    const v = sanitizeDateInput(target.value);
     if (campo === 'filtro') this.filtroData = v; else this.nuovaSpesaData = v;
   }
 
@@ -481,20 +475,17 @@ export class NoteSpese implements OnInit {
 
   private loadSpese(year: number = new Date().getFullYear()): void {
     this.isSpeseLoading = true;
-    const url = `http://localhost:5000/api/SpesaNota/Utente/GetSpeseByUserAndYear?year=${year}`;
-    console.log('[NoteSpese] Loading spese from', url);
-    this.http.get<any[]>(url).subscribe({
+    this.noteSpeseService.getSpeseByYear(year).subscribe({
       next: (res) => {
-        console.log('[NoteSpese] loadSpese response:', res);
         const mapped = (res || []).map(item => {
-          const id = item?.id ?? item?.idSpesa ?? item?.idSpesaNota ?? null;
-          const idCliente = item?.idCliente ?? item?.idClienteOrdine ?? item?.clienteId ?? null;
+          const id = (item as any)?.id ?? item?.idSpesa ?? (item as any)?.idSpesaNota ?? null;
+          const idCliente = (item as any)?.idCliente ?? (item as any)?.idClienteOrdine ?? (item as any)?.clienteId ?? null;
           return {
             id,
-            data: this.formatDateIt(item.dataNotificazione),
+            data: formatDateIt(item.dataNotificazione),
             codice: item.codiceOrdine || '',
             richiesto: this.formattaTotaleNumber(item.totaleComplessivo || 0),
-            validato: this.formattaTotaleNumber(item.totaleValidato || 0),
+            validato: this.formattaTotaleNumber((item as any).totaleValidato || 0),
             pagato: Boolean(item.statoPagamento),
             idCliente,
           } as Spesa;
@@ -534,16 +525,11 @@ export class NoteSpese implements OnInit {
   }
 
   clampNonNegative(value: number | string | null | undefined): number {
-    const n = Number(value);
-    if (!Number.isFinite(n) || n < 0) return 0;
-    return n;
+    return clampNonNegative(value);
   }
 
   blockNegative(event: KeyboardEvent): void {
-    const blockedKeys = ['-', '+', 'e', 'E'];
-    if (blockedKeys.includes(event.key)) {
-      event.preventDefault();
-    }
+    blockNegative(event);
   }
 
   private sommaDettaglio(dett: DettaglioSpesa): number {
@@ -560,28 +546,10 @@ export class NoteSpese implements OnInit {
     );
   }
 
-  private parseDataString(valore: string): Date | null {
-    if (!valore || valore.length !== 10) return null;
-    const [giorno, mese, anno] = valore.split('/').map((part) => Number(part));
-    if (!giorno || !mese || !anno) return null;
-    const data = new Date(anno, mese - 1, giorno);
-    return Number.isNaN(data.getTime()) ? null : data;
-  }
-
   private syncCalendarioConData(target: 'filtro' | 'popup'): void {
-    const data = this.parseDataString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData) || new Date();
+    const data = parseDateString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData) || new Date();
     this.dataVisualizzata = new Date(data.getFullYear(), data.getMonth(), 1);
     this.generaCalendario();
-  }
-
-  private formatDateIt(val: string | null | undefined): string {
-    if (!val) return '';
-    const d = new Date(val);
-    if (Number.isNaN(d.getTime())) return '';
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
   }
 
   private rebuildFiltroOrdiniOptions(): void {
@@ -595,11 +563,8 @@ export class NoteSpese implements OnInit {
   private loadClienti(): void {
     if (this.clientiLoaded || this.isClientiLoading) return;
     this.isClientiLoading = true;
-    const url = `http://localhost:5000/api/Utente/utente/getClienteByUtente`;
-    console.log('[NoteSpese] Loading clienti from', url);
-    this.http.get<ClienteApiItem[]>(url).subscribe({
+    this.clientiOrdiniService.getClienti().subscribe({
       next: (res) => {
-        console.log('[NoteSpese] loadClienti response:', res);
         this.clientiLoaded = true;
         this.clientiOptions.splice(0, this.clientiOptions.length, ...(res || []));
         if (this.clientiOptions.length && this.dettagliSpesa[0]) {
@@ -630,30 +595,27 @@ export class NoteSpese implements OnInit {
       return;
     }
 
-      this.isOrdiniLoading = true;
-      const url = `http://localhost:5000/api/Ordini?IdCliente=${idCliente}`;
-      console.log('[NoteSpese] Loading ordini from', url);
-      this.http.get<OrdineApiItem[]>(url).subscribe({
-        next: (res) => {
-          console.log('[NoteSpese] loadOrdini response for', idCliente, res);
-          this.ordiniCache[idCliente] = res || [];
-          if (!this.ordiniCache[idCliente].length) {
-            this.loadErrore = 'Nessun ordine per il cliente selezionato.';
-          }
-            this.enrichSpeseWithClienti();
-          this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
-        },
-        error: (err) => {
-          console.error('[NoteSpese] getOrdini error:', err);
-          this.loadErrore = `Errore caricamento ordini: ${err?.status || 'n/a'}`;
-          this.ordiniCache[idCliente] = this.ordiniCache[idCliente] || [];
-            this.enrichSpeseWithClienti();
-          this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
-        },
-        complete: () => {
-          this.isOrdiniLoading = false;
+    this.isOrdiniLoading = true;
+    this.clientiOrdiniService.getOrdini(idCliente).subscribe({
+      next: (res) => {
+        this.ordiniCache[idCliente] = res || [];
+        if (!this.ordiniCache[idCliente].length) {
+          this.loadErrore = 'Nessun ordine per il cliente selezionato.';
         }
-      });
+        this.enrichSpeseWithClienti();
+        this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
+      },
+      error: (err) => {
+        console.error('[NoteSpese] getOrdini error:', err);
+        this.loadErrore = `Errore caricamento ordini: ${err?.status || 'n/a'}`;
+        this.ordiniCache[idCliente] = this.ordiniCache[idCliente] || [];
+        this.enrichSpeseWithClienti();
+        this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
+      },
+      complete: () => {
+        this.isOrdiniLoading = false;
+      }
+    });
   }
 
   private ensureCodiceOrdineValid(dett: DettaglioSpesa | undefined, ordini: OrdineApiItem[]): void {
@@ -682,9 +644,9 @@ export class NoteSpese implements OnInit {
   }
 
   private buildAddPayload(): AddSpesaRequest {
-    const dataNotificazione = this.formatDateISO(this.nuovaSpesaData);
+    const dataNotificazione = formatDateISO(this.nuovaSpesaData);
     const dettagli = this.dettagliSpesa.map(d => ({
-      dataDettaglio: this.formatDateISO(this.nuovaSpesaData),
+      dataDettaglio: formatDateISO(this.nuovaSpesaData),
       vitto: Number(d.vitto || 0),
       hotel: Number(d.hotel || 0),
       trasportiLocali: Number(d.trasporti || 0),
@@ -707,7 +669,7 @@ export class NoteSpese implements OnInit {
     const dettagli = this.dettagliSpesa.map(d => ({
       idDettaglio: d.idDettaglio ?? 0,
       daEliminare: false,
-      dataDettaglio: this.formatDateISO(this.nuovaSpesaData),
+      dataDettaglio: formatDateISO(this.nuovaSpesaData),
       vitto: Number(d.vitto || 0),
       hotel: Number(d.hotel || 0),
       trasportiLocali: Number(d.trasporti || 0),
@@ -726,11 +688,4 @@ export class NoteSpese implements OnInit {
     };
   }
 
-  private formatDateISO(valore: string): string {
-    const data = this.parseDataString(valore) || new Date();
-    const yyyy = data.getFullYear();
-    const mm = String(data.getMonth() + 1).padStart(2, '0');
-    const dd = String(data.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
 }

@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AttivitaService, AttivitaItem, AddAttivitaPayload, UpdateAttivitaPayload, ClienteApiItem, OrdineApiItem } from './attivitaservice';
+import { AttivitaService, AttivitaItem, AddAttivitaPayload, UpdateAttivitaPayload } from './attivitaservice';
+import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
+import { ClienteApiItem } from '../../dto/cliente.dto';
+import { OrdineApiItem } from '../../dto/ordine.dto';
+import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
 
 
-// Rappresenta una singola cella del mini-calendario
-// `valore`: giorno del mese
-// `corrente`: true se il giorno appartiene al mese visualizzato
 interface GiornoCalendario {
   valore: number;
   corrente: boolean;
@@ -26,21 +27,18 @@ export class Attivita implements OnInit {
   private readonly maxOreGiornaliere = 8;
 
   giornoSelezionato = 1;
-  meseCorrente = 0; // verrà aggiornato a runtime
-  annoCorrente = 2000; // verrà aggiornato a runtime
+  meseCorrente = 0;
+  annoCorrente = 2000;
 
-  // Stato e dati della UI
   giorniCalendario: GiornoCalendario[] = [];
   listaAnni: number[] = [];
   listaAttivita: AttivitaItem[] = [];
 
-  // Opzioni caricate dal backend per i select nel modal
   clientiOptions: ClienteApiItem[] = [];
   ordiniOptions: OrdineApiItem[] = [];
-  // Selezioni correnti nel form/modal
   selectedClienteId: number | null = null;
   selectedCodice: string | null = null;
-  private clientiLoaded = false;   // evita ricariche ridondanti della lista clienti
+  private clientiLoaded = false;
 
 
   isLoading = false;
@@ -54,16 +52,17 @@ export class Attivita implements OnInit {
   isDettaglioOpen = false;
   attivitaDettaglio: AttivitaItem | null = null;
 
-  // Il service inietta l'HTTP layer
-  constructor(private attivitaService: AttivitaService) {}
+  constructor(
+    private readonly attivitaService: AttivitaService,
+    private readonly clientiOrdiniService: ClientiOrdiniService
+  ) {}
 
   ngOnInit(): void {
-    // Inizializza data e visualizzazione, poi carica dati necessari
     this.impostaDataOggi();
     this.listaAnni = this.creaIntervalloAnni();
     this.generaCalendario();
-    this.loadClienti();// carico i clienti per popolare il select del modal
-    this.loadAttivita(); // carico le attività per la data attuale
+    this.loadClienti();
+    this.loadAttivita();
   }
 
   apriModal(): void {
@@ -77,22 +76,15 @@ export class Attivita implements OnInit {
     this.mostraModal = true;
   }
 
-  // Apre il modal per la creazione di una nuova attività e resetta i campi del form e i select collegati.
-
   modificaAttivita(index: number): void {
     this.isModifica = true;
     this.indiceInModifica = index;
     this.nuovaAttivita = { ...this.listaAttivita[index] };
-    // Preimposto i select nel modal in base all'attività da modificare
     this.selectedClienteId = this.findClienteIdByNome(this.nuovaAttivita.nominativoCliente);
     this.selectedCodice = this.nuovaAttivita.codiceOrdine || null;
-    // Carico gli ordini del cliente; `keepSelection=true` mantiene il codice se ancora presente
     this.loadOrdiniByCliente(this.selectedClienteId, true);
     this.mostraModal = true;
   }
-
-  // Apre il modal per modifica. Prepopola i select cliente/ordine e mantiene
-  // la selezione del codice se ancora presente tra gli ordini del cliente.
 
   apriDettaglio(attivita: AttivitaItem, index: number): void {
     this.attivitaDettaglio = attivita;
@@ -152,14 +144,10 @@ export class Attivita implements OnInit {
       },
       error: (err: any) => {
         console.error('addAttivita error:', err);
-        if (err && err.error) console.error('addAttivita error.body:', err.error);
         this.errorMsg = 'Errore durante la creazione dell\'attività';
       }
     });
   }
-
-  // Conferma l'aggiunta: valida il form, costruisce il payload e chiama il POST.
-  // Gestisce feedback di errore e messaggi di skippedDates (se presenti).
 
   private confermaModifica(): void {
     const idx = this.indiceInModifica;
@@ -176,7 +164,6 @@ export class Attivita implements OnInit {
     const payload = this.buildUpdatePayload();
     const dataAttivita = payload.dataAttivita;
 
-    // Effettua la chiamata al backend per aggiornare l'attività
     this.isLoading = true;
     this.errorMsg = '';
     this.attivitaService.updateAttivita(payload).subscribe({
@@ -204,7 +191,6 @@ export class Attivita implements OnInit {
     if (!target) return;
     if (!confirm('Sei sicuro di voler eliminare questa attività?')) return;
 
-    // Chiamata al backend per eliminare l'attività selezionata
     this.isLoading = true;
     this.errorMsg = '';
     this.attivitaService.deleteAttivita(target.idAttivita).subscribe({
@@ -309,16 +295,11 @@ export class Attivita implements OnInit {
   }
 
   clampNonNegative(value: number | string | null | undefined): number {
-    const n = Number(value);
-    if (!Number.isFinite(n) || n < 0) return 0;
-    return n;
+    return clampNonNegative(value);
   }
 
   blockNegative(event: KeyboardEvent): void {
-    const blockedKeys = ['-', '+', 'e', 'E'];
-    if (blockedKeys.includes(event.key)) {
-      event.preventDefault();
-    }
+    blockNegative(event);
   }
 
   private dataSelezionataISO(): string {
@@ -326,7 +307,6 @@ export class Attivita implements OnInit {
     const mm = month < 10 ? `0${month}` : `${month}`;
     const dd = this.giornoSelezionato < 10 ? `0${this.giornoSelezionato}` : `${this.giornoSelezionato}`;
     return `${this.annoCorrente}-${mm}-${dd}`;
-    
   }
 
   private aggiornaAttivitaPerData(): void {
@@ -348,23 +328,17 @@ export class Attivita implements OnInit {
     });
   }
 
-  // Ritorna la data selezionata come stringa ISO (YYYY-MM-DD) usata per le query
-  // Usata da `loadAttivita` e dai builders di payload per garantire coerenza
-
-
   private buildAddPayload(): AddAttivitaPayload {
     const dataInizio = this.dataSelezionataISO();
     return {
       codiceOrdine: this.nuovaAttivita.codiceOrdine,
       luogo: this.nuovaAttivita.location,
       dataInizio,
-      dataFine: dataInizio, // dataFine deve essere valorizzata con dataInizio
+      dataFine: dataInizio,
       ricorrenza: [],
       oreLavoro: this.nuovaAttivita.ore,
     };
   }
-
-  // Costruisce il payload per la chiamata POST di creazione e mappa i campi del form nella shape richiesta dal backend.  
 
   private buildUpdatePayload(): UpdateAttivitaPayload {
     const dataAttivita = (this.nuovaAttivita.dataAttivita || this.dataSelezionataISO()).slice(0, 10);
@@ -377,14 +351,12 @@ export class Attivita implements OnInit {
     };
   }
 
-  // Costruisce il payload per la chiamata PUT di aggiornamento e assicura che dataAttivita sia in formato YYYY-MM-DD. Il backend si aspetta questa forma per processare correttamente la data
   private esitoRiuscito(esito?: string): boolean {
     return (esito || '').toLowerCase().includes('riuscita');
   }
 
   onClienteChange(): void {
     if (this.selectedClienteId == null) return;
-    // L'utente ha selezionato un cliente dal select: sincronizzo nominativo e carico ordini
     this.syncClienteFromId(this.selectedClienteId);
     this.loadOrdiniByCliente(this.selectedClienteId);
   }
@@ -394,7 +366,6 @@ export class Attivita implements OnInit {
     const ordine = this.ordiniOptions.find(o => o.codiceOrdine === this.selectedCodice);
     this.nuovaAttivita.codiceOrdine = this.selectedCodice;
     if (ordine && ordine.idCliente) {
-      // Se l'ordine selezionato porta con sé l'id cliente, sincronizzo anche il select cliente
       this.selectedClienteId = ordine.idCliente;
       this.syncClienteFromId(ordine.idCliente);
     }
@@ -407,7 +378,7 @@ export class Attivita implements OnInit {
 
   private loadClienti(): void {
     if (this.clientiLoaded) return;
-    this.attivitaService.getClienti().subscribe({
+    this.clientiOrdiniService.getClienti().subscribe({
       next: (res) => {
         this.clientiOptions = res || [];
         this.clientiLoaded = true;
@@ -419,10 +390,8 @@ export class Attivita implements OnInit {
   private loadOrdiniByCliente(idCliente: number | null, keepSelection: boolean = false): void {
     this.ordiniOptions = [];
     if (idCliente == null) return;
-    this.attivitaService.getOrdini(idCliente).subscribe({
+    this.clientiOrdiniService.getOrdini(idCliente).subscribe({
       next: (res) => {
-        // filtro e imposto le opzioni ordini nel select e non forzo selezioni automatiche
-        // Shape attesa ordine: { codiceOrdine: string, idCliente: number, ... }
         const list = (res || []).filter(o => !idCliente || o.idCliente === idCliente);
         this.ordiniOptions = list;
         if (keepSelection && this.selectedCodice) {
@@ -435,7 +404,6 @@ export class Attivita implements OnInit {
   }
 
   private syncClienteFromId(idCliente: number): void {
-    // Aggiorna il campo `nominativoCliente` nell'oggetto attività a partire dall'id selezionato
     const cliente = this.clientiOptions.find(c => c.idCliente === idCliente);
     if (!cliente) return;
     this.nuovaAttivita.nominativoCliente = cliente.nominativo;
@@ -457,7 +425,6 @@ export class Attivita implements OnInit {
     this.errorMsg = restante <= 0
       ? `Hai già raggiunto il limite massimo di ${this.maxOreGiornaliere} ore per il giorno selezionato.`
       : `Limite giornaliero di ${this.maxOreGiornaliere} ore superato: ore già inserite ${totaleAttuale}. Ore disponibili: ${restante}.`;
-    // Mantieni il messaggio più visibile: dura 10 secondi o fino a chiusura manuale
     setTimeout(() => (this.errorMsg = ''), 10000);
   }
 
