@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { NoteSpeseService, DettaglioApiResponse } from './note-spese.service';
+import { NoteSpeseService, DettaglioApiResponse, AddSpesaRequest } from './note-spese.service';
 
 interface Spesa {
   id?: number | null;
@@ -226,7 +226,7 @@ export class NoteSpese implements OnInit {
 
     if (this.isAggiungi) {
       const payload = this.buildAddPayload();
-      this.http.post<boolean>('http://localhost:5000/api/SpesaNota/Utente/AddSpesa', payload).subscribe({
+      this.noteSpeseService.addSpesa(payload).subscribe({
         next: (ok) => {
           if (ok === true) {
             const totaleStringa = this.formattaTotale(this.totaleCalcolato);
@@ -633,7 +633,7 @@ export class NoteSpese implements OnInit {
     });
   }
 
-  private buildAddPayload(): any {
+  private buildAddPayload(): AddSpesaRequest {
     const dataNotificazione = this.formatDateISO(this.nuovaSpesaData);
     const dettagli = this.dettagliSpesa.map(d => ({
       dataDettaglio: this.formatDateISO(this.nuovaSpesaData),
