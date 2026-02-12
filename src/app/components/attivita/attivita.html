@@ -58,6 +58,7 @@
           <th>Cliente</th>
           <th>Location</th>
           <th>Ore</th>
+          <th>Stato</th>
           <th class="text-center azioni-col">Azioni</th>
         </tr>
       </thead>
@@ -67,6 +68,7 @@
           <td>{{ item.nominativoCliente }}</td>
           <td>{{ item.location }}</td>
           <td>{{ item.ore }}:00</td>
+          <td>{{ item.stato || '—' }}</td>
           <td class="text-center azioni-col">
             <button class="btn btn-link text-dark" (click)="apriDettaglio(item, i)">
               <i class="bi bi-eye"></i>
@@ -80,7 +82,7 @@
           </td>
         </tr>
         <tr *ngIf="!isLoading && listaAttivita.length === 0">
-          <td colspan="5" class="text-center text-muted py-4">Nessuna attività trovata.</td>
+          <td colspan="6" class="text-center text-muted py-4">Nessuna attività trovata.</td>
         </tr>
       </tbody>
     </table>
@@ -109,6 +111,7 @@
         <label class="fw-bold text-muted d-block">Ore</label>
         <span class="fw-bold">{{ attivitaDettaglio?.ore }}:00</span>
       </div>
+      
       <div class="col-6 text-start">
       </div>
     </div>

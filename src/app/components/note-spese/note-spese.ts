@@ -696,7 +696,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
   private formatDateISO(valore: string): string {
-    const data = this.parseDataString(valore) || new Date();
+    const data = parseDateString(valore) || new Date();
     const yyyy = data.getFullYear();
     const mm = String(data.getMonth() + 1).padStart(2, '0');
     const dd = String(data.getDate()).padStart(2, '0');

@@ -9,6 +9,7 @@ import { environment } from '../config/env';
 @Injectable()
 export class AuthTokenInterceptor implements HttpInterceptor {
   private readonly baseUrl = environment.apiBaseUrl;
+  private readonly debug = true; // set false to silence logs
 
   constructor(private readonly auth: AuthService) {}
 
@@ -17,6 +18,11 @@ export class AuthTokenInterceptor implements HttpInterceptor {
       switchMap((token) => {
         const isRelative = !/^https?:\/\//i.test(req.url);
         const url = isRelative ? `${this.baseUrl}${req.url}` : req.url;
+
+        if (this.debug) {
+          console.log('[AuthTokenInterceptor] request', req.method, url);
+          console.log('[AuthTokenInterceptor] token', token ?? 'null');
+        }
 
         if (token) {
           const authReq = req.clone({

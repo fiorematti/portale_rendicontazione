@@ -9,6 +9,7 @@ export interface AttivitaItem {
   location: string;
   ore: number;
   dataAttivita: string;
+  stato?: string;
 }
 
 export interface AddAttivitaPayload {

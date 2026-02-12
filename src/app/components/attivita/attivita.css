@@ -113,6 +113,12 @@
     white-space: nowrap;
 }
 
+.codice-col {
+    width: 140px;
+    max-width: 160px;
+    white-space: nowrap;
+}
+
 .bg-success-custom {
     background-color: #d4edda;
     color: #155724;
