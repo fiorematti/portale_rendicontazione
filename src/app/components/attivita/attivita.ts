@@ -5,6 +5,7 @@ import { AttivitaService, AttivitaItem, AddAttivitaPayload, UpdateAttivitaPayloa
 import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
 import { ClienteApiItem } from '../../dto/cliente.dto';
 import { OrdineApiItem } from '../../dto/ordine.dto';
+import { LuogoApiItem } from '../../dto/luogo.dto';
 import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
 
 
@@ -33,13 +34,14 @@ export class Attivita implements OnInit {
   giorniCalendario: GiornoCalendario[] = [];
   listaAnni: number[] = [];
   listaAttivita: AttivitaItem[] = [];
-  locationOptions: string[] = [];
+  locationOptions: LuogoApiItem[] = [];
 
   clientiOptions: ClienteApiItem[] = [];
   ordiniOptions: OrdineApiItem[] = [];
   selectedClienteId: number | null = null;
   selectedCodice: string | null = null;
   private clientiLoaded = false;
+  private locationLoaded = false;
 
 
   isLoading = false;
@@ -63,6 +65,7 @@ export class Attivita implements OnInit {
     this.listaAnni = this.creaIntervalloAnni();
     this.generaCalendario();
     this.loadClienti();
+    this.loadLocation();
     this.loadAttivita();
   }
 
@@ -324,21 +327,21 @@ export class Attivita implements OnInit {
         const items = (res ?? [])
           .filter((item: AttivitaItem) => (item.dataAttivita || '').slice(0, 10) === selected);
         this.listaAttivita = items;
-        this.updateLocationOptions(items);
       },
       error: (err: any) => { this.errorMsg = 'Errore caricamento dati'; console.error(err); },
       complete: () => { this.isLoading = false; }
     });
   }
 
-  private updateLocationOptions(items: AttivitaItem[]): void {
-    const locations = items
-      .map(item => item.location)
-      .filter(loc => !!loc);
-    const unique = [...new Set(locations)];
-    if (unique.length > 0) {
-      this.locationOptions = unique;
-    }
+  private loadLocation(): void {
+    if (this.locationLoaded) return;
+    this.attivitaService.getLocation().subscribe({
+      next: (res) => {
+        this.locationOptions = res || [];
+        this.locationLoaded = true;
+      },
+      error: (err) => { console.error('getLocation error:', err); }
+    });
   }
 
   private buildAddPayload(): AddAttivitaPayload {

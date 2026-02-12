@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { LuogoApiItem } from '../../dto/luogo.dto';
 
 export interface AttivitaItem {
   idAttivita: number;
@@ -67,5 +68,9 @@ export class AttivitaService {
   deleteAttivita(idAttivita: number): Observable<DeleteAttivitaResponse> {
     const params = new HttpParams().set('IdAttivita', idAttivita.toString());
     return this.http.delete<DeleteAttivitaResponse>(`${this.baseUrl}/DeleteAttivita`, { params });
+  }
+
+  getLocation(): Observable<LuogoApiItem[]> {
+    return this.http.get<LuogoApiItem[]>('/api/Luogo');
   }
 }
