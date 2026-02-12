@@ -85,7 +85,6 @@ export class NoteSpese implements OnInit {
 
   mostraCalendario = false;
 
-  constructor(private readonly noteSpeseService: NoteSpeseService) {}
   targetData: 'filtro' | 'popup' = 'filtro';
   dataVisualizzata: Date = new Date();
   giorniDelMese: number[] = [];
