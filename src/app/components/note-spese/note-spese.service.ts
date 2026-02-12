@@ -1,38 +1,69 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-export interface DettaglioSpesaRequest {
+export interface SpesaNotaResponse {
+  idSpesa: number;
+  codiceOrdine: string;
+  dataNotificazione: string;
+  statoPagamento: boolean;
+  totaleComplessivo: number;
+}
+
+export interface DettaglioApiResponse {
   idDettaglio: number;
-  daEliminare: boolean;
+  idSpesa: number;
+  dataDettaglio: string;
+  statoApprovazione: string;
+  vitto: number;
+  hotel: number;
+  trasportiLocali: number;
+  aereo: number;
+  spesaVaria: number;
+  idAuto: number | null;
+  km: number;
+  telepass: number;
+  parking: number;
+  idAutoNavigation: any;
+  idSpesaNavigation: any;
+}
+
+export interface AddSpesaDettaglio {
   dataDettaglio: string;
   vitto: number;
   hotel: number;
   trasportiLocali: number;
   aereo: number;
   spesaVaria: number;
-  idAuto: number;
+  idAuto: number | null;
   km: number;
   telepass: number;
   parking: number;
 }
 
-export interface UpdateSpesaRequest {
+export interface AddSpesaRequest {
   codiceOrdine: string;
-  idSpesa: number;
-  dettagli: DettaglioSpesaRequest[];
-}
-
-export interface UpdateSpesaResponse {
-  esito: string;
-  motivazione: string;
+  dataNotificazione: string;
+  dettagli: AddSpesaDettaglio[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class NoteSpeseService {
+  private readonly baseUrl = '/api/SpesaNota/Utente';
+
   constructor(private readonly http: HttpClient) {}
 
-  updateSpesa(body: UpdateSpesaRequest): Observable<UpdateSpesaResponse> {
-    return this.http.put<UpdateSpesaResponse>('/api/SpesaNota/Utente/UpdateSpesa', body);
+  getSpeseByYear(year: number): Observable<SpesaNotaResponse[]> {
+    const params = new HttpParams().set('year', year.toString());
+    return this.http.get<SpesaNotaResponse[]>(`${this.baseUrl}/GetSpeseByUserAndYear`, { params });
+  }
+
+  getDettagliBySpesa(idSpesa: number): Observable<DettaglioApiResponse[]> {
+    const params = new HttpParams().set('idSpesa', idSpesa.toString());
+    return this.http.get<DettaglioApiResponse[]>('/api/Dettaglio/getDettagliBySpesa', { params });
+  }
+
+  addSpesa(request: AddSpesaRequest): Observable<boolean> {
+    return this.http.post<boolean>(`${this.baseUrl}/AddSpesa`, request);
   }
 }

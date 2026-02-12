@@ -123,3 +123,51 @@
     color: #721c24;
 }
 
+/* Responsive layout tweaks */
+@media (max-width: 992px) {
+    .container-fluid > .d-flex.justify-content-between.align-items-start.mb-4 {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .container-fluid > .d-flex.justify-content-between.align-items-start.mb-4 > div:last-child {
+        width: 100%;
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .calendar-card-mini {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Make the table scroll horizontally on small screens without breaking layout */
+    .mb-4 > table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .mb-4 > table thead, 
+    .mb-4 > table tbody {
+        width: 100%;
+    }
+
+    .mb-4 > table th,
+    .mb-4 > table td {
+        white-space: nowrap;
+    }
+
+    .modal-card {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 12px;
+    }
+
+    .d-flex.align-items-start > .ms-5 {
+        margin-left: 0 !important;
+    }
+}
+
