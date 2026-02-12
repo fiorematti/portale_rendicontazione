@@ -119,27 +119,39 @@
           </h2>
 
           <div *ngIf="dettagliSpesa[tabAttiva]" class="d-flex align-items-center gap-3">
-            <div style="min-width:220px;">
-              <label class="small fw-bold">Cliente</label>
-              <select class="form-select custom-select" [disabled]="modalMode === 'visualizza'"
-                [(ngModel)]="dettagliSpesa[tabAttiva].idCliente" (change)="onClienteChange(dettagliSpesa[tabAttiva])">
-                <option [ngValue]="null">Seleziona cliente</option>
-                <option *ngIf="isClientiLoading" [ngValue]="null">Caricamento clienti...</option>
-                <option *ngIf="!isClientiLoading && !clientiOptions.length" [ngValue]="null">Nessun cliente disponibile</option>
-                <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
-              </select>
-            </div>
-            <div style="min-width:220px;">
-              <label class="small fw-bold">Codice ordine</label>
-              <select class="form-select custom-select" [disabled]="modalMode === 'visualizza'"
-                [(ngModel)]="dettagliSpesa[tabAttiva].codiceOrdine"
-                (change)="onCodiceChange(dettagliSpesa[tabAttiva], dettagliSpesa[tabAttiva].codiceOrdine)">
-                <option [ngValue]="''">Seleziona codice</option>
-                <option *ngIf="isOrdiniLoading" [ngValue]="dettagliSpesa[tabAttiva].codiceOrdine">Caricamento ordini...</option>
-                <option *ngIf="!isOrdiniLoading && !ordiniDisponibili(dettagliSpesa[tabAttiva]).length" [ngValue]="''">Nessun ordine disponibile</option>
-                <option *ngFor="let o of ordiniDisponibili(dettagliSpesa[tabAttiva])" [ngValue]="o.codiceOrdine">{{ o.codiceOrdine }}</option>
-              </select>
-            </div>
+            <ng-container *ngIf="modalMode !== 'visualizza'; else infoSoloTesto">
+              <div style="min-width:220px;">
+                <label class="small fw-bold">Cliente</label>
+                <select class="form-select custom-select"
+                  [(ngModel)]="dettagliSpesa[tabAttiva].idCliente" (change)="onClienteChange(dettagliSpesa[tabAttiva])">
+                  <option [ngValue]="null">Seleziona cliente</option>
+                  <option *ngIf="isClientiLoading" [ngValue]="null">Caricamento clienti...</option>
+                  <option *ngIf="!isClientiLoading && !clientiOptions.length" [ngValue]="null">Nessun cliente disponibile</option>
+                  <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
+                </select>
+              </div>
+              <div style="min-width:220px;">
+                <label class="small fw-bold">Codice ordine</label>
+                <select class="form-select custom-select"
+                  [(ngModel)]="dettagliSpesa[tabAttiva].codiceOrdine"
+                  (change)="onCodiceChange(dettagliSpesa[tabAttiva], dettagliSpesa[tabAttiva].codiceOrdine)">
+                  <option [ngValue]="''">Seleziona codice</option>
+                  <option *ngIf="isOrdiniLoading" [ngValue]="dettagliSpesa[tabAttiva].codiceOrdine">Caricamento ordini...</option>
+                  <option *ngIf="!isOrdiniLoading && !ordiniDisponibili(dettagliSpesa[tabAttiva]).length" [ngValue]="''">Nessun ordine disponibile</option>
+                  <option *ngFor="let o of ordiniDisponibili(dettagliSpesa[tabAttiva])" [ngValue]="o.codiceOrdine">{{ o.codiceOrdine }}</option>
+                </select>
+              </div>
+            </ng-container>
+            <ng-template #infoSoloTesto>
+              <div aria-label="Cliente" class="text-only-info">
+                <div class="small fw-bold text-muted">Cliente</div>
+                <div class="fw-semibold">{{ dettagliSpesa[tabAttiva].nominativoCliente || '—' }}</div>
+              </div>
+              <div aria-label="Codice ordine" class="text-only-info ms-3">
+                <div class="small fw-bold text-muted">Codice ordine</div>
+                <div class="fw-semibold">{{ dettagliSpesa[tabAttiva].codiceOrdine || '—' }}</div>
+              </div>
+            </ng-template>
           </div>
         </div>
 
@@ -169,7 +181,7 @@
         </div>
 
         <!-- Tabs dettagli e form per singolo dettaglio -->
-        <div class="d-flex align-items-center gap-3 mb-4 border-bottom pb-2" *ngIf="!isDettaglioLoading">
+        <div class="tab-strip d-flex align-items-center gap-3 mb-4 border-bottom pb-2" *ngIf="!isDettaglioLoading">
           <span *ngFor="let dett of dettagliSpesa; let i = index" class="tab-item" [class.active]="tabAttiva === i"
             (click)="selezionaTab(i)">
             Dett. {{ i + 1 }}
