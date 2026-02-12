@@ -39,6 +39,7 @@ interface DettaglioSpesa {
   parking?: number | null;
   telepass?: number | null;
   costo?: number | null;
+  idAuto?: number;
 }
 
 @Component({
@@ -82,6 +83,8 @@ export class NoteSpese implements OnInit {
   rigaSelezionata: Spesa | null = null;
 
   mostraCalendario = false;
+
+  constructor(private readonly noteSpeseService: NoteSpeseService) {}
   targetData: 'filtro' | 'popup' = 'filtro';
   dataVisualizzata: Date = new Date();
   giorniDelMese: number[] = [];
