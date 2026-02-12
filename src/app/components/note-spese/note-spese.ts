@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NoteSpeseService, UpdateSpesaRequest } from './note-spese.service';
 
 interface Spesa {
+  idSpesa: number;
   data: string;
   codice: string;
   richiesto: string;
@@ -11,6 +13,8 @@ interface Spesa {
 }
 
 interface DettaglioSpesa {
+  idDettaglio?: number;
+  daEliminare?: boolean;
   codiceOrdine: string;
   vitto?: number | null;
   alloggio?: number | null;
@@ -23,6 +27,7 @@ interface DettaglioSpesa {
   parking?: number | null;
   telepass?: number | null;
   costo?: number | null;
+  idAuto?: number;
 }
 
 @Component({
@@ -36,9 +41,9 @@ export class NoteSpese implements OnInit {
   private readonly filtroDefault = 'Tutti';
 
   listaSpese: Spesa[] = [
-    { data: '14/01/2026', codice: 'AAAA/xxxx', richiesto: '215,00€', validato: '190,00€', pagato: true },
-    { data: '15/01/2026', codice: 'BBBB/yyyy', richiesto: '120,00€', validato: '120,00€', pagato: true },
-    { data: '16/01/2026', codice: 'CCCC/zzzz', richiesto: '45,00€', validato: '40,00€', pagato: false },
+    { idSpesa: 0, data: '14/01/2026', codice: 'AAAA/xxxx', richiesto: '215,00€', validato: '190,00€', pagato: true },
+    { idSpesa: 0, data: '15/01/2026', codice: 'BBBB/yyyy', richiesto: '120,00€', validato: '120,00€', pagato: true },
+    { idSpesa: 0, data: '16/01/2026', codice: 'CCCC/zzzz', richiesto: '45,00€', validato: '40,00€', pagato: false },
   ];
 
   filtroPagate = this.filtroDefault;
@@ -55,6 +60,8 @@ export class NoteSpese implements OnInit {
   rigaSelezionata: Spesa | null = null;
 
   mostraCalendario = false;
+
+  constructor(private readonly noteSpeseService: NoteSpeseService) {}
   targetData: 'filtro' | 'popup' = 'filtro';
   dataVisualizzata: Date = new Date();
   giorniDelMese: number[] = [];
@@ -123,9 +130,38 @@ export class NoteSpese implements OnInit {
     if (this.isAggiungi) {
       this.listaSpese.unshift(this.creaSpesaDaDettaglio(dett, totaleStringa));
     } else if (this.rigaSelezionata) {
-      this.rigaSelezionata.data = this.nuovaSpesaData;
-      this.rigaSelezionata.codice = dett.codiceOrdine;
-      this.rigaSelezionata.richiesto = totaleStringa;
+      const body: UpdateSpesaRequest = {
+        codiceOrdine: dett.codiceOrdine,
+        idSpesa: this.rigaSelezionata.idSpesa,
+        dettagli: this.dettagliSpesa.map(d => ({
+          idDettaglio: d.idDettaglio ?? 0,
+          daEliminare: d.daEliminare ?? false,
+          dataDettaglio: this.convertiDataPerApi(this.nuovaSpesaData),
+          vitto: Number(d.vitto || 0),
+          hotel: Number(d.hotel || 0),
+          trasportiLocali: Number(d.trasporti || 0),
+          aereo: Number(d.aereo || 0),
+          spesaVaria: Number(d.varie || 0),
+          idAuto: d.idAuto ?? 1,
+          km: Number(d.km || 0),
+          telepass: Number(d.telepass || 0),
+          parking: Number(d.parking || 0),
+        })),
+      };
+
+      this.noteSpeseService.updateSpesa(body).subscribe({
+        next: () => {
+          this.rigaSelezionata!.data = this.nuovaSpesaData;
+          this.rigaSelezionata!.codice = dett.codiceOrdine;
+          this.rigaSelezionata!.richiesto = totaleStringa;
+          this.chiudiModal();
+        },
+        error: () => {
+          this.mostraErrore = true;
+          setTimeout(() => (this.mostraErrore = false), 4000);
+        },
+      });
+      return;
     }
 
     this.chiudiModal();
@@ -254,6 +290,7 @@ export class NoteSpese implements OnInit {
 
   private creaSpesaDaDettaglio(dett: DettaglioSpesa, totale: string): Spesa {
     return {
+      idSpesa: 0,
       data: this.nuovaSpesaData,
       codice: dett.codiceOrdine,
       richiesto: totale,
@@ -303,5 +340,11 @@ export class NoteSpese implements OnInit {
     const data = this.parseDataString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData) || new Date();
     this.dataVisualizzata = new Date(data.getFullYear(), data.getMonth(), 1);
     this.generaCalendario();
+  }
+
+  private convertiDataPerApi(data: string): string {
+    const parts = data.split('/');
+    if (parts.length !== 3) return data;
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
   }
 }
