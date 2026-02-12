@@ -33,6 +33,7 @@ export class Attivita implements OnInit {
   giorniCalendario: GiornoCalendario[] = [];
   listaAnni: number[] = [];
   listaAttivita: AttivitaItem[] = [];
+  locationOptions: string[] = [];
 
   clientiOptions: ClienteApiItem[] = [];
   ordiniOptions: OrdineApiItem[] = [];
@@ -320,12 +321,24 @@ export class Attivita implements OnInit {
     this.attivitaService.getAttivita(data).subscribe({
       next: (res: AttivitaItem[] | null) => {
         const selected = data;
-        this.listaAttivita = (res ?? [])
+        const items = (res ?? [])
           .filter((item: AttivitaItem) => (item.dataAttivita || '').slice(0, 10) === selected);
+        this.listaAttivita = items;
+        this.updateLocationOptions(items);
       },
       error: (err: any) => { this.errorMsg = 'Errore caricamento dati'; console.error(err); },
       complete: () => { this.isLoading = false; }
     });
+  }
+
+  private updateLocationOptions(items: AttivitaItem[]): void {
+    const locations = items
+      .map(item => item.location)
+      .filter(loc => !!loc);
+    const unique = [...new Set(locations)];
+    if (unique.length > 0) {
+      this.locationOptions = unique;
+    }
   }
 
   private buildAddPayload(): AddAttivitaPayload {
