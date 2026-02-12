@@ -162,7 +162,7 @@
         <label class="fw-bold mb-1">Location</label>
         <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.location">
           <option value="">Seleziona location</option>
-          <option *ngFor="let loc of locationOptions" [ngValue]="loc">{{ loc }}</option>
+          <option *ngFor="let loc of locationOptions" [ngValue]="loc.nome">{{ loc.nome }}</option>
         </select>
       </div>
       <div class="col-6 text-start">
