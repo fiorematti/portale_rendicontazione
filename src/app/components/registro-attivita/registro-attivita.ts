@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { generateCalendarDays, navigateMonth, formatSelectedDay, isDaySelected, MONTH_NAMES_IT } from '../../shared/utils/calendar.utils';
+import { sanitizeDateInput, formatDateIt } from '../../shared/utils/date.utils';
 
 type FormatoExport = 'PDF' | 'EXCEL';
 type StatoConvalidaFiltro = '' | 'convalidato' | 'da-convalidare';
@@ -42,7 +44,7 @@ export class RegistroAttivitaComponent {
   currentMonth = new Date().getMonth();
   currentYear = new Date().getFullYear();
   calendarDays: (number | null)[] = [];
-  monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+  monthNames = MONTH_NAMES_IT;
 
   constructor() {
     this.generateCalendar();
@@ -72,10 +74,9 @@ export class RegistroAttivitaComponent {
 
   get attivitaFiltrate() {
     const testo = this.filtroTesto.toLowerCase();
-    const dataFiltro = this.filtroData;
     return this.elencoAttivita.filter(a => {
       const matchTesto = (a.nome + ' ' + a.cognome).toLowerCase().includes(testo);
-      const matchData = this.formatData(a.data).includes(dataFiltro);
+      const matchData = formatDateIt(a.data).includes(this.filtroData);
       const matchConvalida = this.matchesConvalida(a.convalidato, this.filtroConvalida);
       const matchLocation = this.filtroLocation === '' || a.location === this.filtroLocation;
       return matchTesto && matchData && matchConvalida && matchLocation;
@@ -83,7 +84,7 @@ export class RegistroAttivitaComponent {
   }
 
   onDataInput(event: any): void {
-    this.filtroData = this.sanitizeDate(event.target.value);
+    this.filtroData = sanitizeDateInput(event.target.value);
   }
 
   toggleCalendar(): void {
@@ -92,40 +93,33 @@ export class RegistroAttivitaComponent {
   }
 
   generateCalendar(): void {
-    this.calendarDays = [];
-    const firstDayIndex = new Date(this.currentYear, this.currentMonth, 1).getDay();
-    const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
-    const offset = (firstDayIndex === 0) ? 6 : firstDayIndex - 1;
-    for (let i = 0; i < offset; i++) this.calendarDays.push(null);
-    for (let i = 1; i <= daysInMonth; i++) this.calendarDays.push(i);
+    this.calendarDays = generateCalendarDays(this.currentYear, this.currentMonth);
   }
 
   prevMonth(event: Event): void {
     event.stopPropagation();
-    this.currentMonth--;
-    if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
+    const nav = navigateMonth(this.currentMonth, this.currentYear, -1);
+    this.currentMonth = nav.month;
+    this.currentYear = nav.year;
     this.generateCalendar();
   }
 
   nextMonth(event: Event): void {
     event.stopPropagation();
-    this.currentMonth++;
-    if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
+    const nav = navigateMonth(this.currentMonth, this.currentYear, 1);
+    this.currentMonth = nav.month;
+    this.currentYear = nav.year;
     this.generateCalendar();
   }
 
   selectDate(day: number | null): void {
     if (!day) return;
-    const d = day.toString().padStart(2, '0');
-    const m = (this.currentMonth + 1).toString().padStart(2, '0');
-    this.filtroData = `${d}/${m}/${this.currentYear}`;
+    this.filtroData = formatSelectedDay(day, this.currentMonth, this.currentYear);
     this.showCalendar = false;
   }
 
   isSelected(day: number | null): boolean {
-    if (!day) return false;
-    const dateStr = `${day.toString().padStart(2, '0')}/${(this.currentMonth + 1).toString().padStart(2, '0')}/${this.currentYear}`;
-    return this.filtroData === dateStr;
+    return isDaySelected(day, this.filtroData, this.currentMonth, this.currentYear);
   }
 
   toggleAll(event: any): void {
@@ -138,19 +132,6 @@ export class RegistroAttivitaComponent {
     if (count > 0) {
       alert(`Hai convalidato con successo ${count} attività.`);
     }
-  }
-
-  private sanitizeDate(raw: string): string {
-    let v = raw.replace(/\D/g, '');
-    if (v.length > 8) v = v.substring(0, 8);
-    if (v.length > 4) return `${v.substring(0, 2)}/${v.substring(2, 4)}/${v.substring(4)}`;
-    if (v.length > 2) return `${v.substring(0, 2)}/${v.substring(2)}`;
-    return v;
-  }
-
-  private formatData(dateIso: string): string {
-    const d = new Date(dateIso);
-    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
   }
 
   private matchesConvalida(value: boolean, filtro: StatoConvalidaFiltro): boolean {

@@ -73,6 +73,11 @@ export interface UpdateSpesaResponse {
   motivazione: string;
 }
 
+export interface DeleteSpesaResponse {
+  esito: string;
+  motivazione?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NoteSpeseService {
   private readonly baseUrl = '/api/SpesaNota/Utente';
@@ -95,5 +100,10 @@ export class NoteSpeseService {
 
   updateSpesa(request: UpdateSpesaRequest): Observable<UpdateSpesaResponse> {
     return this.http.put<UpdateSpesaResponse>(`${this.baseUrl}/UpdateSpesa`, request);
+  }
+
+  deleteSpesa(id: number): Observable<DeleteSpesaResponse> {
+    const params = new HttpParams().set('id', id.toString());
+    return this.http.delete<DeleteSpesaResponse>(`${this.baseUrl}/DeleteSpesa`, { params });
   }
 }
