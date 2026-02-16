@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, NgForOf, NgIf } from '@angular/common';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AttivitaService, AttivitaItem, AddAttivitaPayload, UpdateAttivitaPayload } from './attivitaservice';
 import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
@@ -17,7 +17,7 @@ interface GiornoCalendario {
 @Component({
   selector: 'app-attivita',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIf, NgForOf],
+  imports: [CommonModule, FormsModule, NgIf, NgFor],
   templateUrl: './attivita.html',
   styleUrls: ['./attivita.css'],
 })
