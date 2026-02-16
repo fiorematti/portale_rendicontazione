@@ -426,6 +426,23 @@ export class NoteSpese implements OnInit, OnDestroy {
     return this.ordiniCache[dett.idCliente] || [];
   }
 
+  onClienteDropdownClick(): void {
+    if (this.isClientiLoading) return;
+    this.isClientiLoading = true;
+    this.clientiOrdiniService.getClienti().subscribe({
+      next: (res) => {
+        this.clientiLoaded = true;
+        this.clientiOptions.splice(0, this.clientiOptions.length, ...(res || []));
+      },
+      error: (err) => {
+        console.error('[NoteSpese] getClienteByUtente error:', err);
+      },
+      complete: () => {
+        this.isClientiLoading = false;
+      }
+    });
+  }
+
   onClienteChange(dett: DettaglioSpesa): void {
     if (!dett) return;
     const cliente = this.clientiOptions.find(c => c.idCliente === dett.idCliente);

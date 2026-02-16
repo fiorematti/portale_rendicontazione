@@ -123,7 +123,7 @@
               <div style="min-width:220px;">
                 <label class="small fw-bold">Cliente</label>
                 <select class="form-select custom-select"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].idCliente" (change)="onClienteChange(dettagliSpesa[tabAttiva])">
+                  [(ngModel)]="dettagliSpesa[tabAttiva].idCliente" (focus)="onClienteDropdownClick()" (change)="onClienteChange(dettagliSpesa[tabAttiva])">
                   <option [ngValue]="null">Seleziona cliente</option>
                   <option *ngIf="isClientiLoading" [ngValue]="null">Caricamento clienti...</option>
                   <option *ngIf="!isClientiLoading && !clientiOptions.length" [ngValue]="null">Nessun cliente disponibile</option>
