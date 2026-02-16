@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, NgForOf, NgIf } from '@angular/common';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AttivitaService, AttivitaItem, AddAttivitaPayload, UpdateAttivitaPayload } from './attivitaservice';
 import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
 import { ClienteApiItem } from '../../dto/cliente.dto';
 import { OrdineApiItem } from '../../dto/ordine.dto';
+import { LuogoApiItem } from '../../dto/luogo.dto';
 import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
 
 
@@ -16,7 +17,7 @@ interface GiornoCalendario {
 @Component({
   selector: 'app-attivita',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIf, NgForOf],
+  imports: [CommonModule, FormsModule, NgIf, NgFor],
   templateUrl: './attivita.html',
   styleUrls: ['./attivita.css'],
 })
@@ -33,12 +34,14 @@ export class Attivita implements OnInit {
   giorniCalendario: GiornoCalendario[] = [];
   listaAnni: number[] = [];
   listaAttivita: AttivitaItem[] = [];
+  locationOptions: LuogoApiItem[] = [];
 
   clientiOptions: ClienteApiItem[] = [];
   ordiniOptions: OrdineApiItem[] = [];
   selectedClienteId: number | null = null;
   selectedCodice: string | null = null;
   private clientiLoaded = false;
+  private locationLoaded = false;
 
 
   isLoading = false;
@@ -62,6 +65,7 @@ export class Attivita implements OnInit {
     this.listaAnni = this.creaIntervalloAnni();
     this.generaCalendario();
     this.loadClienti();
+    this.loadLocation();
     this.loadAttivita();
   }
 
@@ -320,11 +324,23 @@ export class Attivita implements OnInit {
     this.attivitaService.getAttivita(data).subscribe({
       next: (res: AttivitaItem[] | null) => {
         const selected = data;
-        this.listaAttivita = (res ?? [])
+        const items = (res ?? [])
           .filter((item: AttivitaItem) => (item.dataAttivita || '').slice(0, 10) === selected);
+        this.listaAttivita = items;
       },
       error: (err: any) => { this.errorMsg = 'Errore caricamento dati'; console.error(err); },
       complete: () => { this.isLoading = false; }
+    });
+  }
+
+  private loadLocation(): void {
+    if (this.locationLoaded) return;
+    this.attivitaService.getLocation().subscribe({
+      next: (res) => {
+        this.locationOptions = res || [];
+        this.locationLoaded = true;
+      },
+      error: (err) => { console.error('getLocation error:', err); }
     });
   }
 
