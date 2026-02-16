@@ -1,13 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TariffaKmService } from './tariffa-km.service';
+import { AutomobileDto } from '../../dto/automobile.dto';
 
 interface Acquirente {
 	id: number;
-	utente: string;
-	auto: string;
+	marca: string;
+	modello: string;
 	targa: string;
 	tariffaKm: number;
+	cilindrata: number;
 }
 
 @Component({
@@ -17,27 +20,44 @@ interface Acquirente {
 	templateUrl: './tariffa-km.html',
 	styleUrls: ['./tariffa-km.css'],
 })
-export class TariffaKmComponent {
-	listaAcquirenti: Acquirente[] = [
-		{ id: 1, utente: 'Mario Neri', auto: 'Modello A', targa: 'AB123CD', tariffaKm: 0.1234 },
-		{ id: 2, utente: 'Andrea Bianchi', auto: 'Modello B', targa: 'EF456GH', tariffaKm: 0.1234 },
-		{ id: 3, utente: 'Luca Rossi', auto: 'Modello C', targa: 'IJ789KL', tariffaKm: 0.1234 },
-	];
+export class TariffaKmComponent implements OnInit {
+	listaAcquirenti: Acquirente[] = [];
 
 	filtroTesto = '';
 	isModalOpen = false;
 	isEditMode = false;
 	mostraErrore = false;
+	erroreCaricamento = false;
 	acquirenteSelezionato: Acquirente = this.creaAcquirenteVuoto();
 	isDettaglioOpen = false;
 	acquirenteDettaglio: Acquirente | null = null;
+
+	constructor(private readonly tariffaKmService: TariffaKmService) {}
+
+	async ngOnInit(): Promise<void> {
+		try {
+			this.erroreCaricamento = false;
+			const automobili = await this.tariffaKmService.getAllAutomobili();
+			this.listaAcquirenti = automobili.map((auto: AutomobileDto) => ({
+				id: auto.idauto,
+				marca: auto.marca,
+				modello: auto.modello,
+				targa: auto.targa,
+				tariffaKm: auto.tariffaChilometrica,
+				cilindrata: auto.cilindrata,
+			}));
+		} catch (error) {
+			console.error('Errore nel caricamento delle automobili', error);
+			this.erroreCaricamento = true;
+		}
+	}
 
 	get acquirentiFiltrati(): Acquirente[] {
 		const filtro = this.filtroTesto.trim().toLowerCase();
 		if (!filtro) return this.listaAcquirenti;
 		return this.listaAcquirenti.filter((item) =>
-			item.utente.toLowerCase().includes(filtro) ||
-			item.auto.toLowerCase().includes(filtro) ||
+			item.marca.toLowerCase().includes(filtro) ||
+			item.modello.toLowerCase().includes(filtro) ||
 			item.targa.toLowerCase().includes(filtro)
 		);
 	}
@@ -60,9 +80,9 @@ export class TariffaKmComponent {
 	}
 
 	salvaAcquirente(): void {
-		const { utente, auto, targa, tariffaKm, id } = this.acquirenteSelezionato;
+		const { marca, modello, targa, tariffaKm, id } = this.acquirenteSelezionato;
 		const tariffaValida = !Number.isNaN(Number(tariffaKm));
-		const campiValidi = Boolean(utente.trim() && auto.trim() && targa.trim() && tariffaValida);
+		const campiValidi = Boolean(marca.trim() && modello.trim() && targa.trim() && tariffaValida);
 
 		if (!campiValidi) {
 			this.mostraErrore = true;
@@ -113,7 +133,7 @@ export class TariffaKmComponent {
 	}
 
 	private creaAcquirenteVuoto(): Acquirente {
-		return { id: 0, utente: '', auto: '', targa: '', tariffaKm: 0 };
+		return { id: 0, marca: '', modello: '', targa: '', tariffaKm: 0, cilindrata: 0 };
 	}
 
 	private generaId(): number {
