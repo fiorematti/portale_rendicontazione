@@ -27,6 +27,7 @@ export class TariffaKmComponent implements OnInit {
 	isModalOpen = false;
 	isEditMode = false;
 	mostraErrore = false;
+	erroreCaricamento = false;
 	acquirenteSelezionato: Acquirente = this.creaAcquirenteVuoto();
 	isDettaglioOpen = false;
 	acquirenteDettaglio: Acquirente | null = null;
@@ -35,6 +36,7 @@ export class TariffaKmComponent implements OnInit {
 
 	async ngOnInit(): Promise<void> {
 		try {
+			this.erroreCaricamento = false;
 			const automobili = await this.tariffaKmService.getAllAutomobili();
 			this.listaAcquirenti = automobili.map((auto: AutomobileDto) => ({
 				id: auto.idauto,
@@ -46,6 +48,7 @@ export class TariffaKmComponent implements OnInit {
 			}));
 		} catch (error) {
 			console.error('Errore nel caricamento delle automobili', error);
+			this.erroreCaricamento = true;
 		}
 	}
 
