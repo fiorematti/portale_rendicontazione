@@ -147,7 +147,8 @@
       <div class="col-6 text-start">
         <label class="fw-bold mb-1">Cliente</label>
         <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.cliente">
-          <option value="Nome cliente">Nome cliente</option>
+          <option [ngValue]="''">Seleziona cliente</option>
+          <option *ngFor="let c of clientiOptions" [ngValue]="c.nominativo">{{ c.nominativo }}</option>
         </select>
       </div>
       <div class="col-6 text-start">
