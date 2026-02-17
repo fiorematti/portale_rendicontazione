@@ -1,12 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AttivitaService, AttivitaItem, AddAttivitaPayload, UpdateAttivitaPayload } from './attivitaservice';
 import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
 import { ClienteApiItem } from '../../dto/cliente.dto';
-import { OrdineApiItem } from '../../dto/ordine.dto';
-import { LuogoApiItem } from '../../dto/luogo.dto';
-import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
 
 
 interface GiornoCalendario {
@@ -57,19 +53,16 @@ export class Attivita implements OnInit {
   isDettaglioOpen = false;
   attivitaDettaglio: AttivitaItem | null = null;
 
-  constructor(
-    private readonly attivitaService: AttivitaService,
-    private readonly clientiOrdiniService: ClientiOrdiniService
-  ) {}
+  clientiOptions: ClienteApiItem[] = [];
+  private clientiLoaded = false;
+
+  constructor(private readonly clientiOrdiniService: ClientiOrdiniService) {}
 
   ngOnInit(): void {
     this.impostaDataOggi();
     this.listaAnni = this.creaIntervalloAnni();
     this.generaCalendario();
     this.loadClienti();
-    this.loadOrdini();
-    this.loadLocation();
-    this.loadAttivita();
   }
 
   apriModal(): void {
@@ -263,6 +256,17 @@ export class Attivita implements OnInit {
       this.giornoSelezionato = giorno.valore;
       this.aggiornaAttivitaPerData();
     }
+  }
+
+  private loadClienti(): void {
+    if (this.clientiLoaded) return;
+    this.clientiOrdiniService.getClienti().subscribe({
+      next: (res) => {
+        this.clientiOptions = res || [];
+        this.clientiLoaded = true;
+      },
+      error: (err) => { console.error('getClienti error:', err); }
+    });
   }
 
   private creaAttivitaVuota(): AttivitaItem {

@@ -151,10 +151,10 @@
       </div>
       
       <div class="col-6 text-start">
-        <label class="fw-bold mb-1">Codice ordine</label>
-        <select class="form-select bg-light" [(ngModel)]="selectedCodice" (change)="onCodiceChange()">
-          <option [ngValue]="null">Seleziona codice</option>
-          <option *ngFor="let o of ordiniOptions" [ngValue]="o.codiceOrdine">{{ o.codiceOrdine }}</option>
+        <label class="fw-bold mb-1">Cliente</label>
+        <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.cliente">
+          <option [ngValue]="''">Seleziona cliente</option>
+          <option *ngFor="let c of clientiOptions" [ngValue]="c.nominativo">{{ c.nominativo }}</option>
         </select>
       </div>
       
