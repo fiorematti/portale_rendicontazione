@@ -600,16 +600,14 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.noteSpeseService.getSpeseByYear(year,month).subscribe({
       next: (res) => {
         const mapped = (res || []).map(item => {
-          const id = (item as any)?.id ?? item?.idSpesa ?? (item as any)?.idSpesaNota ?? null;
-          const idCliente = (item as any)?.idCliente ?? (item as any)?.idClienteOrdine ?? (item as any)?.clienteId ?? null;
           return {
-            id,
+            id: item?.idSpesa ?? null,
             data: formatDateIt(item.dataNotificazione),
             codice: item.codiceOrdine || '',
             richiesto: this.formattaTotaleNumber(item.totaleComplessivo || 0),
-            validato: this.formattaTotaleNumber((item as any).totaleValidato || 0),
+            validato: this.formattaTotaleNumber(item.totaleValidato || 0),
             pagato: Boolean(item.statoPagamento),
-            idCliente,
+            idCliente: item?.idCliente ?? null,
           } as Spesa;
           console.log('Mapped item:', item, 'Result:', { ...item, ...this.listaSpese[this.listaSpese.length - 1] });
         });

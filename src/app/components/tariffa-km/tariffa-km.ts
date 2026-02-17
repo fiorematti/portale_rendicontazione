@@ -27,32 +27,29 @@ export class TariffaKmComponent implements OnInit {
 	isModalOpen = false;
 	isEditMode = false;
 	mostraErrore = false;
+	erroreCaricamento = false;
 	acquirenteSelezionato: Acquirente = this.creaAcquirenteVuoto();
 	isDettaglioOpen = false;
 	acquirenteDettaglio: Acquirente | null = null;
 
 	constructor(private readonly tariffaKmService: TariffaKmService) {}
 
-	ngOnInit(): void {
-		this.caricaAutomobili();
-	}
-
-	caricaAutomobili(): void {
-		this.tariffaKmService.getAllAutomobili().subscribe({
-			next: (data: AutomobileDto[]) => {
-				this.listaAcquirenti = data.map((auto) => ({
-					id: auto.idauto,
-					marca: auto.marca,
-					modello: auto.modello,
-					targa: auto.targa,
-					tariffaKm: auto.tariffaChilometrica,
-					cilindrata: auto.cilindrata,
-				}));
-			},
-			error: (err) => {
-				console.error('Errore nel caricamento delle automobili', err);
-			},
-		});
+	async ngOnInit(): Promise<void> {
+		try {
+			this.erroreCaricamento = false;
+			const automobili = await this.tariffaKmService.getAllAutomobili();
+			this.listaAcquirenti = automobili.map((auto: AutomobileDto) => ({
+				id: auto.idauto,
+				marca: auto.marca,
+				modello: auto.modello,
+				targa: auto.targa,
+				tariffaKm: auto.tariffaChilometrica,
+				cilindrata: auto.cilindrata,
+			}));
+		} catch (error) {
+			console.error('Errore nel caricamento delle automobili', error);
+			this.erroreCaricamento = true;
+		}
 	}
 
 	get acquirentiFiltrati(): Acquirente[] {
