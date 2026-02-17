@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, NgForOf, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
+import { ClienteApiItem } from '../../dto/cliente.dto';
 
 interface AttivitaItem {
   codice: string;
@@ -45,9 +47,15 @@ export class Attivita implements OnInit {
   isDettaglioOpen = false;
   attivitaDettaglio: AttivitaItem | null = null;
 
+  clientiOptions: ClienteApiItem[] = [];
+  private clientiLoaded = false;
+
+  constructor(private readonly clientiOrdiniService: ClientiOrdiniService) {}
+
   ngOnInit(): void {
     this.listaAnni = this.creaIntervalloAnni();
     this.generaCalendario();
+    this.loadClienti();
   }
 
   apriModal(): void {
@@ -150,6 +158,17 @@ export class Attivita implements OnInit {
 
   selezionaGiorno(giorno: GiornoCalendario): void {
     if (giorno.corrente) this.giornoSelezionato = giorno.valore;
+  }
+
+  private loadClienti(): void {
+    if (this.clientiLoaded) return;
+    this.clientiOrdiniService.getClienti().subscribe({
+      next: (res) => {
+        this.clientiOptions = res || [];
+        this.clientiLoaded = true;
+      },
+      error: (err) => { console.error('getClienti error:', err); }
+    });
   }
 
   private creaAttivitaVuota(): AttivitaItem {
