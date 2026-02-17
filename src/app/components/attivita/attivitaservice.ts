@@ -15,7 +15,7 @@ export interface AttivitaItem {
 
 export interface AddAttivitaPayload {
   codiceOrdine: string;
-  luogo: string;
+  luogo: number;
   dataInizio: string;
   dataFine: string;
   ricorrenza: number[];
@@ -31,7 +31,7 @@ export interface AddAttivitaResponse {
 export interface UpdateAttivitaPayload {
   idAttivita: number;
   codiceOrdine: string;
-  luogo: string;
+  luogo: number;
   dataAttivita: string;
   oreLavoro: number;
 }

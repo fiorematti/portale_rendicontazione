@@ -40,6 +40,7 @@ export class Attivita implements OnInit {
   ordiniOptions: OrdineApiItem[] = [];
   selectedClienteId: number | null = null;
   selectedCodice: string | null = null;
+  selectedLocationId: number | null = null;
   private clientiLoaded = false;
   private ordiniLoaded = false;
   private locationLoaded = false;
@@ -77,6 +78,7 @@ export class Attivita implements OnInit {
     this.nuovaAttivita = this.creaAttivitaVuota();
     this.selectedClienteId = null;
     this.selectedCodice = null;
+    this.selectedLocationId = null;
     this.errorMsg = '';
     this.mostraModal = true;
   }
@@ -87,6 +89,7 @@ export class Attivita implements OnInit {
     this.nuovaAttivita = { ...this.listaAttivita[index] };
     this.selectedClienteId = this.findClienteIdByNome(this.nuovaAttivita.nominativoCliente);
     this.selectedCodice = this.nuovaAttivita.codiceOrdine || null;
+    this.selectedLocationId = this.findLocationIdByNome(this.nuovaAttivita.location);
     this.mostraModal = true;
   }
 
@@ -268,7 +271,7 @@ export class Attivita implements OnInit {
       codiceOrdine: '',
       nominativoCliente: '',
       location: '',
-      ore: 0,
+      ore: 4,
       dataAttivita: this.dataSelezionataISO(),
     };
   }
@@ -294,8 +297,9 @@ export class Attivita implements OnInit {
   }
 
   private isAttivitaValida(attivita: AttivitaItem): boolean {
-    const { codiceOrdine, location, ore } = attivita;
-    return Boolean(codiceOrdine.trim() && location.trim() && Number(ore) > 0);
+    const { codiceOrdine, ore } = attivita;
+    const hasLocation = this.selectedLocationId != null || Boolean(attivita.location.trim());
+    return Boolean(codiceOrdine.trim() && hasLocation && Number(ore) > 0);
   }
 
   clampNonNegative(value: number | string | null | undefined): number {
@@ -346,9 +350,10 @@ export class Attivita implements OnInit {
 
   private buildAddPayload(): AddAttivitaPayload {
     const dataInizio = this.dataSelezionataISO();
+    const luogoId = this.selectedLocationId ?? this.findLocationIdByNome(this.nuovaAttivita.location) ?? 0;
     return {
       codiceOrdine: this.nuovaAttivita.codiceOrdine,
-      luogo: this.nuovaAttivita.location,
+      luogo: luogoId,
       dataInizio,
       dataFine: dataInizio,
       ricorrenza: [],
@@ -358,10 +363,11 @@ export class Attivita implements OnInit {
 
   private buildUpdatePayload(): UpdateAttivitaPayload {
     const dataAttivita = (this.nuovaAttivita.dataAttivita || this.dataSelezionataISO()).slice(0, 10);
+    const luogoId = this.selectedLocationId ?? this.findLocationIdByNome(this.nuovaAttivita.location) ?? 0;
     return {
       idAttivita: this.nuovaAttivita.idAttivita,
       codiceOrdine: this.nuovaAttivita.codiceOrdine,
-      luogo: this.nuovaAttivita.location,
+      luogo: luogoId,
       dataAttivita,
       oreLavoro: this.nuovaAttivita.ore,
     };
@@ -379,6 +385,12 @@ export class Attivita implements OnInit {
   onCodiceChange(): void {
     if (!this.selectedCodice) return;
     this.nuovaAttivita.codiceOrdine = this.selectedCodice;
+  }
+
+  onLocationChange(): void {
+    if (this.selectedLocationId == null) return;
+    const found = this.locationOptions.find(l => l.idLuogo === this.selectedLocationId);
+    if (found) this.nuovaAttivita.location = found.luogo;
   }
 
   private findClienteIdByNome(nome: string): number | null {
@@ -406,6 +418,11 @@ export class Attivita implements OnInit {
       },
       error: (err) => { console.error('getOrdini error:', err); }
     });
+  }
+
+  private findLocationIdByNome(nome: string): number | null {
+    const found = this.locationOptions.find(l => l.luogo === nome);
+    return found ? found.idLuogo : null;
   }
 
   private syncClienteFromId(idCliente: number): void {
