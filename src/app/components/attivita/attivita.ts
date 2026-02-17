@@ -406,9 +406,9 @@ export class Attivita implements OnInit {
   private loadOrdiniByCliente(idCliente: number | null, keepSelection: boolean = false): void {
     this.ordiniOptions = [];
     if (idCliente == null) return;
-    this.clientiOrdiniService.getOrdini(idCliente).subscribe({
+    this.clientiOrdiniService.getOrdiniByUtenteAndCliente(idCliente).subscribe({
       next: (res) => {
-        const list = (res || []).filter(o => !idCliente || o.idCliente === idCliente);
+        const list = res || [];
         this.ordiniOptions = list;
         if (keepSelection && this.selectedCodice) {
           const exists = list.some(o => o.codiceOrdine === this.selectedCodice);

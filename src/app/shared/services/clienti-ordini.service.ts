@@ -23,4 +23,9 @@ export class ClientiOrdiniService {
     }
     return this.http.get<OrdineApiItem[]>('/api/Ordini', { params });
   }
+
+  getOrdiniByUtenteAndCliente(clienteId: number): Observable<OrdineApiItem[]> {
+    const params = new HttpParams().set('clienteId', clienteId.toString());
+    return this.http.get<OrdineApiItem[]>('/api/Utente/utente/getOrdiniByUtenteAndCliente', { params });
+  }
 }
