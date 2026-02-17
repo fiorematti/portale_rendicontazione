@@ -1,8 +1,9 @@
 <div class="main-content">
   <h2 class="fw-bold mb-4">Note Spese</h2>
 
+
   <!-- Filtri: stato pagamento, data, cliente, codice ordine -->
-  <div class="filter-card d-flex flex-wrap align-items-end gap-3 p-3 mb-4 shadow-sm bg-white rounded-4">
+  <div class="filter-card d-flex flex-wrap align-items-center gap-3 p-3 mb-4 shadow-sm bg-white rounded-4">
     <div class="filter-group">
       <label class="fw-bold mb-1">Pagate</label>
       <select class="form-select custom-select" [(ngModel)]="filtroPagate">
@@ -12,33 +13,19 @@
       </select>
     </div>
 
-    <div class="filter-group datepicker-wrapper position-relative">
-      <label class="fw-bold mb-1">In data</label>
-      <div class="input-with-icon">
-        <input class="form-control custom-input" maxlength="10" placeholder="gg/mm/aaaa" type="text"
-          [(ngModel)]="filtroData" (input)="formattaData($event, 'filtro')" />
-        <i class="bi bi-calendar3 calendar-icon-overlay" (click)="toggleCalendario('filtro')"></i>
-      </div>
 
-      <div class="calendar-dropdown shadow-lg p-2 bg-white rounded-3"
-        *ngIf="mostraCalendario && targetData === 'filtro'">
-        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-          <i class="bi bi-chevron-left cursor-pointer small" (click)="cambiaMese(-1)"></i>
-          <span class="fw-bold text-capitalize mini-title">{{ nomeMeseCorrente }} {{ annoVisualizzato }}</span>
-          <i class="bi bi-chevron-right cursor-pointer small" (click)="cambiaMese(1)"></i>
-        </div>
-        <div class="calendar-grid">
-          <span class="day-name">L</span><span class="day-name">M</span><span class="day-name">M</span>
-          <span class="day-name">G</span><span class="day-name">V</span><span class="day-name">S</span><span
-            class="day-name">D</span>
-          <div *ngFor="let vuoto of giorniVuoti"></div>
-          <div *ngFor="let giorno of giorniDelMese" class="calendar-day"
-            [class.is-selected]="isGiornoSelezionato(giorno, 'filtro')" (click)="selezionaGiorno(giorno)">
-            {{ giorno }}
-          </div>
-        </div>
+    <div class="filter-group">
+      <label class="fw-bold mb-1">In data</label>
+      <div class="d-flex gap-2">
+        <select class="form-select custom-select" [(ngModel)]="meseFiltro" (change)="onCambioMeseAnno('filtro')">
+          <option *ngFor="let m of listaMesi; let i = index" [ngValue]="i">{{ m }}</option>
+        </select>
+        <select class="form-select custom-select" [(ngModel)]="annoFiltro" (change)="onCambioMeseAnno('filtro')">
+          <option *ngFor="let a of listaAnni" [ngValue]="a">{{ a }}</option>
+        </select>
       </div>
     </div>
+
 
     <div class="filter-group">
       <label class="fw-bold mb-1">Cliente</label>
@@ -50,6 +37,7 @@
       </select>
     </div>
 
+
     <div class="filter-group">
       <label class="fw-bold mb-1">Codice ordine</label>
       <select class="form-select custom-select" [(ngModel)]="filtroOrdine">
@@ -57,11 +45,13 @@
       </select>
     </div>
 
-    <button class="btn btn-dark rounded-pill px-4 ms-auto mb-1" (click)="apriModalSpesa()">
+
+    <button class="btn btn-dark rounded-pill px-4 ms-auto align-self-center" (click)="apriModalSpesa()">
       <i class="bi bi-plus-lg me-2"></i>
       <span>Aggiungi spesa</span>
     </button>
   </div>
+
 
   <!-- Tabella elenco note spese con stato e azioni -->
   <div class="table-container shadow-sm p-3 bg-white rounded-5">
@@ -72,10 +62,12 @@
       <p class="mt-2 text-muted">Caricamento spese...</p>
     </div>
 
+
     <div *ngIf="errore" class="alert alert-danger border-0 shadow-sm d-flex align-items-center m-3" role="alert" style="border-radius: 15px;">
       <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
       <div>{{ errore }}</div>
     </div>
+
 
     <div class="table-responsive" *ngIf="!loading && !errore">
       <table class="table align-middle">
@@ -109,6 +101,7 @@
     </div>
   </div>
 
+
   <!-- Modal per aggiunta/visualizzazione/modifica spesa -->
   <div class="modal-overlay" *ngIf="mostraModal">
     <div class="custom-modal shadow-lg rounded-4">
@@ -117,6 +110,7 @@
           <h2 class="fw-bold m-0">
             {{ modalMode === 'aggiungi' ? 'Aggiungi spesa' : (modalMode === 'visualizza' ? 'Dettaglio spesa' : 'Modifica spesa') }}
           </h2>
+
 
           <div *ngIf="dettagliSpesa[tabAttiva]" class="d-flex align-items-center gap-3">
             <ng-container *ngIf="modalMode !== 'visualizza'; else infoSoloTesto">
@@ -155,11 +149,13 @@
           </div>
         </div>
 
+
         <div *ngIf="mostraErrore" class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-3"
           role="alert" style="border-radius: 15px;">
           <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
           <div>Compila tutti i campi.</div>
         </div>
+
 
         <div *ngIf="salvaErrore" class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-3"
           role="alert" style="border-radius: 15px;">
@@ -167,11 +163,13 @@
           <div>{{ salvaErrore }}</div>
         </div>
 
+
         <div *ngIf="loadErrore" class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-3"
           role="alert" style="border-radius: 15px;">
           <i class="bi bi-info-circle-fill me-2 fs-5"></i>
           <div>{{ loadErrore }}</div>
         </div>
+
 
         <div *ngIf="isDettaglioLoading" class="text-center py-4">
           <div class="spinner-border text-warning" role="status">
@@ -179,6 +177,7 @@
           </div>
           <p class="mt-2 text-muted">Caricamento dettagli...</p>
         </div>
+
 
         <!-- Tabs dettagli e form per singolo dettaglio -->
         <div class="tab-strip d-flex align-items-center gap-3 mb-4 border-bottom pb-2" *ngIf="!isDettaglioLoading">
@@ -190,10 +189,11 @@
             (click)="aggiungiTab()"></i>
         </div>
 
+
         <div class="row" *ngIf="dettagliSpesa[tabAttiva] && !isDettaglioLoading">
           <div class="col-md-7 border-end pe-4">
             <div class="row g-3">
-              
+             
               <div class="col-6 position-relative">
                 <label class="small fw-bold">Data</label>
                 <div class="input-with-icon">
@@ -204,21 +204,21 @@
                     (click)="toggleCalendario('popup')"></i>
                 </div>
 
+
                 <div class="calendar-dropdown shadow-lg p-2 bg-white rounded-3"
-                  *ngIf="mostraCalendario && targetData === 'popup'">
+                  *ngIf="mostraCalendarioPopup && targetData === 'popup'">
                   <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-                    <i class="bi bi-chevron-left cursor-pointer small" (click)="cambiaMese(-1)"></i>
-                    <span class="fw-bold text-capitalize mini-title">{{ nomeMeseCorrente }} {{ annoVisualizzato
-                      }}</span>
-                    <i class="bi bi-chevron-right cursor-pointer small" (click)="cambiaMese(1)"></i>
+                    <i class="bi bi-chevron-left cursor-pointer small" (click)="cambiaMesePopup(-1)"></i>
+                    <span class="fw-bold text-capitalize mini-title">{{ nomeMesePopup }} {{ annoPopup }}</span>
+                    <i class="bi bi-chevron-right cursor-pointer small" (click)="cambiaMesePopup(1)"></i>
                   </div>
                   <div class="calendar-grid">
                     <span class="day-name">L</span><span class="day-name">M</span><span class="day-name">M</span>
                     <span class="day-name">G</span><span class="day-name">V</span><span class="day-name">S</span><span
                       class="day-name">D</span>
-                    <div *ngFor="let vuoto of giorniVuoti"></div>
-                    <div *ngFor="let giorno of giorniDelMese" class="calendar-day"
-                      [class.is-selected]="isGiornoSelezionato(giorno, 'popup')" (click)="selezionaGiorno(giorno)">
+                    <div *ngFor="let vuoto of giorniVuotiPopup"></div>
+                    <div *ngFor="let giorno of giorniDelMesePopup" class="calendar-day"
+                      [class.is-selected]="isGiornoSelezionatoPopup(giorno)" (click)="selezionaGiornoPopup(giorno)">
                       {{ giorno }}
                     </div>
                   </div>
@@ -250,6 +250,7 @@
                     (ngModelChange)="dettagliSpesa[tabAttiva].hotel = clampNonNegative($event)" />
                 </div>
 
+
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Aereo</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
@@ -277,6 +278,8 @@
               </div>
             </div>
           </div>
+
+
 
 
           <div class="col-md-5 ps-4">
@@ -313,6 +316,7 @@
           </div>
         </div>
 
+
         <div class="mt-4 pt-3 border-top">
           <div class="d-flex align-items-center justify-content-between mb-4">
             <h4 class="fw-bold m-0">Totale: {{ totaleCalcolato | number: '1.2-2' }}€</h4>
@@ -320,6 +324,7 @@
               Stato validazione: <span class="text-muted">Non Validato</span>
             </div>
           </div>
+
 
           <!-- Footer azioni in base alla modalità -->
           <div class="d-flex justify-content-center gap-3">
@@ -331,11 +336,13 @@
               </button>
             </ng-container>
 
+
             <ng-container *ngIf="modalMode === 'visualizza'">
               <button class="btn btn-dark px-5 py-2 fw-bold rounded-3" (click)="chiudiModal()">Esci</button>
               <button class="btn btn-warning text-white px-5 py-2 fw-bold rounded-3"
                 (click)="modalMode = 'modifica'">Modifica</button>
             </ng-container>
+
 
             <ng-container *ngIf="modalMode === 'modifica'">
               <button class="btn btn-danger px-4 py-2 fw-bold rounded-3" (click)="eliminaDettaglioCorrente()">Elimina
