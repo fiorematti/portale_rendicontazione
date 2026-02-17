@@ -167,7 +167,7 @@ export class Attivita implements OnInit {
 
     const payload = this.buildUpdatePayload();
     const dataAttivita = payload.dataAttivita;
-
+    console.log('Modifica Attività - Payload:', payload);
     this.isLoading = true;
     this.errorMsg = '';
     this.attivitaService.updateAttivita(payload).subscribe({
