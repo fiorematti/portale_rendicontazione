@@ -19,10 +19,10 @@
         <div class="calendar-card-mini p-2 border rounded-4 bg-light shadow-sm">
           <div class="d-flex justify-content-center align-items-center mb-2 px-1">
             <div class="d-flex align-items-center gap-1">
-              <select class="calendar-select fw-bold" [(ngModel)]="meseCorrente" (change)="generaCalendario()">
+              <select class="calendar-select fw-bold" [(ngModel)]="meseCorrente" (change)="onCambioMeseAnno()">
                 <option *ngFor="let m of listaMesi; let i = index" [value]="i">{{ m }}</option>
               </select>
-              <select class="calendar-select fw-bold" [(ngModel)]="annoCorrente" (change)="generaCalendario()">
+              <select class="calendar-select fw-bold" [(ngModel)]="annoCorrente" (change)="onCambioMeseAnno()">
                 <option *ngFor="let a of listaAnni" [value]="a">{{ a }}</option>
               </select>
             </div>
@@ -58,21 +58,17 @@
           <th>Cliente</th>
           <th>Location</th>
           <th>Ore</th>
-          <th class="text-center">Approvazione</th>
+          <th>Stato</th>
           <th class="text-center azioni-col">Azioni</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let item of listaAttivita; let i = index" class="border-bottom">
-          <td class="ps-4 text-muted">{{ item.codice }}</td>
-          <td>{{ item.cliente }}</td>
+          <td class="ps-4 text-muted">{{ item.codiceOrdine }}</td>
+          <td>{{ item.nominativoCliente }}</td>
           <td>{{ item.location }}</td>
           <td>{{ item.ore }}:00</td>
-          <td class="text-center">
-            <span class="badge rounded-pill" [ngClass]="item.approvato ? 'bg-success-custom' : 'bg-danger-custom'">
-              {{ item.approvato ? 'Approvato' : 'Non approvato' }}
-            </span>
-          </td>
+          <td>{{ item.stato || '—' }}</td>
           <td class="text-center azioni-col">
             <button class="btn btn-link text-dark" (click)="apriDettaglio(item, i)">
               <i class="bi bi-eye"></i>
@@ -84,6 +80,9 @@
               <i class="bi bi-pencil"></i>
             </button>
           </td>
+        </tr>
+        <tr *ngIf="!isLoading && listaAttivita.length === 0">
+          <td colspan="6" class="text-center text-muted py-4">Nessuna attività trovata.</td>
         </tr>
       </tbody>
     </table>
@@ -98,11 +97,11 @@
     <div class="row g-3 mb-3">
       <div class="col-6 text-start">
         <label class="fw-bold text-muted d-block">Codice ordine</label>
-        <span class="fw-bold">{{ attivitaDettaglio?.codice }}</span>
+        <span class="fw-bold">{{ attivitaDettaglio?.codiceOrdine }}</span>
       </div>
       <div class="col-6 text-start">
         <label class="fw-bold text-muted d-block">Cliente</label>
-        <span class="fw-bold">{{ attivitaDettaglio?.cliente }}</span>
+        <span class="fw-bold">{{ attivitaDettaglio?.nominativoCliente }}</span>
       </div>
       <div class="col-6 text-start">
         <label class="fw-bold text-muted d-block">Location</label>
@@ -112,11 +111,8 @@
         <label class="fw-bold text-muted d-block">Ore</label>
         <span class="fw-bold">{{ attivitaDettaglio?.ore }}:00</span>
       </div>
+      
       <div class="col-6 text-start">
-        <label class="fw-bold text-muted d-block">Stato approvazione</label>
-        <span class="badge rounded-pill" [ngClass]="attivitaDettaglio?.approvato ? 'bg-success-custom' : 'bg-danger-custom'">
-          {{ attivitaDettaglio?.approvato ? 'Approvato' : 'Non approvato' }}
-        </span>
       </div>
     </div>
 
@@ -137,13 +133,23 @@
       <div>Compila tutti i campi.</div>
     </div>
 
+    <div *ngIf="errorMsg" class="alert alert-danger border-0 shadow-sm d-flex align-items-center justify-content-between mb-4" role="alert" style="border-radius: 15px; font-weight:600;">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+        <div>{{ errorMsg }}</div>
+      </div>
+      <button type="button" class="btn-close ms-3" aria-label="Chiudi" (click)="clearErrorMsg()"></button>
+    </div>
+
     <div class="row g-3">
       <div class="col-6 text-start">
-        <label class="fw-bold mb-1">Codice ordine</label>
-        <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.codice">
-          <option value="AAAA/xxxx">AAAA/xxxx</option>
+        <label class="fw-bold mb-1">Cliente</label>
+        <select class="form-select bg-light" [(ngModel)]="selectedClienteId" (change)="onClienteChange()">
+          <option [ngValue]="null">Seleziona cliente</option>
+          <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
         </select>
       </div>
+      
       <div class="col-6 text-start">
         <label class="fw-bold mb-1">Cliente</label>
         <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.cliente">
@@ -151,24 +157,22 @@
           <option *ngFor="let c of clientiOptions" [ngValue]="c.nominativo">{{ c.nominativo }}</option>
         </select>
       </div>
+      
       <div class="col-6 text-start">
         <label class="fw-bold mb-1">Location</label>
-        <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.location">
-          <option value="In sede">In sede</option>
-          <option value="Trasferta">Trasferta</option>
+        <select class="form-select bg-light" [(ngModel)]="selectedLocationId" (change)="onLocationChange()">
+          <option [ngValue]="null">Seleziona location</option>
+          <option *ngFor="let loc of locationOptions" [ngValue]="loc.idLuogo">{{ loc.luogo }}</option>
         </select>
       </div>
       <div class="col-6 text-start">
         <label class="fw-bold mb-1">Ore</label>
-        <input type="number" class="form-control bg-light" [(ngModel)]="nuovaAttivita.ore">
+        <input type="number" class="form-control bg-light" min="0"
+          (keydown)="blockNegative($event)"
+          [(ngModel)]="nuovaAttivita.ore"
+          (ngModelChange)="nuovaAttivita.ore = clampNonNegative($event)">
       </div>
-      <div class="col-6 text-start">
-        <label class="fw-bold mb-1">Stato approvazione</label>
-        <select class="form-select bg-light" [(ngModel)]="nuovaAttivita.approvato">
-          <option [ngValue]="true">Approvato</option>
-          <option [ngValue]="false">Non approvato</option>
-        </select>
-      </div>
+      
     </div>
     <div class="d-flex justify-content-center gap-3 mt-5">
       <button class="btn btn-dark rounded-pill px-5 py-2 fw-bold" (click)="chiudiModal()">Annulla</button>

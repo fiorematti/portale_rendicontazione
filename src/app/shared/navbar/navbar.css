@@ -7,14 +7,18 @@
   --sidebar-muted: rgba(255, 255, 255, 0.6);
   --sidebar-accent: #f9ad2d;
   --sidebar-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  /* layout sizing variables */
+  --topbar-height: 64px;
+  --logo-height: 48px;
+  --sidebar-top-offset: calc(var(--topbar-height) + 24px);
 }
 
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
-  height: 96px;
+  padding: 0 20px;
+  height: var(--topbar-height);
   background: transparent;
 }
 
@@ -24,8 +28,9 @@
 }
 
 .topbar__logo {
-  height: 90px;
+  height: var(--logo-height);
   object-fit: contain;
+  max-width: 220px;
 }
 
 .topbar__user {
@@ -46,9 +51,9 @@
 
 .sidebar {
   position: fixed;
-  top: 140px; /* per aumentare lo spazio tra la sidebar e il titolo */
-  left: 20px;
-  bottom: 20px;
+  top: var(--sidebar-top-offset); /* space from top adjusted to new header */
+  left: 16px;
+  bottom: 16px;
   width: var(--sidebar-width-expanded);
   background: var(--sidebar-bg, #000000);
   border-radius: 20px;
@@ -106,6 +111,18 @@
   padding-top: 0px;
   padding-left: 6px; 
   padding-right: 6px;
+}
+
+/* Responsive tweak: slightly smaller header/logo on narrow screens */
+@media (max-width: 768px) {
+  :host {
+    --topbar-height: 56px;
+    --logo-height: 40px;
+    --sidebar-top-offset: calc(var(--topbar-height) + 16px);
+  }
+  .topbar {
+    padding: 0 12px;
+  }
 }
 
 /* Nasconde la scrollbar mantenendo lo scroll */
@@ -233,6 +250,21 @@
 .logout-link .link-text {
   display: inline-block;
   color: var(--sidebar-text, #ffffff);
+}
+
+/* icona logout */
+.sidebar:not(:hover) .logout-link,
+.sidebar.collapsed .logout-link {
+  justify-content: center;
+  gap: 0;
+  padding: 8px 0;
+}
+
+.sidebar:not(:hover) .logout-link i,
+.sidebar.collapsed .logout-link i {
+  width: 20px;
+  font-size: 1.05rem;
+  text-align: center;
 }
 
 .sidebar:hover .logout-link,

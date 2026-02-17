@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { generateCalendarDays, navigateMonth, formatSelectedDay, isDaySelected, MONTH_NAMES_IT } from '../../shared/utils/calendar.utils';
+import { sanitizeDateInput } from '../../shared/utils/date.utils';
 
 interface Ordine {
   id: string;
@@ -18,11 +20,6 @@ interface Ordine {
   styleUrls: ['./ordini.css'],
 })
 export class OrdiniComponent implements OnInit {
-  readonly monthNames = [
-    'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-    'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
-  ];
-
   filtroTesto = '';
   filtroStato = '';
   mostraModal = false;
@@ -49,61 +46,42 @@ export class OrdiniComponent implements OnInit {
   }
 
   generateCalendar(): void {
-    this.calendarDays = [];
-    const firstDayIndex = new Date(this.currentYear, this.currentMonth, 1).getDay();
-    const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
-    const offset = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
-    for (let i = 0; i < offset; i++) this.calendarDays.push(null);
-    for (let i = 1; i <= daysInMonth; i++) this.calendarDays.push(i);
+    this.calendarDays = generateCalendarDays(this.currentYear, this.currentMonth);
   }
 
   prevMonth(event: Event): void {
     event.stopPropagation();
-    this.currentMonth--;
-    if (this.currentMonth < 0) {
-      this.currentMonth = 11;
-      this.currentYear--;
-    }
+    const nav = navigateMonth(this.currentMonth, this.currentYear, -1);
+    this.currentMonth = nav.month;
+    this.currentYear = nav.year;
     this.generateCalendar();
   }
 
   nextMonth(event: Event): void {
     event.stopPropagation();
-    this.currentMonth++;
-    if (this.currentMonth > 11) {
-      this.currentMonth = 0;
-      this.currentYear++;
-    }
+    const nav = navigateMonth(this.currentMonth, this.currentYear, 1);
+    this.currentMonth = nav.month;
+    this.currentYear = nav.year;
     this.generateCalendar();
   }
 
   get nomeMeseAnno(): string {
-    return `${this.monthNames[this.currentMonth]} ${this.currentYear}`;
+    return `${MONTH_NAMES_IT[this.currentMonth]} ${this.currentYear}`;
   }
 
   selectDate(day: number | null): void {
     if (!day) return;
-    const d = day.toString().padStart(2, '0');
-    const m = (this.currentMonth + 1).toString().padStart(2, '0');
-    this.nuovoOrdineDati.dataInizio = `${d}/${m}/${this.currentYear}`;
+    this.nuovoOrdineDati.dataInizio = formatSelectedDay(day, this.currentMonth, this.currentYear);
     this.mostraCalendario = false;
   }
 
   isSelected(day: number | null): boolean {
-    if (!day) return false;
-    const dateStr = `${day.toString().padStart(2, '0')}/${(this.currentMonth + 1).toString().padStart(2, '0')}/${this.currentYear}`;
-    return this.nuovoOrdineDati.dataInizio === dateStr;
+    return isDaySelected(day, this.nuovoOrdineDati.dataInizio, this.currentMonth, this.currentYear);
   }
 
   formattaData(event: Event): void {
     const target = event.target as HTMLInputElement;
-    let v = target.value.replace(/\D/g, '');
-    if (v.length > 8) v = v.substring(0, 8);
-    let final = '';
-    if (v.length > 0) final += v.substring(0, 2);
-    if (v.length > 2) final += '/' + v.substring(2, 4);
-    if (v.length > 4) final += '/' + v.substring(4, 8);
-    this.nuovoOrdineDati.dataInizio = final;
+    this.nuovoOrdineDati.dataInizio = sanitizeDateInput(target.value);
   }
 
   visualizzaDettaglio(ordine: Ordine): void {
@@ -129,7 +107,6 @@ export class OrdiniComponent implements OnInit {
     this.mostraModal = true;
   }
 
-  // Funzione chiamata dal tasto arancione nel dettaglio
   passaAModifica(): void {
     const ordineDaModificare = { ...this.nuovoOrdineDati };
     this.modificaOrdine(ordineDaModificare);

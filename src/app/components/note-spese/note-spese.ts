@@ -1,16 +1,28 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule, NgForOf, NgIf } from '@angular/common';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NoteSpeseService, DettaglioApiResponse, AddSpesaRequest, UpdateSpesaRequest } from './note-spese.service';
+import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
+import { ClienteApiItem } from '../../dto/cliente.dto';
+import { OrdineApiItem } from '../../dto/ordine.dto';
+import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
+import { parseDateString, formatDateIt, formatDateISO, sanitizeDateInput } from '../../shared/utils/date.utils';
+import { navigateMonth } from '../../shared/utils/calendar.utils';
 
 interface Spesa {
+  id?: number | null;
   data: string;
   codice: string;
   richiesto: string;
   validato: string;
   pagato: boolean;
+  idCliente?: number | null;
 }
 
 interface DettaglioSpesa {
+  idDettaglio?: number;
+  idCliente?: number | null;
+  nominativoCliente?: string | null;
   codiceOrdine: string;
   vitto?: number | null;
   alloggio?: number | null;
@@ -23,27 +35,30 @@ interface DettaglioSpesa {
   parking?: number | null;
   telepass?: number | null;
   costo?: number | null;
+  idAuto?: number;
 }
 
 @Component({
   selector: 'app-note-spese',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIf, NgForOf],
+  imports: [CommonModule, FormsModule],
   templateUrl: './note-spese.html',
   styleUrl: './note-spese.css',
 })
-export class NoteSpese implements OnInit {
+export class NoteSpese implements OnInit, OnDestroy {
   private readonly filtroDefault = 'Tutti';
+  readonly clientiOptions: ClienteApiItem[] = [];
+  private ordiniCache: Record<number, OrdineApiItem[]> = {};
 
-  listaSpese: Spesa[] = [
-    { data: '14/01/2026', codice: 'AAAA/xxxx', richiesto: '215,00€', validato: '190,00€', pagato: true },
-    { data: '15/01/2026', codice: 'BBBB/yyyy', richiesto: '120,00€', validato: '120,00€', pagato: true },
-    { data: '16/01/2026', codice: 'CCCC/zzzz', richiesto: '45,00€', validato: '40,00€', pagato: false },
-  ];
+  listaSpese: Spesa[] = [];
+  loading = false;
+  errore: string | null = null;
 
   filtroPagate = this.filtroDefault;
   filtroData = '';
+  filtroCliente: number | 'Tutti' = this.filtroDefault;
   filtroOrdine = this.filtroDefault;
+  filtroOrdiniOptions: string[] = [];
 
   mostraModal = false;
   modalMode: 'aggiungi' | 'visualizza' | 'modifica' = 'aggiungi';
@@ -51,10 +66,20 @@ export class NoteSpese implements OnInit {
   tabAttiva = 0;
   dettagliSpesa: DettaglioSpesa[] = [];
   mostraErrore = false;
+  salvaInCorso = false;
+  salvaErrore = '';
+  loadErrore = '';
+  private clientiLoaded = false;
+  isClientiLoading = false;
+  isOrdiniLoading = false;
+  isSpeseLoading = false;
+  deletingSpesaId: number | null = null;
+  isDettaglioLoading = false;
 
   rigaSelezionata: Spesa | null = null;
 
   mostraCalendario = false;
+
   targetData: 'filtro' | 'popup' = 'filtro';
   dataVisualizzata: Date = new Date();
   giorniDelMese: number[] = [];
@@ -64,36 +89,143 @@ export class NoteSpese implements OnInit {
   get isVisualizza(): boolean { return this.modalMode === 'visualizza'; }
   get isModifica(): boolean { return this.modalMode === 'modifica'; }
 
+  constructor(
+    private readonly noteSpeseService: NoteSpeseService,
+    private readonly clientiOrdiniService: ClientiOrdiniService
+  ) {}
+
   ngOnInit(): void {
     this.generaCalendario();
+    this.loadClienti();
+    this.loadSpese();
     this.resetNuovaSpesa();
+  }
+
+  ngOnDestroy(): void {
+    this.setBodyScrollLock(false);
   }
 
   visualizzaDettaglio(spesa: Spesa): void {
     this.rigaSelezionata = spesa;
-    this.caricaDatiNellaModal(spesa);
+    this.nuovaSpesaData = spesa.data;
     this.apriModalConModalita('visualizza');
+
+    if (spesa.id != null) {
+      this.isDettaglioLoading = true;
+      this.noteSpeseService.getDettagliBySpesa(spesa.id).subscribe({
+        next: (res) => {
+          if (res && res.length > 0) {
+            this.dettagliSpesa = res.map(item => this.mapDettaglioApiToDettaglioSpesa(item, spesa));
+          } else {
+            this.caricaDatiNellaModal(spesa);
+          }
+          this.tabAttiva = 0;
+        },
+        error: (err) => {
+          console.error('[NoteSpese] getDettagliBySpesa error:', err);
+          this.caricaDatiNellaModal(spesa);
+        },
+        complete: () => {
+          this.isDettaglioLoading = false;
+        }
+      });
+    } else {
+      this.caricaDatiNellaModal(spesa);
+    }
+  }
+
+  private mapDettaglioApiToDettaglioSpesa(item: DettaglioApiResponse, spesa: Spesa): DettaglioSpesa {
+    const ordine = this.findOrdineByCodice(spesa.codice);
+    const cliente = ordine ? this.clientiOptions.find(c => c.idCliente === ordine.idCliente) : null;
+    return {
+      idDettaglio: item.idDettaglio ?? 0,
+      idCliente: ordine?.idCliente ?? spesa.idCliente ?? null,
+      nominativoCliente: cliente?.nominativo ?? null,
+      codiceOrdine: spesa.codice,
+      vitto: item.vitto ?? 0,
+      alloggio: 0,
+      hotel: item.hotel ?? 0,
+      trasporti: item.trasportiLocali ?? 0,
+      aereo: item.aereo ?? 0,
+      varie: item.spesaVaria ?? 0,
+      auto: item.idAuto != null ? String(item.idAuto) : 'Modello auto',
+      km: item.km ?? 0,
+      parking: item.parking ?? 0,
+      telepass: item.telepass ?? 0,
+      costo: 0
+    };
   }
 
   apriModifica(spesa: Spesa): void {
     this.rigaSelezionata = spesa;
-    this.caricaDatiNellaModal(spesa);
+    this.nuovaSpesaData = spesa.data;
     this.apriModalConModalita('modifica');
+
+    if (spesa.id != null) {
+      this.isDettaglioLoading = true;
+      this.noteSpeseService.getDettagliBySpesa(spesa.id).subscribe({
+        next: (res) => {
+          if (res && res.length > 0) {
+            this.dettagliSpesa = res.map(item => this.mapDettaglioApiToDettaglioSpesa(item, spesa));
+          } else {
+            this.caricaDatiNellaModal(spesa);
+          }
+          this.tabAttiva = 0;
+        },
+        error: (err) => {
+          console.error('[NoteSpese] getDettagliBySpesa error:', err);
+          this.caricaDatiNellaModal(spesa);
+        },
+        complete: () => {
+          this.isDettaglioLoading = false;
+        }
+      });
+    } else {
+      this.caricaDatiNellaModal(spesa);
+    }
   }
 
   eliminaSpesa(indexTable: number): void {
     const spesaDaEliminare = this.speseFiltrate[indexTable];
+    if (!spesaDaEliminare) return;
     const indexReale = this.listaSpese.indexOf(spesaDaEliminare);
-    if (confirm("Sei sicuro di voler eliminare questa nota spesa?")) {
-      this.listaSpese.splice(indexReale, 1);
+    if (!confirm('Sei sicuro di voler eliminare questa nota spesa?')) return;
+
+    if (spesaDaEliminare.id != null) {
+      this.deletingSpesaId = spesaDaEliminare.id;
+      this.noteSpeseService.deleteSpesa(spesaDaEliminare.id).subscribe({
+        next: (res) => {
+          const esitoOk = typeof res?.esito === 'string' ? res.esito.toLowerCase().includes('riuscita') : true;
+          if (esitoOk) {
+            if (indexReale >= 0) this.listaSpese.splice(indexReale, 1);
+            this.rebuildFiltroOrdiniOptions();
+          } else {
+            this.loadErrore = res?.motivazione || 'Eliminazione non riuscita.';
+          }
+        },
+        error: (err) => {
+          console.error('DeleteSpesa error:', err);
+          this.loadErrore = 'Errore durante l\'eliminazione della spesa.';
+        },
+        complete: () => {
+          this.deletingSpesaId = null;
+        }
+      });
+    } else {
+      if (indexReale >= 0) this.listaSpese.splice(indexReale, 1);
+      this.rebuildFiltroOrdiniOptions();
     }
   }
 
   private caricaDatiNellaModal(spesa: Spesa): void {
     this.nuovaSpesaData = spesa.data;
     const importoPulito = this.parseImporto(spesa.richiesto);
+    const ordine = this.findOrdineByCodice(spesa.codice);
+    const cliente = ordine ? this.clientiOptions.find(c => c.idCliente === ordine.idCliente) : null;
     
     this.dettagliSpesa = [{
+      idCliente: ordine?.idCliente ?? null,
+      nominativoCliente: cliente?.nominativo ?? null,
       codiceOrdine: spesa.codice,
       vitto: importoPulito,
       alloggio: 0, 
@@ -117,26 +249,77 @@ export class NoteSpese implements OnInit {
       setTimeout(() => (this.mostraErrore = false), 4000);
       return;
     }
-
-    const totaleStringa = this.formattaTotale(this.totaleCalcolato);
+    this.salvaErrore = '';
+    this.salvaInCorso = true;
 
     if (this.isAggiungi) {
-      this.listaSpese.unshift(this.creaSpesaDaDettaglio(dett, totaleStringa));
+      const payload = this.buildAddPayload();
+      this.noteSpeseService.addSpesa(payload).subscribe({
+        next: (ok) => {
+          if (ok === true) {
+            const totaleStringa = this.formattaTotale(this.totaleCalcolato);
+            this.listaSpese.unshift(this.creaSpesaDaDettaglio(dett, totaleStringa));
+            this.chiudiModal();
+          } else {
+            this.salvaErrore = 'Salvataggio non riuscito.';
+          }
+        },
+        error: (err) => {
+          console.error('AddSpesa error', err);
+          this.salvaErrore = 'Errore durante il salvataggio della spesa.';
+        },
+        complete: () => { this.salvaInCorso = false; }
+      });
+    } else if (this.isModifica && this.rigaSelezionata) {
+      const payload = this.buildUpdatePayload();
+      this.noteSpeseService.updateSpesa(payload).subscribe({
+        next: (res) => {
+          const esitoOk = typeof res?.esito === 'string' && res.esito.toLowerCase().includes('riuscita');
+          if (esitoOk) {
+            const totaleStringa = this.formattaTotale(this.totaleCalcolato);
+            this.rigaSelezionata!.data = this.nuovaSpesaData;
+            this.rigaSelezionata!.codice = dett.codiceOrdine;
+            this.rigaSelezionata!.richiesto = totaleStringa;
+            this.chiudiModal();
+          } else {
+            this.salvaErrore = res?.motivazione || 'Aggiornamento non riuscito.';
+          }
+        },
+        error: (err) => {
+          console.error('UpdateSpesa error', err);
+          this.salvaErrore = 'Errore durante l\'aggiornamento della spesa.';
+        },
+        complete: () => { this.salvaInCorso = false; }
+      });
     } else if (this.rigaSelezionata) {
+      const totaleStringa = this.formattaTotale(this.totaleCalcolato);
       this.rigaSelezionata.data = this.nuovaSpesaData;
       this.rigaSelezionata.codice = dett.codiceOrdine;
       this.rigaSelezionata.richiesto = totaleStringa;
+      this.salvaInCorso = false;
+      this.chiudiModal();
     }
-
-    this.chiudiModal();
   }
 
   resetNuovaSpesa(): void {
     this.nuovaSpesaData = '';
-    this.dettagliSpesa = [{ codiceOrdine: 'AAAA/xxxx', vitto: null, auto: 'Modello auto' }];
+    this.dettagliSpesa = [{
+      idCliente: null,
+      nominativoCliente: null,
+      codiceOrdine: '',
+      vitto: null,
+      auto: 'Modello auto'
+    }];
     this.tabAttiva = 0;
     this.rigaSelezionata = null;
     this.mostraErrore = false;
+    // se i clienti sono già caricati preimposta il primo
+    if (this.clientiLoaded && this.clientiOptions.length) {
+      const first = this.clientiOptions[0];
+      this.dettagliSpesa[0].idCliente = first.idCliente;
+      this.dettagliSpesa[0].nominativoCliente = first.nominativo;
+      this.loadOrdiniByCliente(first.idCliente, this.dettagliSpesa[0]);
+    }
   }
 
   apriModalSpesa(): void { 
@@ -149,6 +332,7 @@ export class NoteSpese implements OnInit {
     this.mostraCalendario = false;
     this.rigaSelezionata = null;
     this.mostraErrore = false;
+    this.setBodyScrollLock(false);
   }
 
   get totaleCalcolato(): number {
@@ -171,9 +355,9 @@ export class NoteSpese implements OnInit {
   generaCalendario(): void {
     const anno = this.dataVisualizzata.getFullYear();
     const mese = this.dataVisualizzata.getMonth();
-    let primoGiorno = new Date(anno, mese, 1).getDay();
-    primoGiorno = primoGiorno === 0 ? 6 : primoGiorno - 1;
-    this.giorniVuoti = Array(primoGiorno).fill(0);
+    const firstDayIndex = new Date(anno, mese, 1).getDay();
+    const offset = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+    this.giorniVuoti = Array(offset).fill(0);
     const numGiorni = new Date(anno, mese + 1, 0).getDate();
     this.giorniDelMese = Array.from({ length: numGiorni }, (_, i) => i + 1);
   }
@@ -186,12 +370,13 @@ export class NoteSpese implements OnInit {
   }
 
   cambiaMese(d: number): void {
-    this.dataVisualizzata.setMonth(this.dataVisualizzata.getMonth() + d);
+    const nav = navigateMonth(this.dataVisualizzata.getMonth(), this.dataVisualizzata.getFullYear(), d);
+    this.dataVisualizzata = new Date(nav.year, nav.month, 1);
     this.generaCalendario();
   }
 
   isGiornoSelezionato(giorno: number, target: 'filtro' | 'popup'): boolean {
-    const data = this.parseDataString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData);
+    const data = parseDateString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData);
     if (!data) return false;
     return (
       data.getDate() === giorno &&
@@ -202,10 +387,7 @@ export class NoteSpese implements OnInit {
 
   formattaData(event: Event, campo: string): void {
     const target = event.target as HTMLInputElement;
-    let v = target.value.replace(/\D/g, '');
-    if (v.length > 8) v = v.substring(0, 8);
-    if (v.length >= 5) v = v.replace(/(\d{2})(\d{2})(\d{1,4})/, '$1/$2/$3');
-    else if (v.length >= 3) v = v.replace(/(\d{2})(\d{1,2})/, '$1/$2');
+    const v = sanitizeDateInput(target.value);
     if (campo === 'filtro') this.filtroData = v; else this.nuovaSpesaData = v;
   }
 
@@ -217,21 +399,72 @@ export class NoteSpese implements OnInit {
       const mPagato = this.filtroPagate === this.filtroDefault || (this.filtroPagate === 'Si' ? s.pagato : !s.pagato);
       const mData = !this.filtroData || s.data === this.filtroData;
       const mOrdine = this.filtroOrdine === this.filtroDefault || s.codice === this.filtroOrdine;
-      return mPagato && mData && mOrdine;
+      const idClienteSpesa = s.idCliente ?? this.resolveClienteIdFromOrdine(s.codice);
+      const mCliente = this.filtroCliente === this.filtroDefault || (idClienteSpesa != null && idClienteSpesa === this.filtroCliente);
+      return mPagato && mData && mOrdine && mCliente;
     });
   }
 
   selezionaTab(i: number): void { this.tabAttiva = i; }
-  aggiungiTab(): void { this.dettagliSpesa.push({ codiceOrdine: this.dettagliSpesa[0].codiceOrdine, vitto: 0 }); }
+  aggiungiTab(): void {
+    const first = this.dettagliSpesa[0];
+    this.dettagliSpesa.push({
+      idCliente: first?.idCliente ?? null,
+      nominativoCliente: first?.nominativoCliente ?? null,
+      codiceOrdine: first?.codiceOrdine || '',
+      vitto: 0
+    });
+  }
   eliminaDettaglioCorrente(): void {
     this.dettagliSpesa.splice(this.tabAttiva, 1);
     if (this.dettagliSpesa.length === 0) this.chiudiModal();
     else this.tabAttiva = 0;
   }
 
+  ordiniDisponibili(dett: DettaglioSpesa): { codiceOrdine: string; idCliente: number }[] {
+    if (!dett || dett.idCliente == null) return [];
+    return this.ordiniCache[dett.idCliente] || [];
+  }
+
+  onClienteDropdownClick(): void {
+    if (this.isClientiLoading) return;
+    this.isClientiLoading = true;
+    this.clientiOrdiniService.getClienti().subscribe({
+      next: (res) => {
+        this.clientiLoaded = true;
+        this.clientiOptions.splice(0, this.clientiOptions.length, ...(res || []));
+      },
+      error: (err) => {
+        console.error('[NoteSpese] getClienteByUtente error:', err);
+      },
+      complete: () => {
+        this.isClientiLoading = false;
+      }
+    });
+  }
+
+  onClienteChange(dett: DettaglioSpesa): void {
+    if (!dett) return;
+    const cliente = this.clientiOptions.find(c => c.idCliente === dett.idCliente);
+    dett.nominativoCliente = cliente ? cliente.nominativo : null;
+    this.loadOrdiniByCliente(dett.idCliente ?? null, dett);
+  }
+
+  onCodiceChange(dett: DettaglioSpesa, codice: string): void {
+    if (!dett) return;
+    dett.codiceOrdine = codice;
+    const ordine = this.findOrdineByCodice(codice);
+    if (ordine) {
+      dett.idCliente = ordine.idCliente;
+      const cliente = this.clientiOptions.find(c => c.idCliente === ordine.idCliente);
+      dett.nominativoCliente = cliente ? cliente.nominativo : dett.nominativoCliente;
+    }
+  }
+
   private apriModalConModalita(mode: 'aggiungi' | 'visualizza' | 'modifica'): void {
     this.modalMode = mode;
     this.mostraModal = true;
+    this.setBodyScrollLock(true);
   }
 
   private isDettaglioValido(dett: DettaglioSpesa | undefined): boolean {
@@ -254,12 +487,46 @@ export class NoteSpese implements OnInit {
 
   private creaSpesaDaDettaglio(dett: DettaglioSpesa, totale: string): Spesa {
     return {
+      id: null,
       data: this.nuovaSpesaData,
       codice: dett.codiceOrdine,
       richiesto: totale,
       validato: '0,00€',
       pagato: false,
+      idCliente: dett.idCliente ?? null,
     };
+  }
+
+  private loadSpese(year?: number, month?: number): void {
+    const now = new Date();
+    year = year ?? now.getFullYear();
+    month = month ?? now.getMonth() + 1;
+    this.isSpeseLoading = true;
+    this.noteSpeseService.getSpeseByYearAndMonth(year, month).subscribe({
+      next: (res) => {
+        const mapped = (res || []).map(item => {
+          return {
+            id: item?.idSpesa ?? null,
+            data: formatDateIt(item.dataNotificazione),
+            codice: item.codiceOrdine || '',
+            richiesto: this.formattaTotaleNumber(item.totaleComplessivo || 0),
+            validato: this.formattaTotaleNumber(item.totaleValidato || 0),
+            pagato: Boolean(item.statoPagamento),
+            idCliente: item?.idCliente ?? null,
+          } as Spesa;
+        });
+        this.listaSpese = mapped;
+        this.enrichSpeseWithClienti();
+        this.rebuildFiltroOrdiniOptions();
+      },
+      error: (err) => {
+        console.error('[NoteSpese] loadSpese error:', err);
+        this.loadErrore = `Errore caricamento spese: ${err?.status || 'n/a'}`;
+      },
+      complete: () => {
+        this.isSpeseLoading = false;
+      }
+    });
   }
 
   private parseImporto(importo: string): number {
@@ -277,6 +544,19 @@ export class NoteSpese implements OnInit {
     return totale.toFixed(2).replace('.', ',') + '€';
   }
 
+  private formattaTotaleNumber(tot: number): string {
+    const n = Number(tot || 0);
+    return n.toFixed(2).replace('.', ',') + '€';
+  }
+
+  clampNonNegative(value: number | string | null | undefined): number {
+    return clampNonNegative(value);
+  }
+
+  blockNegative(event: KeyboardEvent): void {
+    blockNegative(event);
+  }
+
   private sommaDettaglio(dett: DettaglioSpesa): number {
     return (
       Number(dett.vitto || 0) +
@@ -291,17 +571,166 @@ export class NoteSpese implements OnInit {
     );
   }
 
-  private parseDataString(valore: string): Date | null {
-    if (!valore || valore.length !== 10) return null;
-    const [giorno, mese, anno] = valore.split('/').map((part) => Number(part));
-    if (!giorno || !mese || !anno) return null;
-    const data = new Date(anno, mese - 1, giorno);
-    return Number.isNaN(data.getTime()) ? null : data;
-  }
-
   private syncCalendarioConData(target: 'filtro' | 'popup'): void {
-    const data = this.parseDataString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData) || new Date();
+    const data = parseDateString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData) || new Date();
     this.dataVisualizzata = new Date(data.getFullYear(), data.getMonth(), 1);
     this.generaCalendario();
+  }
+
+  private rebuildFiltroOrdiniOptions(): void {
+    const codes = Array.from(new Set(this.listaSpese.map(s => s.codice).filter(Boolean)));
+    this.filtroOrdiniOptions = [this.filtroDefault, ...codes];
+    if (!this.filtroOrdiniOptions.includes(this.filtroOrdine)) {
+      this.filtroOrdine = this.filtroDefault;
+    }
+  }
+
+  private loadClienti(): void {
+    if (this.clientiLoaded || this.isClientiLoading) return;
+    this.isClientiLoading = true;
+    this.clientiOrdiniService.getClienti().subscribe({
+      next: (res) => {
+        this.clientiLoaded = true;
+        this.clientiOptions.splice(0, this.clientiOptions.length, ...(res || []));
+        if (this.clientiOptions.length && this.dettagliSpesa[0]) {
+          const first = this.clientiOptions[0];
+          this.dettagliSpesa[0].idCliente = first.idCliente;
+          this.dettagliSpesa[0].nominativoCliente = first.nominativo;
+          this.loadOrdiniByCliente(first.idCliente, this.dettagliSpesa[0]);
+        }
+        if (!this.clientiOptions.length) {
+          this.loadErrore = 'Nessun cliente disponibile.';
+        }
+      },
+      error: (err) => {
+        console.error('[NoteSpese] getClienteByUtente error:', err);
+        this.loadErrore = `Errore caricamento clienti: ${err?.status || 'n/a'}`;
+      },
+      complete: () => {
+        this.isClientiLoading = false;
+      }
+    });
+  }
+
+  private loadOrdiniByCliente(idCliente: number | null, dett?: DettaglioSpesa): void {
+    if (idCliente == null) return;
+    if (this.ordiniCache[idCliente]) {
+      this.enrichSpeseWithClienti();
+      this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
+      return;
+    }
+
+    this.isOrdiniLoading = true;
+    this.clientiOrdiniService.getOrdini(idCliente).subscribe({
+      next: (res) => {
+        this.ordiniCache[idCliente] = res || [];
+        if (!this.ordiniCache[idCliente].length) {
+          this.loadErrore = 'Nessun ordine per il cliente selezionato.';
+        }
+        this.enrichSpeseWithClienti();
+        this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
+      },
+      error: (err) => {
+        console.error('[NoteSpese] getOrdini error:', err);
+        this.loadErrore = `Errore caricamento ordini: ${err?.status || 'n/a'}`;
+        this.ordiniCache[idCliente] = this.ordiniCache[idCliente] || [];
+        this.enrichSpeseWithClienti();
+        this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
+      },
+      complete: () => {
+        this.isOrdiniLoading = false;
+      }
+    });
+  }
+
+  private ensureCodiceOrdineValid(dett: DettaglioSpesa | undefined, ordini: OrdineApiItem[]): void {
+    if (!dett) return;
+    const valido = ordini.some(o => o.codiceOrdine === dett.codiceOrdine);
+    if (!valido) dett.codiceOrdine = ordini[0]?.codiceOrdine || '';
+  }
+
+  private findOrdineByCodice(codice: string): OrdineApiItem | undefined {
+    const cacheValues = Object.values(this.ordiniCache).flat();
+    return cacheValues.find(o => o.codiceOrdine === codice);
+  }
+
+  private resolveClienteIdFromOrdine(codice: string): number | null {
+    if (!codice) return null;
+    const ordine = this.findOrdineByCodice(codice);
+    return ordine ? ordine.idCliente : null;
+  }
+
+  private enrichSpeseWithClienti(): void {
+    this.listaSpese.forEach(spesa => {
+      if (spesa.idCliente == null) {
+        spesa.idCliente = this.resolveClienteIdFromOrdine(spesa.codice);
+      }
+    });
+  }
+
+  private buildAddPayload(): AddSpesaRequest {
+    const dataNotificazione = formatDateISO(this.nuovaSpesaData);
+    const dettagli = this.dettagliSpesa.map(d => ({
+      dataDettaglio: formatDateISO(this.nuovaSpesaData),
+      vitto: Number(d.vitto || 0),
+      hotel: Number(d.hotel || 0),
+      trasportiLocali: Number(d.trasporti || 0),
+      aereo: Number(d.aereo || 0),
+      spesaVaria: Number(d.varie || 0),
+      idAuto: d.auto ? Number(d.auto) || null : null,
+      km: Number(d.km || 0),
+      telepass: Number(d.telepass || 0),
+      parking: Number(d.parking || 0)
+    }));
+
+    return {
+      codiceOrdine: this.dettagliSpesa[0]?.codiceOrdine || '',
+      dataNotificazione,
+      dettagli
+    };
+  }
+
+  private buildUpdatePayload(): UpdateSpesaRequest {
+    const dettagli = this.dettagliSpesa.map(d => ({
+      idDettaglio: d.idDettaglio ?? 0,
+      daEliminare: false,
+      dataDettaglio: formatDateISO(this.nuovaSpesaData),
+      vitto: Number(d.vitto || 0),
+      hotel: Number(d.hotel || 0),
+      trasportiLocali: Number(d.trasporti || 0),
+      aereo: Number(d.aereo || 0),
+      spesaVaria: Number(d.varie || 0),
+      idAuto: d.auto ? Number(d.auto) || null : null,
+      km: Number(d.km || 0),
+      telepass: Number(d.telepass || 0),
+      parking: Number(d.parking || 0)
+    }));
+
+    return {
+      codiceOrdine: this.dettagliSpesa[0]?.codiceOrdine || '',
+      idSpesa: this.rigaSelezionata?.id ?? 0,
+      dettagli
+    };
+  }
+
+  private formatDateISO(valore: string): string {
+    const data = parseDateString(valore) || new Date();
+    const yyyy = data.getFullYear();
+    const mm = String(data.getMonth() + 1).padStart(2, '0');
+    const dd = String(data.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  private setBodyScrollLock(lock: boolean): void {
+    const body = document.body;
+    const html = document.documentElement;
+    if (!body || !html) return;
+    if (lock) {
+      body.classList.add('modal-open');
+      html.classList.add('modal-open');
+    } else {
+      body.classList.remove('modal-open');
+      html.classList.remove('modal-open');
+    }
   }
 }

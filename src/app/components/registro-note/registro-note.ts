@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { generateCalendarDays, navigateMonth, formatSelectedDay, isDaySelected, MONTH_NAMES_IT } from '../../shared/utils/calendar.utils';
+import { sanitizeDateInput } from '../../shared/utils/date.utils';
 
 interface Nota {
   id: string;
@@ -41,7 +43,7 @@ export class RegistroNoteComponent implements OnInit {
   currentMonth = new Date().getMonth();
   currentYear = new Date().getFullYear();
   calendarDays: (number | null)[] = [];
-  monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+  monthNames = MONTH_NAMES_IT;
 
   nuovaNota: Nota = this.buildNota();
 
@@ -55,37 +57,32 @@ export class RegistroNoteComponent implements OnInit {
   }
 
   generateCalendar(): void {
-    this.calendarDays = [];
-    const firstDayIndex = new Date(this.currentYear, this.currentMonth, 1).getDay();
-    const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
-    const offset = (firstDayIndex === 0) ? 6 : firstDayIndex - 1;
-    for (let i = 0; i < offset; i++) this.calendarDays.push(null);
-    for (let i = 1; i <= daysInMonth; i++) this.calendarDays.push(i);
+    this.calendarDays = generateCalendarDays(this.currentYear, this.currentMonth);
   }
 
   prevMonth(event: Event): void {
     event.stopPropagation();
-    this.currentMonth--;
-    if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
+    const nav = navigateMonth(this.currentMonth, this.currentYear, -1);
+    this.currentMonth = nav.month;
+    this.currentYear = nav.year;
     this.generateCalendar();
   }
 
   nextMonth(event: Event): void {
     event.stopPropagation();
-    this.currentMonth++;
-    if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
+    const nav = navigateMonth(this.currentMonth, this.currentYear, 1);
+    this.currentMonth = nav.month;
+    this.currentYear = nav.year;
     this.generateCalendar();
   }
 
   get nomeMeseAnno(): string {
-    return `${this.monthNames[this.currentMonth]} ${this.currentYear}`;
+    return `${MONTH_NAMES_IT[this.currentMonth]} ${this.currentYear}`;
   }
 
   selectDate(day: number | null, context: CalendarContext = 'form'): void {
     if (!day) return;
-    const d = day.toString().padStart(2, '0');
-    const m = (this.currentMonth + 1).toString().padStart(2, '0');
-    const selectedDate = `${d}/${m}/${this.currentYear}`;
+    const selectedDate = formatSelectedDay(day, this.currentMonth, this.currentYear);
     if (context === 'filter') {
       this.filtroData = selectedDate;
     } else {
@@ -95,29 +92,16 @@ export class RegistroNoteComponent implements OnInit {
   }
 
   isSelected(day: number | null, context: CalendarContext = 'form'): boolean {
-    if (!day) return false;
-    const dateStr = `${day.toString().padStart(2, '0')}/${(this.currentMonth + 1).toString().padStart(2, '0')}/${this.currentYear}`;
-    return context === 'form' ? this.nuovaNota.data === dateStr : this.filtroData === dateStr;
+    const dateToCheck = context === 'form' ? this.nuovaNota.data : this.filtroData;
+    return isDaySelected(day, dateToCheck, this.currentMonth, this.currentYear);
   }
   
   formattaDataNota(event: any): void {
-    let v = event.target.value.replace(/\D/g, '');
-    if (v.length > 8) v = v.substring(0, 8);
-    let final = '';
-    if (v.length > 0) final += v.substring(0, 2);
-    if (v.length > 2) final += '/' + v.substring(2, 4);
-    if (v.length > 4) final += '/' + v.substring(4, 8);
-    this.nuovaNota.data = final;
+    this.nuovaNota.data = sanitizeDateInput(event.target.value);
   }
 
   formattaDataFiltro(event: any): void {
-    let v = event.target.value.replace(/\D/g, '');
-    if (v.length > 8) v = v.substring(0, 8);
-    let final = '';
-    if (v.length > 0) final += v.substring(0, 2);
-    if (v.length > 2) final += '/' + v.substring(2, 4);
-    if (v.length > 4) final += '/' + v.substring(4, 8);
-    this.filtroData = final;
+    this.filtroData = sanitizeDateInput(event.target.value);
   }
 
   nuovaNotaFn(): void {
