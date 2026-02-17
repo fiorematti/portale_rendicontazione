@@ -71,6 +71,6 @@ export class AttivitaService {
   }
 
   getLocation(): Observable<LuogoApiItem[]> {
-    return this.http.get<LuogoApiItem[]>('/api/Luogo');
+    return this.http.get<LuogoApiItem[]>('/api/Luogo/getAllLuoghi');
   }
 }
