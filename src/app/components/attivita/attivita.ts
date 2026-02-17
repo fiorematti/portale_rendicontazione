@@ -3,6 +3,7 @@ import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AttivitaService, AttivitaItem, AddAttivitaPayload, UpdateAttivitaPayload } from './attivitaservice';
 import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
+import { ClienteApiItem } from '../../dto/cliente.dto';
 import { OrdineApiItem } from '../../dto/ordine.dto';
 import { LuogoApiItem } from '../../dto/luogo.dto';
 import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
@@ -35,8 +36,11 @@ export class Attivita implements OnInit {
   listaAttivita: AttivitaItem[] = [];
   locationOptions: LuogoApiItem[] = [];
 
+  clientiOptions: ClienteApiItem[] = [];
   ordiniOptions: OrdineApiItem[] = [];
+  selectedClienteId: number | null = null;
   selectedCodice: string | null = null;
+  private clientiLoaded = false;
   private ordiniLoaded = false;
   private locationLoaded = false;
 
@@ -61,6 +65,7 @@ export class Attivita implements OnInit {
     this.impostaDataOggi();
     this.listaAnni = this.creaIntervalloAnni();
     this.generaCalendario();
+    this.loadClienti();
     this.loadOrdini();
     this.loadLocation();
     this.loadAttivita();
@@ -70,6 +75,7 @@ export class Attivita implements OnInit {
     this.isModifica = false;
     this.mostraErrore = false;
     this.nuovaAttivita = this.creaAttivitaVuota();
+    this.selectedClienteId = null;
     this.selectedCodice = null;
     this.errorMsg = '';
     this.mostraModal = true;
@@ -79,6 +85,7 @@ export class Attivita implements OnInit {
     this.isModifica = true;
     this.indiceInModifica = index;
     this.nuovaAttivita = { ...this.listaAttivita[index] };
+    this.selectedClienteId = this.findClienteIdByNome(this.nuovaAttivita.nominativoCliente);
     this.selectedCodice = this.nuovaAttivita.codiceOrdine || null;
     this.mostraModal = true;
   }
@@ -364,9 +371,30 @@ export class Attivita implements OnInit {
     return (esito || '').toLowerCase().includes('riuscita');
   }
 
+  onClienteChange(): void {
+    if (this.selectedClienteId == null) return;
+    this.syncClienteFromId(this.selectedClienteId);
+  }
+
   onCodiceChange(): void {
     if (!this.selectedCodice) return;
     this.nuovaAttivita.codiceOrdine = this.selectedCodice;
+  }
+
+  private findClienteIdByNome(nome: string): number | null {
+    const found = this.clientiOptions.find(c => c.nominativo === nome);
+    return found ? found.idCliente : null;
+  }
+
+  private loadClienti(): void {
+    if (this.clientiLoaded) return;
+    this.clientiOrdiniService.getClienti().subscribe({
+      next: (res) => {
+        this.clientiOptions = res || [];
+        this.clientiLoaded = true;
+      },
+      error: (err) => { console.error('getClienti error:', err); }
+    });
   }
 
   private loadOrdini(): void {
@@ -378,6 +406,12 @@ export class Attivita implements OnInit {
       },
       error: (err) => { console.error('getOrdini error:', err); }
     });
+  }
+
+  private syncClienteFromId(idCliente: number): void {
+    const cliente = this.clientiOptions.find(c => c.idCliente === idCliente);
+    if (!cliente) return;
+    this.nuovaAttivita.nominativoCliente = cliente.nominativo;
   }
 
   private totaleOreGiornata(excludeIndex: number = -1): number {
