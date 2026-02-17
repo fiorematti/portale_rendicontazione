@@ -143,14 +143,6 @@
 
     <div class="row g-3">
       <div class="col-6 text-start">
-        <label class="fw-bold mb-1">Cliente</label>
-        <select class="form-select bg-light" [(ngModel)]="selectedClienteId" (change)="onClienteChange()">
-          <option [ngValue]="null">Seleziona cliente</option>
-          <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
-        </select>
-      </div>
-      
-      <div class="col-6 text-start">
         <label class="fw-bold mb-1">Codice ordine</label>
         <select class="form-select bg-light" [(ngModel)]="selectedCodice" (change)="onCodiceChange()">
           <option [ngValue]="null">Seleziona codice</option>
