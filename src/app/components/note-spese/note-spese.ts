@@ -7,7 +7,7 @@ import { ClienteApiItem } from '../../dto/cliente.dto';
 import { OrdineApiItem } from '../../dto/ordine.dto';
 import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
 import { parseDateString, formatDateIt, formatDateISO, sanitizeDateInput } from '../../shared/utils/date.utils';
-import { navigateMonth } from '../../shared/utils/calendar.utils';
+
 
 interface Spesa {
   id?: number | null;
@@ -18,6 +18,7 @@ interface Spesa {
   pagato: boolean;
   idCliente?: number | null;
 }
+
 
 interface DettaglioSpesa {
   idDettaglio?: number;
@@ -38,6 +39,7 @@ interface DettaglioSpesa {
   idAuto?: number;
 }
 
+
 @Component({
   selector: 'app-note-spese',
   standalone: true,
@@ -45,20 +47,29 @@ interface DettaglioSpesa {
   templateUrl: './note-spese.html',
   styleUrl: './note-spese.css',
 })
+
+
+
+
+
+
 export class NoteSpese implements OnInit, OnDestroy {
   private readonly filtroDefault = 'Tutti';
   readonly clientiOptions: ClienteApiItem[] = [];
   private ordiniCache: Record<number, OrdineApiItem[]> = {};
 
+
   listaSpese: Spesa[] = [];
   loading = false;
   errore: string | null = null;
+
 
   filtroPagate = this.filtroDefault;
   filtroData = '';
   filtroCliente: number | 'Tutti' = this.filtroDefault;
   filtroOrdine = this.filtroDefault;
   filtroOrdiniOptions: string[] = [];
+
 
   mostraModal = false;
   modalMode: 'aggiungi' | 'visualizza' | 'modifica' = 'aggiungi';
@@ -76,39 +87,60 @@ export class NoteSpese implements OnInit, OnDestroy {
   deletingSpesaId: number | null = null;
   isDettaglioLoading = false;
 
+
   rigaSelezionata: Spesa | null = null;
 
-  mostraCalendario = false;
 
+  mostraCalendario = false;
   targetData: 'filtro' | 'popup' = 'filtro';
-  dataVisualizzata: Date = new Date();
-  giorniDelMese: number[] = [];
-  giorniVuoti: number[] = [];
+
+
+  readonly listaMesi = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  listaAnni: number[] = [];
+
+
+  meseFiltro = new Date().getMonth();
+  annoFiltro = new Date().getFullYear();
+
+
+  mostraCalendarioPopup = false;
+  dataVisualizzataPopup: Date = new Date();
+  giorniDelMesePopup: number[] = [];
+  giorniVuotiPopup: number[] = [];
+
 
   get isAggiungi(): boolean { return this.modalMode === 'aggiungi'; }
   get isVisualizza(): boolean { return this.modalMode === 'visualizza'; }
   get isModifica(): boolean { return this.modalMode === 'modifica'; }
+
 
   constructor(
     private readonly noteSpeseService: NoteSpeseService,
     private readonly clientiOrdiniService: ClientiOrdiniService
   ) {}
 
+
   ngOnInit(): void {
-    this.generaCalendario();
+    this.listaAnni = this.creaIntervalloAnni();
+    this.syncDateStrings('filtro');
+    this.syncDatePopupFromString();
+    this.generaCalendarioPopup();
     this.loadClienti();
     this.loadSpese();
     this.resetNuovaSpesa();
   }
 
+
   ngOnDestroy(): void {
     this.setBodyScrollLock(false);
   }
+
 
   visualizzaDettaglio(spesa: Spesa): void {
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
     this.apriModalConModalita('visualizza');
+
 
     if (spesa.id != null) {
       this.isDettaglioLoading = true;
@@ -133,6 +165,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       this.caricaDatiNellaModal(spesa);
     }
   }
+
 
   private mapDettaglioApiToDettaglioSpesa(item: DettaglioApiResponse, spesa: Spesa): DettaglioSpesa {
     const ordine = this.findOrdineByCodice(spesa.codice);
@@ -156,10 +189,12 @@ export class NoteSpese implements OnInit, OnDestroy {
     };
   }
 
+
   apriModifica(spesa: Spesa): void {
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
     this.apriModalConModalita('modifica');
+
 
     if (spesa.id != null) {
       this.isDettaglioLoading = true;
@@ -185,11 +220,13 @@ export class NoteSpese implements OnInit, OnDestroy {
     }
   }
 
+
   eliminaSpesa(indexTable: number): void {
     const spesaDaEliminare = this.speseFiltrate[indexTable];
     if (!spesaDaEliminare) return;
     const indexReale = this.listaSpese.indexOf(spesaDaEliminare);
     if (!confirm('Sei sicuro di voler eliminare questa nota spesa?')) return;
+
 
     if (spesaDaEliminare.id != null) {
       this.deletingSpesaId = spesaDaEliminare.id;
@@ -217,30 +254,32 @@ export class NoteSpese implements OnInit, OnDestroy {
     }
   }
 
+
   private caricaDatiNellaModal(spesa: Spesa): void {
     this.nuovaSpesaData = spesa.data;
     const importoPulito = this.parseImporto(spesa.richiesto);
     const ordine = this.findOrdineByCodice(spesa.codice);
     const cliente = ordine ? this.clientiOptions.find(c => c.idCliente === ordine.idCliente) : null;
-    
+   
     this.dettagliSpesa = [{
       idCliente: ordine?.idCliente ?? null,
       nominativoCliente: cliente?.nominativo ?? null,
       codiceOrdine: spesa.codice,
       vitto: importoPulito,
-      alloggio: 0, 
-      hotel: 0, 
-      trasporti: 0, 
-      aereo: 0, 
+      alloggio: 0,
+      hotel: 0,
+      trasporti: 0,
+      aereo: 0,
       varie: 0,
-      auto: 'Modello auto', 
-      km: 0, 
-      parking: 0, 
-      telepass: 0, 
+      auto: 'Modello auto',
+      km: 0,
+      parking: 0,
+      telepass: 0,
       costo: 0
     }];
     this.tabAttiva = 0;
   }
+
 
   confermaSpesa(): void {
     const dett = this.dettagliSpesa[this.tabAttiva] || this.dettagliSpesa[0];
@@ -251,6 +290,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     }
     this.salvaErrore = '';
     this.salvaInCorso = true;
+
 
     if (this.isAggiungi) {
       const payload = this.buildAddPayload();
@@ -301,6 +341,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     }
   }
 
+
   resetNuovaSpesa(): void {
     this.nuovaSpesaData = '';
     this.dettagliSpesa = [{
@@ -313,6 +354,8 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.tabAttiva = 0;
     this.rigaSelezionata = null;
     this.mostraErrore = false;
+    this.syncDatePopupFromString();
+    this.generaCalendarioPopup();
     // se i clienti sono già caricati preimposta il primo
     if (this.clientiLoaded && this.clientiOptions.length) {
       const first = this.clientiOptions[0];
@@ -322,68 +365,33 @@ export class NoteSpese implements OnInit, OnDestroy {
     }
   }
 
-  apriModalSpesa(): void { 
+
+  apriModalSpesa(): void {
     this.resetNuovaSpesa();
     this.apriModalConModalita('aggiungi');
   }
 
-  chiudiModal(): void { 
-    this.mostraModal = false; 
+
+  chiudiModal(): void {
+    this.mostraModal = false;
     this.mostraCalendario = false;
     this.rigaSelezionata = null;
     this.mostraErrore = false;
     this.setBodyScrollLock(false);
   }
 
+
   get totaleCalcolato(): number {
     return this.dettagliSpesa.reduce((acc, dett) => acc + this.sommaDettaglio(dett), 0);
   }
 
-  toggleCalendario(target: 'filtro' | 'popup'): void {
-    if (this.isVisualizza && target === 'popup') return;
-    const opening = !this.mostraCalendario || this.targetData !== target;
-    this.targetData = target;
 
-    if (opening) {
-      this.syncCalendarioConData(target);
-      this.mostraCalendario = true;
-    } else {
-      this.mostraCalendario = false;
+  onCambioMeseAnno(target: 'filtro' | 'popup'): void {
+    if (target === 'filtro') {
+      this.syncDateStrings('filtro');
     }
   }
 
-  generaCalendario(): void {
-    const anno = this.dataVisualizzata.getFullYear();
-    const mese = this.dataVisualizzata.getMonth();
-    const firstDayIndex = new Date(anno, mese, 1).getDay();
-    const offset = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
-    this.giorniVuoti = Array(offset).fill(0);
-    const numGiorni = new Date(anno, mese + 1, 0).getDate();
-    this.giorniDelMese = Array.from({ length: numGiorni }, (_, i) => i + 1);
-  }
-
-  selezionaGiorno(g: number): void {
-    const d = `${String(g).padStart(2, '0')}/${String(this.dataVisualizzata.getMonth() + 1).padStart(2, '0')}/${this.dataVisualizzata.getFullYear()}`;
-    if (this.targetData === 'filtro') this.filtroData = d; else this.nuovaSpesaData = d;
-    this.syncCalendarioConData(this.targetData);
-    this.mostraCalendario = false;
-  }
-
-  cambiaMese(d: number): void {
-    const nav = navigateMonth(this.dataVisualizzata.getMonth(), this.dataVisualizzata.getFullYear(), d);
-    this.dataVisualizzata = new Date(nav.year, nav.month, 1);
-    this.generaCalendario();
-  }
-
-  isGiornoSelezionato(giorno: number, target: 'filtro' | 'popup'): boolean {
-    const data = parseDateString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData);
-    if (!data) return false;
-    return (
-      data.getDate() === giorno &&
-      data.getMonth() === this.dataVisualizzata.getMonth() &&
-      data.getFullYear() === this.dataVisualizzata.getFullYear()
-    );
-  }
 
   formattaData(event: Event, campo: string): void {
     const target = event.target as HTMLInputElement;
@@ -391,8 +399,6 @@ export class NoteSpese implements OnInit, OnDestroy {
     if (campo === 'filtro') this.filtroData = v; else this.nuovaSpesaData = v;
   }
 
-  get nomeMeseCorrente(): string { return this.dataVisualizzata.toLocaleString('it-IT', { month: 'long' }); }
-  get annoVisualizzato(): number { return this.dataVisualizzata.getFullYear(); }
 
   get speseFiltrate(): Spesa[] {
     return this.listaSpese.filter((s) => {
@@ -404,6 +410,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       return mPagato && mData && mOrdine && mCliente;
     });
   }
+
 
   selezionaTab(i: number): void { this.tabAttiva = i; }
   aggiungiTab(): void {
@@ -421,10 +428,12 @@ export class NoteSpese implements OnInit, OnDestroy {
     else this.tabAttiva = 0;
   }
 
+
   ordiniDisponibili(dett: DettaglioSpesa): { codiceOrdine: string; idCliente: number }[] {
     if (!dett || dett.idCliente == null) return [];
     return this.ordiniCache[dett.idCliente] || [];
   }
+
 
   onClienteDropdownClick(): void {
     if (this.isClientiLoading) return;
@@ -443,12 +452,14 @@ export class NoteSpese implements OnInit, OnDestroy {
     });
   }
 
+
   onClienteChange(dett: DettaglioSpesa): void {
     if (!dett) return;
     const cliente = this.clientiOptions.find(c => c.idCliente === dett.idCliente);
     dett.nominativoCliente = cliente ? cliente.nominativo : null;
     this.loadOrdiniByCliente(dett.idCliente ?? null, dett);
   }
+
 
   onCodiceChange(dett: DettaglioSpesa, codice: string): void {
     if (!dett) return;
@@ -461,11 +472,96 @@ export class NoteSpese implements OnInit, OnDestroy {
     }
   }
 
+
+  toggleCalendario(target: 'filtro' | 'popup'): void {
+    if (target !== 'popup' || this.modalMode === 'visualizza') return;
+    this.targetData = target;
+    this.mostraCalendarioPopup = !this.mostraCalendarioPopup;
+    if (this.mostraCalendarioPopup) {
+      this.syncDatePopupFromString();
+      this.generaCalendarioPopup();
+    }
+  }
+
+
+  generaCalendarioPopup(): void {
+    const anno = this.dataVisualizzataPopup.getFullYear();
+    const mese = this.dataVisualizzataPopup.getMonth();
+    const firstDayIndex = new Date(anno, mese, 1).getDay();
+    const offset = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+    this.giorniVuotiPopup = Array(offset).fill(0);
+    const numGiorni = new Date(anno, mese + 1, 0).getDate();
+    this.giorniDelMesePopup = Array.from({ length: numGiorni }, (_, i) => i + 1);
+  }
+
+
+  cambiaMesePopup(delta: number): void {
+    const currentMonth = this.dataVisualizzataPopup.getMonth();
+    const currentYear = this.dataVisualizzataPopup.getFullYear();
+    const target = new Date(currentYear, currentMonth + delta, 1);
+    this.dataVisualizzataPopup = target;
+    this.generaCalendarioPopup();
+  }
+
+
+  selezionaGiornoPopup(g: number): void {
+    const giorno = String(g).padStart(2, '0');
+    const mese = String(this.dataVisualizzataPopup.getMonth() + 1).padStart(2, '0');
+    const anno = this.dataVisualizzataPopup.getFullYear();
+    this.nuovaSpesaData = `${giorno}/${mese}/${anno}`;
+    this.mostraCalendarioPopup = false;
+  }
+
+
+  isGiornoSelezionatoPopup(giorno: number): boolean {
+    const data = parseDateString(this.nuovaSpesaData);
+    if (!data) return false;
+    return (
+      data.getDate() === giorno &&
+      data.getMonth() === this.dataVisualizzataPopup.getMonth() &&
+      data.getFullYear() === this.dataVisualizzataPopup.getFullYear()
+    );
+  }
+
+
+  get nomeMesePopup(): string {
+    return this.dataVisualizzataPopup.toLocaleString('it-IT', { month: 'long' });
+  }
+
+
+  get annoPopup(): number {
+    return this.dataVisualizzataPopup.getFullYear();
+  }
+
+
+  private creaIntervalloAnni(): number[] {
+    const start = 2020;
+    const end = new Date().getFullYear() + 5;
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }
+
+
+  private syncDateStrings(target: 'filtro' | 'popup'): void {
+    const giorno = '01';
+    if (target === 'filtro') {
+      const mese = String(this.meseFiltro + 1).padStart(2, '0');
+      this.filtroData = `${giorno}/${mese}/${this.annoFiltro}`;
+    }
+  }
+
+
+  private syncDatePopupFromString(): void {
+    const data = parseDateString(this.nuovaSpesaData) || new Date();
+    this.dataVisualizzataPopup = new Date(data.getFullYear(), data.getMonth(), 1);
+  }
+
+
   private apriModalConModalita(mode: 'aggiungi' | 'visualizza' | 'modifica'): void {
     this.modalMode = mode;
     this.mostraModal = true;
     this.setBodyScrollLock(true);
   }
+
 
   private isDettaglioValido(dett: DettaglioSpesa | undefined): boolean {
     if (!dett) return false;
@@ -485,6 +581,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     return Boolean(dataValida && codiceValido && hasImporto);
   }
 
+
   private creaSpesaDaDettaglio(dett: DettaglioSpesa, totale: string): Spesa {
     return {
       id: null,
@@ -497,12 +594,10 @@ export class NoteSpese implements OnInit, OnDestroy {
     };
   }
 
-  private loadSpese(year?: number, month?: number): void {
-    const now = new Date();
-    year = year ?? now.getFullYear();
-    month = month ?? now.getMonth() + 1;
+
+  private loadSpese(year: number = new Date().getFullYear(), month: number = new Date().getMonth() + 1): void {
     this.isSpeseLoading = true;
-    this.noteSpeseService.getSpeseByYearAndMonth(year, month).subscribe({
+    this.noteSpeseService.getSpeseByYear(year,month).subscribe({
       next: (res) => {
         const mapped = (res || []).map(item => {
           return {
@@ -514,6 +609,7 @@ export class NoteSpese implements OnInit, OnDestroy {
             pagato: Boolean(item.statoPagamento),
             idCliente: item?.idCliente ?? null,
           } as Spesa;
+          console.log('Mapped item:', item, 'Result:', { ...item, ...this.listaSpese[this.listaSpese.length - 1] });
         });
         this.listaSpese = mapped;
         this.enrichSpeseWithClienti();
@@ -529,6 +625,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     });
   }
 
+
   private parseImporto(importo: string): number {
     return (
       parseFloat(
@@ -540,22 +637,27 @@ export class NoteSpese implements OnInit, OnDestroy {
     );
   }
 
+
   private formattaTotale(totale: number): string {
     return totale.toFixed(2).replace('.', ',') + '€';
   }
+
 
   private formattaTotaleNumber(tot: number): string {
     const n = Number(tot || 0);
     return n.toFixed(2).replace('.', ',') + '€';
   }
 
+
   clampNonNegative(value: number | string | null | undefined): number {
     return clampNonNegative(value);
   }
 
+
   blockNegative(event: KeyboardEvent): void {
     blockNegative(event);
   }
+
 
   private sommaDettaglio(dett: DettaglioSpesa): number {
     return (
@@ -571,11 +673,6 @@ export class NoteSpese implements OnInit, OnDestroy {
     );
   }
 
-  private syncCalendarioConData(target: 'filtro' | 'popup'): void {
-    const data = parseDateString(target === 'filtro' ? this.filtroData : this.nuovaSpesaData) || new Date();
-    this.dataVisualizzata = new Date(data.getFullYear(), data.getMonth(), 1);
-    this.generaCalendario();
-  }
 
   private rebuildFiltroOrdiniOptions(): void {
     const codes = Array.from(new Set(this.listaSpese.map(s => s.codice).filter(Boolean)));
@@ -584,6 +681,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       this.filtroOrdine = this.filtroDefault;
     }
   }
+
 
   private loadClienti(): void {
     if (this.clientiLoaded || this.isClientiLoading) return;
@@ -612,6 +710,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     });
   }
 
+
   private loadOrdiniByCliente(idCliente: number | null, dett?: DettaglioSpesa): void {
     if (idCliente == null) return;
     if (this.ordiniCache[idCliente]) {
@@ -619,6 +718,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
       return;
     }
+
 
     this.isOrdiniLoading = true;
     this.clientiOrdiniService.getOrdini(idCliente).subscribe({
@@ -643,22 +743,26 @@ export class NoteSpese implements OnInit, OnDestroy {
     });
   }
 
+
   private ensureCodiceOrdineValid(dett: DettaglioSpesa | undefined, ordini: OrdineApiItem[]): void {
     if (!dett) return;
     const valido = ordini.some(o => o.codiceOrdine === dett.codiceOrdine);
     if (!valido) dett.codiceOrdine = ordini[0]?.codiceOrdine || '';
   }
 
+
   private findOrdineByCodice(codice: string): OrdineApiItem | undefined {
     const cacheValues = Object.values(this.ordiniCache).flat();
     return cacheValues.find(o => o.codiceOrdine === codice);
   }
+
 
   private resolveClienteIdFromOrdine(codice: string): number | null {
     if (!codice) return null;
     const ordine = this.findOrdineByCodice(codice);
     return ordine ? ordine.idCliente : null;
   }
+
 
   private enrichSpeseWithClienti(): void {
     this.listaSpese.forEach(spesa => {
@@ -667,6 +771,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       }
     });
   }
+
 
   private buildAddPayload(): AddSpesaRequest {
     const dataNotificazione = formatDateISO(this.nuovaSpesaData);
@@ -683,12 +788,14 @@ export class NoteSpese implements OnInit, OnDestroy {
       parking: Number(d.parking || 0)
     }));
 
+
     return {
       codiceOrdine: this.dettagliSpesa[0]?.codiceOrdine || '',
       dataNotificazione,
       dettagli
     };
   }
+
 
   private buildUpdatePayload(): UpdateSpesaRequest {
     const dettagli = this.dettagliSpesa.map(d => ({
@@ -706,12 +813,14 @@ export class NoteSpese implements OnInit, OnDestroy {
       parking: Number(d.parking || 0)
     }));
 
+
     return {
       codiceOrdine: this.dettagliSpesa[0]?.codiceOrdine || '',
       idSpesa: this.rigaSelezionata?.id ?? 0,
       dettagli
     };
   }
+
 
   private formatDateISO(valore: string): string {
     const data = parseDateString(valore) || new Date();
@@ -720,6 +829,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     const dd = String(data.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
   }
+
 
   private setBodyScrollLock(lock: boolean): void {
     const body = document.body;
