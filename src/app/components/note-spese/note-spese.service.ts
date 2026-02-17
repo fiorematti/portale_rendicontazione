@@ -4,10 +4,15 @@ import { Observable } from 'rxjs';
 
 export interface SpesaNotaResponse {
   idSpesa: number;
+  idUtente: number;
+  idCliente: number;
   codiceOrdine: string;
   dataNotificazione: string;
   statoPagamento: boolean;
   totaleComplessivo: number;
+  totaleValidato: number;
+  totaleNonValidato: number;
+  totaleAnnullato: number;
 }
 
 export interface DettaglioApiResponse {
@@ -84,9 +89,11 @@ export class NoteSpeseService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getSpeseByYear(year: number): Observable<SpesaNotaResponse[]> {
-    const params = new HttpParams().set('year', year.toString());
-    return this.http.get<SpesaNotaResponse[]>(`${this.baseUrl}/GetSpeseByUserAndYear`, { params });
+  getSpeseByYearAndMonth(year: number, month: number): Observable<SpesaNotaResponse[]> {
+    const params = new HttpParams()
+      .set('year', year.toString())
+      .set('month', month.toString());
+    return this.http.get<SpesaNotaResponse[]>(`${this.baseUrl}/GetSpeseByUserAndYearAndMonth`, { params });
   }
 
   getDettagliBySpesa(idSpesa: number): Observable<DettaglioApiResponse[]> {

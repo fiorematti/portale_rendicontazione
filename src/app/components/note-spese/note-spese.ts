@@ -497,21 +497,22 @@ export class NoteSpese implements OnInit, OnDestroy {
     };
   }
 
-  private loadSpese(year: number = new Date().getFullYear()): void {
+  private loadSpese(year?: number, month?: number): void {
+    const now = new Date();
+    year = year ?? now.getFullYear();
+    month = month ?? now.getMonth() + 1;
     this.isSpeseLoading = true;
-    this.noteSpeseService.getSpeseByYear(year).subscribe({
+    this.noteSpeseService.getSpeseByYearAndMonth(year, month).subscribe({
       next: (res) => {
         const mapped = (res || []).map(item => {
-          const id = (item as any)?.id ?? item?.idSpesa ?? (item as any)?.idSpesaNota ?? null;
-          const idCliente = (item as any)?.idCliente ?? (item as any)?.idClienteOrdine ?? (item as any)?.clienteId ?? null;
           return {
-            id,
+            id: item?.idSpesa ?? null,
             data: formatDateIt(item.dataNotificazione),
             codice: item.codiceOrdine || '',
             richiesto: this.formattaTotaleNumber(item.totaleComplessivo || 0),
-            validato: this.formattaTotaleNumber((item as any).totaleValidato || 0),
+            validato: this.formattaTotaleNumber(item.totaleValidato || 0),
             pagato: Boolean(item.statoPagamento),
-            idCliente,
+            idCliente: item?.idCliente ?? null,
           } as Spesa;
         });
         this.listaSpese = mapped;
