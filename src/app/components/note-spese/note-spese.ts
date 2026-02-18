@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgIf, NgForOf, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NoteSpeseService, DettaglioApiResponse, AddSpesaRequest, UpdateSpesaRequest } from './note-spese.service';
 import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
@@ -43,7 +43,7 @@ interface DettaglioSpesa {
 @Component({
   selector: 'app-note-spese',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgIf, NgForOf, NgClass],
   templateUrl: './note-spese.html',
   styleUrl: './note-spese.css',
 })

@@ -6,6 +6,8 @@
   z-index: 10;
   margin-top: 0 !important;
   margin-bottom: 10px !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-end !important;
 }
 
 /* Wrapper verticale per etichetta + controllo */
@@ -27,6 +29,29 @@
   height: 38px;
   padding: 0.375rem 0.75rem;
   min-width: 160px;
+}
+
+/* Allinea il bottone "Aggiungi spesa" con gli altri controlli */
+.filter-card .btn-add-spesa {
+  height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-weight: 600;
+  line-height: 1;
+  margin-top: 18px;
+}
+
+.filter-card .btn-add-spesa i {
+  margin-top: 0;
+}
+
+@media (max-width: 1200px) {
+  .filter-card {
+    flex-wrap: wrap !important;
+  }
 }
 
 .custom-datepicker {
