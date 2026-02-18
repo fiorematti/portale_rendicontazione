@@ -408,9 +408,14 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   get speseFiltrate(): Spesa[] {
+    const filtroDate = parseDateString(this.filtroData);
     return this.listaSpese.filter((s) => {
       const mPagato = this.filtroPagate === this.filtroDefault || (this.filtroPagate === 'Si' ? s.pagato : !s.pagato);
-      const mData = !this.filtroData || s.data === this.filtroData;
+      let mData = true;
+      if (this.filtroData && filtroDate) {
+        const sd = parseDateString(s.data);
+        mData = sd ? sd.getFullYear() === filtroDate.getFullYear() && sd.getMonth() === filtroDate.getMonth() : false;
+      }
       const mOrdine = this.filtroOrdine === this.filtroDefault || s.codice === this.filtroOrdine;
       const idClienteSpesa = s.idCliente ?? this.resolveClienteIdFromOrdine(s.codice);
       const mCliente = this.filtroCliente === this.filtroDefault || (idClienteSpesa != null && idClienteSpesa === this.filtroCliente);
@@ -604,12 +609,14 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   private loadSpese(year: number = new Date().getFullYear(), month: number = new Date().getMonth() + 1): void {
     this.isSpeseLoading = true;
-    this.noteSpeseService.getSpeseByYear(year,month).subscribe({
+    this.loading = true;
+    this.noteSpeseService.getSpeseByYear(year, month).subscribe({
       next: (res) => {
+        console.log('[NoteSpese] API response spese:', res);
         const mapped = (res || []).map(item => {
           const id = (item as any)?.id ?? item?.idSpesa ?? (item as any)?.idSpesaNota ?? null;
           const idCliente = (item as any)?.idCliente ?? (item as any)?.idClienteOrdine ?? (item as any)?.clienteId ?? null;
-          return {
+          const result = {
             id,
             data: formatDateIt(item.dataNotificazione),
             codice: item.codiceOrdine || '',
@@ -618,18 +625,24 @@ export class NoteSpese implements OnInit, OnDestroy {
             pagato: Boolean(item.statoPagamento),
             idCliente,
           } as Spesa;
-          console.log('Mapped item:', item, 'Result:', { ...item, ...this.listaSpese[this.listaSpese.length - 1] });
+          console.log('[NoteSpese] mapped item ->', result);
+          return result;
         });
         this.listaSpese = mapped;
+        console.log('[NoteSpese] listaSpese popolata', this.listaSpese.length);
         this.enrichSpeseWithClienti();
         this.rebuildFiltroOrdiniOptions();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('[NoteSpese] loadSpese error:', err);
-        this.loadErrore = `Errore caricamento spese: ${err?.status || 'n/a'}`;
+        const status = err && err.status ? err.status : 'n/a';
+        this.loadErrore = `Errore caricamento spese: ${status}`;
+        this.loading = false;
       },
       complete: () => {
         this.isSpeseLoading = false;
+        this.loading = false;
+        console.log('[NoteSpese] loadSpese complete');
       }
     });
   }
@@ -762,7 +775,8 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   private findOrdineByCodice(codice: string): OrdineApiItem | undefined {
     const cacheValues = Object.values(this.ordiniCache).flat();
-    return cacheValues.find(o => o.codiceOrdine === codice);
+    const allOrdini = [...cacheValues, ...(this.ordini || [])];
+    return allOrdini.find(o => o.codiceOrdine === codice);
   }
 
 
