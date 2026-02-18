@@ -58,6 +58,9 @@ export class NoteSpese implements OnInit, OnDestroy {
   readonly clientiOptions: ClienteApiItem[] = [];
   private ordiniCache: Record<number, OrdineApiItem[]> = {};
 
+  ordini: OrdineApiItem[] = [];
+  selectedCodiceOrdine = '';
+
 
   listaSpese: Spesa[] = [];
   loading = false;
@@ -128,6 +131,10 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.loadClienti();
     this.loadSpese();
     this.resetNuovaSpesa();
+     this.clientiOrdiniService.getOrdini().subscribe({
+      next: res => this.ordini = res || [],
+      error: () => this.ordini = []
+    });
   }
 
 
@@ -845,4 +852,6 @@ export class NoteSpese implements OnInit, OnDestroy {
       html.classList.remove('modal-open');
     }
   }
+  
+  
 }

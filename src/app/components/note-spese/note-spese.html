@@ -131,9 +131,10 @@
                   (change)="onCodiceChange(dettagliSpesa[tabAttiva], dettagliSpesa[tabAttiva].codiceOrdine)">
                   <option [ngValue]="''">Seleziona codice</option>
                   <option *ngIf="isOrdiniLoading" [ngValue]="dettagliSpesa[tabAttiva].codiceOrdine">Caricamento ordini...</option>
-                  <option *ngIf="!isOrdiniLoading && !ordiniDisponibili(dettagliSpesa[tabAttiva]).length" [ngValue]="''">Nessun ordine disponibile</option>
-                  <option *ngFor="let o of ordiniDisponibili(dettagliSpesa[tabAttiva])" [ngValue]="o.codiceOrdine">{{ o.codiceOrdine }}</option>
+                  <option *ngIf="!isOrdiniLoading && !ordini.length" [ngValue]="''">Nessun ordine disponibile</option>
+                  <option *ngFor="let o of ordini" [ngValue]="o.codiceOrdine">{{ o.codiceOrdine }}</option>
                 </select>
+                
               </div>
             </ng-container>
             <ng-template #infoSoloTesto>
@@ -198,7 +199,7 @@
                 <label class="small fw-bold">Data</label>
                 <div class="input-with-icon">
                   <input class="form-control custom-input" placeholder="gg/mm/aaaa"
-                    [disabled]="modalMode === 'visualizza'" readonly type="text" [(ngModel)]="nuovaSpesaData"
+                    [disabled]="modalMode === 'visualizza'" type="text" [(ngModel)]="nuovaSpesaData"
                     (input)="formattaData($event, 'popup')" (click)="toggleCalendario('popup')" />
                   <i *ngIf="modalMode !== 'visualizza'" class="bi bi-calendar3 calendar-icon-overlay"
                     (click)="toggleCalendario('popup')"></i>
