@@ -234,14 +234,7 @@
                     [(ngModel)]="dettagliSpesa[tabAttiva].vitto"
                     (ngModelChange)="dettagliSpesa[tabAttiva].vitto = clampNonNegative($event)" />
                 </div>
-                <div class="col-4">
-                  <label class="small fw-bold mb-0">Alloggio</label>
-                  <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" min="0"
-                    (keydown)="blockNegative($event)"
-                    [(ngModel)]="dettagliSpesa[tabAttiva].alloggio"
-                    (ngModelChange)="dettagliSpesa[tabAttiva].alloggio = clampNonNegative($event)" />
-                </div>
+               
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Hotel</label>
                   <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"

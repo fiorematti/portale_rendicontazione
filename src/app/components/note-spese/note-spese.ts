@@ -26,7 +26,6 @@ interface DettaglioSpesa {
   nominativoCliente?: string | null;
   codiceOrdine: string;
   vitto?: number | null;
-  alloggio?: number | null;
   hotel?: number | null;
   trasporti?: number | null;
   aereo?: number | null;
@@ -183,7 +182,6 @@ export class NoteSpese implements OnInit, OnDestroy {
       nominativoCliente: cliente?.nominativo ?? null,
       codiceOrdine: spesa.codice,
       vitto: item.vitto ?? 0,
-      alloggio: 0,
       hotel: item.hotel ?? 0,
       trasporti: item.trasportiLocali ?? 0,
       aereo: item.aereo ?? 0,
@@ -273,7 +271,6 @@ export class NoteSpese implements OnInit, OnDestroy {
       nominativoCliente: cliente?.nominativo ?? null,
       codiceOrdine: spesa.codice,
       vitto: importoPulito,
-      alloggio: 0,
       hotel: 0,
       trasporti: 0,
       aereo: 0,
@@ -581,7 +578,6 @@ export class NoteSpese implements OnInit, OnDestroy {
     const codiceValido = dett.codiceOrdine?.toString().trim().length > 0;
     const hasImporto = [
       dett.vitto,
-      dett.alloggio,
       dett.hotel,
       dett.trasporti,
       dett.aereo,
@@ -684,7 +680,6 @@ export class NoteSpese implements OnInit, OnDestroy {
   private sommaDettaglio(dett: DettaglioSpesa): number {
     return (
       Number(dett.vitto || 0) +
-      Number(dett.alloggio || 0) +
       Number(dett.hotel || 0) +
       Number(dett.trasporti || 0) +
       Number(dett.aereo || 0) +
