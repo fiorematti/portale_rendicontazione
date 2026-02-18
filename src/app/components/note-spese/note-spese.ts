@@ -5,6 +5,7 @@ import { NoteSpeseService, DettaglioApiResponse, AddSpesaRequest, UpdateSpesaReq
 import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
 import { ClienteApiItem } from '../../dto/cliente.dto';
 import { OrdineApiItem } from '../../dto/ordine.dto';
+import { AutomobileDto } from '../../dto/automobile.dto';
 import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
 import { parseDateString, formatDateIt, formatDateISO, sanitizeDateInput } from '../../shared/utils/date.utils';
 
@@ -17,6 +18,7 @@ interface Spesa {
   validato: string;
   pagato: boolean;
   idCliente?: number | null;
+  dettagliLocali?: DettaglioSpesa[];
 }
 
 
@@ -59,6 +61,9 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   ordini: OrdineApiItem[] = [];
   selectedCodiceOrdine = '';
+
+  automobili: AutomobileDto[] = [];
+  isAutomobiliLoading = false;
 
 
   listaSpese: Spesa[] = [];
@@ -145,6 +150,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   visualizzaDettaglio(spesa: Spesa): void {
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
+    this.ensureAutomobiliLoaded();
     this.apriModalConModalita('visualizza');
 
 
@@ -168,7 +174,11 @@ export class NoteSpese implements OnInit, OnDestroy {
         }
       });
     } else {
-      this.caricaDatiNellaModal(spesa);
+      if (spesa.dettagliLocali?.length) {
+        this.dettagliSpesa = this.copiaDettagli(spesa.dettagliLocali);
+      } else {
+        this.caricaDatiNellaModal(spesa);
+      }
     }
   }
 
@@ -176,20 +186,29 @@ export class NoteSpese implements OnInit, OnDestroy {
   private mapDettaglioApiToDettaglioSpesa(item: DettaglioApiResponse, spesa: Spesa): DettaglioSpesa {
     const ordine = this.findOrdineByCodice(spesa.codice);
     const cliente = ordine ? this.clientiOptions.find(c => c.idCliente === ordine.idCliente) : null;
+    const vitto = (item as any).vitto ?? (item as any).Vitto ?? 0;
+    const hotel = (item as any).hotel ?? (item as any).Hotel ?? 0;
+    const trasporti = (item as any).trasportiLocali ?? (item as any).TrasportiLocali ?? 0;
+    const aereo = (item as any).aereo ?? (item as any).Aereo ?? 0;
+    const varie = (item as any).spesaVaria ?? (item as any).SpesaVaria ?? 0;
+    const parking = (item as any).parking ?? (item as any).Parking ?? 0;
+    const telepass = (item as any).telepass ?? (item as any).Telepass ?? 0;
+    const km = (item as any).km ?? (item as any).Km ?? 0;
+    const idAutoVal = (item as any).idAuto ?? (item as any).IdAuto;
     return {
       idDettaglio: item.idDettaglio ?? 0,
       idCliente: ordine?.idCliente ?? spesa.idCliente ?? null,
       nominativoCliente: cliente?.nominativo ?? null,
       codiceOrdine: spesa.codice,
-      vitto: item.vitto ?? 0,
-      hotel: item.hotel ?? 0,
-      trasporti: item.trasportiLocali ?? 0,
-      aereo: item.aereo ?? 0,
-      varie: item.spesaVaria ?? 0,
-      auto: item.idAuto != null ? String(item.idAuto) : 'Modello auto',
-      km: item.km ?? 0,
-      parking: item.parking ?? 0,
-      telepass: item.telepass ?? 0,
+      vitto,
+      hotel,
+      trasporti,
+      aereo,
+      varie,
+      auto: idAutoVal != null ? String(idAutoVal) : 'Modello auto',
+      km,
+      parking,
+      telepass,
       costo: 0
     };
   }
@@ -198,6 +217,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   apriModifica(spesa: Spesa): void {
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
+    this.ensureAutomobiliLoaded();
     this.apriModalConModalita('modifica');
 
 
@@ -221,7 +241,11 @@ export class NoteSpese implements OnInit, OnDestroy {
         }
       });
     } else {
-      this.caricaDatiNellaModal(spesa);
+      if (spesa.dettagliLocali?.length) {
+        this.dettagliSpesa = this.copiaDettagli(spesa.dettagliLocali);
+      } else {
+        this.caricaDatiNellaModal(spesa);
+      }
     }
   }
 
@@ -282,6 +306,11 @@ export class NoteSpese implements OnInit, OnDestroy {
       costo: 0
     }];
     this.tabAttiva = 0;
+  }
+
+
+  private copiaDettagli(dettagli: DettaglioSpesa[]): DettaglioSpesa[] {
+    return dettagli.map(d => ({ ...d }));
   }
 
 
@@ -428,7 +457,8 @@ export class NoteSpese implements OnInit, OnDestroy {
       idCliente: first?.idCliente ?? null,
       nominativoCliente: first?.nominativoCliente ?? null,
       codiceOrdine: first?.codiceOrdine || '',
-      vitto: 0
+      vitto: 0,
+      auto: 'Modello auto'
     });
   }
   eliminaDettaglioCorrente(): void {
@@ -479,6 +509,28 @@ export class NoteSpese implements OnInit, OnDestroy {
       const cliente = this.clientiOptions.find(c => c.idCliente === ordine.idCliente);
       dett.nominativoCliente = cliente ? cliente.nominativo : dett.nominativoCliente;
     }
+  }
+
+
+  onAutoDropdownClick(): void {
+    this.ensureAutomobiliLoaded();
+  }
+
+
+  private ensureAutomobiliLoaded(): void {
+    if (this.automobili.length || this.isAutomobiliLoading) return;
+    this.isAutomobiliLoading = true;
+    this.noteSpeseService.getAutomobili().subscribe({
+      next: (res) => {
+        this.automobili = res || [];
+      },
+      error: (err) => {
+        console.error('[NoteSpese] getAutomobili error:', err);
+      },
+      complete: () => {
+        this.isAutomobiliLoading = false;
+      }
+    });
   }
 
 
@@ -599,6 +651,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       validato: '0,00€',
       pagato: false,
       idCliente: dett.idCliente ?? null,
+      dettagliLocali: this.copiaDettagli(this.dettagliSpesa),
     };
   }
 

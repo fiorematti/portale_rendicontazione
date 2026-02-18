@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TariffaKmService } from './tariffa-km.service';
-import { AutomobileDto } from '../../dto/automobile.dto';
 import { AuthService } from '../../auth/auth.service';
 
 interface Acquirente {
@@ -34,27 +33,7 @@ export class TariffaKmComponent implements OnInit {
 
 	constructor(private readonly tariffaKmService: TariffaKmService, private readonly authService: AuthService) {}
 
-	ngOnInit(): void {
-		this.caricaAutomobili();
-	}
-
-	caricaAutomobili(): void {
-		this.tariffaKmService.getAllAutomobili().subscribe({
-			next: (data: AutomobileDto[]) => {
-				this.listaAcquirenti = data.map((auto) => ({
-					id: auto.idauto,
-					marca: auto.marca,
-					modello: auto.modello,
-					targa: auto.targa,
-					tariffaKm: auto.tariffaChilometrica,
-					cilindrata: auto.cilindrata,
-				}));
-			},
-			error: (err) => {
-				console.error('Errore nel caricamento delle automobili', err);
-			},
-		});
-	}
+	ngOnInit(): void {}
 
 	get acquirentiFiltrati(): Acquirente[] {
 		const filtro = this.filtroTesto.trim().toLowerCase();
@@ -121,7 +100,6 @@ export class TariffaKmComponent implements OnInit {
 			})
 			.subscribe({
 				next: () => {
-					this.caricaAutomobili();
 					this.chiudiModal();
 				},
 				error: (err) => {

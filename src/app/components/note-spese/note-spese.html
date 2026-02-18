@@ -281,8 +281,11 @@
               <div class="col-12">
                 <label class="small fw-bold mb-0">Auto</label>
                 <select class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].auto">
+                  [(ngModel)]="dettagliSpesa[tabAttiva].auto" (click)="onAutoDropdownClick()" (focus)="onAutoDropdownClick()">
                   <option value="Modello auto">Modello auto</option>
+                  <option *ngIf="isAutomobiliLoading" [ngValue]="dettagliSpesa[tabAttiva].auto">Caricamento automobili...</option>
+                  <option *ngIf="!isAutomobiliLoading && !automobili.length" value="Modello auto">Nessuna automobile disponibile</option>
+                  <option *ngFor="let a of automobili" [ngValue]="a.idauto.toString()">{{ a.marca }} {{ a.modello }} - {{ a.targa }}</option>
                 </select>
               </div>
               <div class="col-6">

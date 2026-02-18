@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AutomobileDto } from '../../dto/automobile.dto';
 
 
 export interface SpesaNotaResponse {
@@ -102,7 +103,9 @@ export class NoteSpeseService {
 
 
   getDettagliBySpesa(idSpesa: number): Observable<DettaglioApiResponse[]> {
-    const params = new HttpParams().set('idSpesa', idSpesa.toString());
+    const params = new HttpParams()
+      .set('idSpesa', idSpesa.toString())
+      .set('idSpesaNota', idSpesa.toString());
     return this.http.get<DettaglioApiResponse[]>('/api/Dettaglio/getDettagliBySpesa', { params });
   }
 
@@ -120,5 +123,10 @@ export class NoteSpeseService {
   deleteSpesa(id: number): Observable<DeleteSpesaResponse> {
     const params = new HttpParams().set('id', id.toString());
     return this.http.delete<DeleteSpesaResponse>(`${this.baseUrl}/DeleteSpesa`, { params });
+  }
+
+
+  getAutomobili(): Observable<AutomobileDto[]> {
+    return this.http.get<AutomobileDto[]>('/api/Automobile/utente/getAllAutomobiliByUtente');
   }
 }
