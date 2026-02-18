@@ -23,6 +23,13 @@
 		</div>
 	</div>
 
+	@if (erroreCaricamento) {
+	<div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-3" role="alert" style="border-radius: 12px;">
+		<i class="bi bi-exclamation-circle-fill me-2"></i>
+		<div>Errore nel caricamento delle automobili. Riprova più tardi.</div>
+	</div>
+	}
+
 	<div class="table-card bg-white rounded-4 shadow-sm overflow-hidden">
 		<div class="table-responsive">
 			<table class="table align-middle mb-0">
@@ -32,6 +39,7 @@
 						<th>Modello</th>
 						<th>Targa</th>
 						<th>Tariffa chilometrica</th>
+						<th>Cilindrata</th>
 						<th class="pe-4 text-center">Azioni</th>
 					</tr>
 				</thead>
@@ -42,6 +50,7 @@
 						<td class="text-nowrap">{{ item.modello }}</td>
 						<td class="text-nowrap">{{ item.targa }}</td>
 						<td class="text-nowrap">{{ item.tariffaKm | number:'1.4-4' }}</td>
+						<td class="text-nowrap">{{ item.cilindrata }}</td>
 						<td class="pe-4 text-center text-nowrap d-flex gap-2 justify-content-center align-items-center">
 							<button class="btn btn-link text-dark p-1" (click)="apriDettaglio(item)">
 								<i class="bi bi-eye"></i>
@@ -56,7 +65,7 @@
 					</tr>
 					} @empty {
 						<tr>
-							<td colspan="5" class="text-center py-4 text-muted">Nessun acquirente trovato.</td>
+							<td colspan="6" class="text-center py-4 text-muted">Nessun acquirente trovato.</td>
 						</tr>
 					}
 				</tbody>
@@ -94,6 +103,10 @@
         <label class="form-label fw-bold mb-1 small">Tariffa chilometrica</label>
         <input type="number" step="0.0001" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.tariffaKm" placeholder="0.1234" />
     </div>
+    <div class="col-12">
+        <label class="form-label fw-bold mb-1 small">Cilindrata</label>
+        <input type="number" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.cilindrata" placeholder="0" />
+    </div>
 </div>
 
 		<div class="d-flex justify-content-center gap-3 mt-4">
@@ -108,7 +121,7 @@
 <div class="modal-overlay" (click)="chiudiDettaglio()">
 	<div class="modal-card modal-card-detail" (click)="$event.stopPropagation()">
 		<div class="d-flex justify-content-between align-items-start mb-3">
-			<h2 class="modal-title mb-0">{{ acquirenteDettaglio?.marca }} {{ acquirenteDettaglio?.modello }}</h2>
+			<h2 class="modal-title mb-0">Auto: {{ acquirenteDettaglio?.marca }} {{ acquirenteDettaglio?.modello }}</h2>
 		</div>
 
 		<div class="detail-table-wrapper">
@@ -119,6 +132,7 @@
 						<th>Modello</th>
 						<th>Targa</th>
 						<th>Tariffa chilometrica</th>
+						<th>Cilindrata</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -127,6 +141,7 @@
 						<td>{{ acquirenteDettaglio?.modello }}</td>
 						<td>{{ acquirenteDettaglio?.targa }}</td>
 						<td>{{ acquirenteDettaglio?.tariffaKm | number:'1.4-4' }}</td>
+						<td>{{ acquirenteDettaglio?.cilindrata }}</td>
 					</tr>
 				</tbody>
 			</table>

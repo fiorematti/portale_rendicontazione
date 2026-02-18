@@ -5,10 +5,15 @@ import { Observable } from 'rxjs';
 
 export interface SpesaNotaResponse {
   idSpesa: number;
+  idUtente: number;
+  idCliente: number;
   codiceOrdine: string;
   dataNotificazione: string;
   statoPagamento: boolean;
   totaleComplessivo: number;
+  totaleValidato: number;
+  totaleNonValidato: number;
+  totaleAnnullato: number;
 }
 
 
