@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TariffaKmService } from './tariffa-km.service';
 import { AutomobileDto } from '../../dto/automobile.dto';
+import { AuthService } from '../../auth/auth.service';
 
 interface Acquirente {
 	id: number;
@@ -31,7 +32,7 @@ export class TariffaKmComponent implements OnInit {
 	isDettaglioOpen = false;
 	acquirenteDettaglio: Acquirente | null = null;
 
-	constructor(private readonly tariffaKmService: TariffaKmService) {}
+	constructor(private readonly tariffaKmService: TariffaKmService, private readonly authService: AuthService) {}
 
 	ngOnInit(): void {
 		this.caricaAutomobili();
@@ -83,9 +84,10 @@ export class TariffaKmComponent implements OnInit {
 	}
 
 	salvaAcquirente(): void {
-		const { marca, modello, targa, tariffaKm, id } = this.acquirenteSelezionato;
+		const { marca, modello, targa, tariffaKm, id, cilindrata } = this.acquirenteSelezionato;
 		const tariffaValida = !Number.isNaN(Number(tariffaKm));
-		const campiValidi = Boolean(marca.trim() && modello.trim() && targa.trim() && tariffaValida);
+		const cilindrataValida = !Number.isNaN(Number(cilindrata));
+		const campiValidi = Boolean(marca.trim() && modello.trim() && targa.trim() && tariffaValida && cilindrataValida);
 
 		if (!campiValidi) {
 			this.mostraErrore = true;
@@ -97,15 +99,43 @@ export class TariffaKmComponent implements OnInit {
 			this.listaAcquirenti = this.listaAcquirenti.map((item) =>
 				item.id === id ? { ...this.acquirenteSelezionato, tariffaKm: Number(tariffaKm) } : item
 			);
-		} else {
-			const nuovoId = this.generaId();
-			this.listaAcquirenti = [
-				...this.listaAcquirenti,
-				{ ...this.acquirenteSelezionato, id: nuovoId, tariffaKm: Number(tariffaKm) },
-			];
+			this.chiudiModal();
+			return;
 		}
 
-		this.chiudiModal();
+		const idUtente = this.getIdUtente();
+		if (!idUtente) {
+			console.error('Impossibile recuperare l\'idUtente per creare l\'automobile');
+			this.mostraErrore = true;
+			return;
+		}
+
+		this.tariffaKmService
+			.addAutomobile({
+				marca: marca.trim(),
+				modello: modello.trim(),
+				targa: targa.trim(),
+				tariffaChilometrica: Number(tariffaKm),
+				cilindrata: Number(cilindrata),
+				idUtente,
+			})
+			.subscribe({
+				next: () => {
+					this.caricaAutomobili();
+					this.chiudiModal();
+				},
+				error: (err) => {
+					console.error('Errore nel salvataggio della nuova automobile', err);
+					this.mostraErrore = true;
+				},
+			});
+	}
+
+	private getIdUtente(): number | null {
+		const id = this.authService.userSnapshot()?.id;
+		if (!id) return null;
+		const parsed = Number(id);
+		return Number.isNaN(parsed) ? null : parsed;
 	}
 
 	modifica(acquirente: Acquirente): void {
