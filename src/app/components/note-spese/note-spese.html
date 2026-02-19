@@ -309,6 +309,10 @@
                   [(ngModel)]="dettagliSpesa[tabAttiva].telepass"
                   (ngModelChange)="dettagliSpesa[tabAttiva].telepass = clampNonNegative($event)" />
               </div>
+              <div class="col-6">
+                <label class="small fw-bold mb-0">Costo km</label>
+                <input class="form-control custom-input input-mini" type="number" [value]="costoKm | number: '1.2-2'" disabled />
+              </div>
             </div>
           </div>
         </div>

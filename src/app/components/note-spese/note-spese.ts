@@ -97,6 +97,8 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   rigaSelezionata: Spesa | null = null;
 
+  readonly costoKm = 0;
+
 
   mostraCalendario = false;
   targetData: 'filtro' | 'popup' = 'filtro';
@@ -637,6 +639,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       dett.parking,
       dett.telepass,
       dett.costo,
+      (Number(dett.km || 0) * this.costoKm),
     ].some((v) => Number(v || 0) > 0);
     return Boolean(dataValida && codiceValido && hasImporto);
   }
@@ -677,7 +680,13 @@ export class NoteSpese implements OnInit, OnDestroy {
           console.log('[NoteSpese] mapped item ->', result);
           return result;
         });
-        this.listaSpese = mapped;
+        this.listaSpese = mapped.sort((a, b) => {
+          const da = parseDateString(a.data);
+          const db = parseDateString(b.data);
+          const ta = da ? da.getTime() : 0;
+          const tb = db ? db.getTime() : 0;
+          return tb - ta; // più recenti prima
+        });
         console.log('[NoteSpese] listaSpese popolata', this.listaSpese.length);
         this.enrichSpeseWithClienti();
         this.rebuildFiltroOrdiniOptions();
@@ -739,7 +748,8 @@ export class NoteSpese implements OnInit, OnDestroy {
       Number(dett.varie || 0) +
       Number(dett.parking || 0) +
       Number(dett.telepass || 0) +
-      Number(dett.costo || 0)
+      Number(dett.costo || 0) +
+      Number(dett.km || 0) * Number(this.costoKm || 0)
     );
   }
 
