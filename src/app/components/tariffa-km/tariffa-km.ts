@@ -97,10 +97,27 @@ export class TariffaKmComponent implements OnInit {
 		}
 
 		if (this.isEditMode) {
-			this.listaAcquirenti = this.listaAcquirenti.map((item) =>
-				item.id === id ? { ...this.acquirenteSelezionato, tariffaKm: Number(tariffaKm) } : item
-			);
-			this.chiudiModal();
+			this.tariffaKmService
+				.updateAutomobile({
+					idAuto: id,
+					marca: marca.trim(),
+					modello: modello.trim(),
+					targa: targa.trim(),
+					tariffaChilometrica: Number(tariffaKm),
+					cilindrata: Number(cilindrata),
+				})
+				.subscribe({
+					next: () => {
+						this.listaAcquirenti = this.listaAcquirenti.map((item) =>
+							item.id === id ? { ...this.acquirenteSelezionato, tariffaKm: Number(tariffaKm) } : item
+						);
+						this.chiudiModal();
+					},
+					error: (err) => {
+						console.error('Errore aggiornamento automobile', err);
+						this.mostraErrore = true;
+					},
+				});
 			return;
 		}
 

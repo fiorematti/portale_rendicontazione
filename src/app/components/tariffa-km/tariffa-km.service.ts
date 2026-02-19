@@ -25,6 +25,20 @@ export interface AutomobiliAdminResponse {
 	automobili: AutomobileDto[];
 }
 
+export interface UpdateAutomobileRequest {
+	idAuto: number;
+	marca: string;
+	modello: string;
+	targa: string;
+	tariffaChilometrica: number;
+	cilindrata: number;
+}
+
+export interface UpdateAutomobileResponse {
+	esito: string;
+	motivazione: string | null;
+}
+
 // export interface AddSpesaDettaglio {
 //   dataDettaglio: string;
 //   vitto: number;
@@ -52,6 +66,10 @@ export class TariffaKmService {
 
 	addAutomobile(request: AddAutomobileRequest): Observable<AddAutomobileResponse> {
 		return this.http.post<AddAutomobileResponse>('/api/Automobile/admin/addAutomobile', request);
+	}
+
+	updateAutomobile(request: UpdateAutomobileRequest): Observable<UpdateAutomobileResponse> {
+		return this.http.put<UpdateAutomobileResponse>('/api/Automobile/admin/updateAutomobile', request);
 	}
 
 	deleteAutomobile(id: number): Observable<boolean> {
