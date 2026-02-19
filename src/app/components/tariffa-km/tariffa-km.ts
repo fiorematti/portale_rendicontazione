@@ -33,7 +33,29 @@ export class TariffaKmComponent implements OnInit {
 
 	constructor(private readonly tariffaKmService: TariffaKmService, private readonly authService: AuthService) {}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.caricaAutomobili();
+	}
+
+	private caricaAutomobili(): void {
+		this.tariffaKmService.getAllAutomobiliAdmin().subscribe({
+			next: (res) => {
+				const first = res?.[0];
+				const autos = first?.automobili || [];
+				this.listaAcquirenti = autos.map((a) => ({
+					id: a.idauto,
+					marca: a.marca,
+					modello: a.modello,
+					targa: a.targa,
+					tariffaKm: a.tariffaChilometrica,
+					cilindrata: a.cilindrata,
+				}));
+			},
+			error: (err: unknown) => {
+				console.error('Errore caricamento automobili admin', err);
+			},
+		});
+	}
 
 	get acquirentiFiltrati(): Acquirente[] {
 		const filtro = this.filtroTesto.trim().toLowerCase();
@@ -101,6 +123,7 @@ export class TariffaKmComponent implements OnInit {
 			.subscribe({
 				next: () => {
 					this.chiudiModal();
+					this.caricaAutomobili();
 				},
 				error: (err) => {
 					console.error('Errore nel salvataggio della nuova automobile', err);
@@ -140,7 +163,17 @@ export class TariffaKmComponent implements OnInit {
 	elimina(acquirente: Acquirente): void {
 		const conferma = confirm('Sei sicuro di voler eliminare questo elemento?');
 		if (!conferma) return;
-		this.listaAcquirenti = this.listaAcquirenti.filter((item) => item.id !== acquirente.id);
+
+		this.tariffaKmService.deleteAutomobile(acquirente.id).subscribe({
+			next: (ok) => {
+				if (ok === true) {
+					this.listaAcquirenti = this.listaAcquirenti.filter((item) => item.id !== acquirente.id);
+				}
+			},
+			error: (err) => {
+				console.error('Errore eliminazione automobile', err);
+			}
+		});
 	}
 
 	private creaAcquirenteVuoto(): Acquirente {
