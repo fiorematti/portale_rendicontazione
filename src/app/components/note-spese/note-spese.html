@@ -322,7 +322,7 @@
           <div class="d-flex align-items-center justify-content-between mb-4">
             <h4 class="fw-bold m-0">Totale: {{ totaleCalcolato | number: '1.2-2' }}€</h4>
             <div *ngIf="modalMode !== 'aggiungi'" class="fw-bold">
-              Stato validazione: <span class="text-muted">Non Validato</span>
+              Stato validazione: <span class="text-muted">{{ dettagliSpesa[tabAttiva]?.statoApprovazione || 'Non Validato' }}</span>
             </div>
           </div>
 

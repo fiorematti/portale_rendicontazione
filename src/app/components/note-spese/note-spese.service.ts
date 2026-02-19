@@ -29,6 +29,8 @@ export interface DettaglioApiResponse {
   parking: number;
   idAutoNavigation: any;
   idSpesaNavigation: any;
+  costoKilometri: number;
+  totale: number;
   
 }
 

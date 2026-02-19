@@ -38,6 +38,9 @@ interface DettaglioSpesa {
   telepass?: number | null;
   costo?: number | null;
   idAuto?: number;
+  totale?: number | null;
+  statoApprovazione?: string | null;
+  costoKilometri?: number | null;
 }
 
 
@@ -197,6 +200,10 @@ export class NoteSpese implements OnInit, OnDestroy {
     const telepass = (item as any).telepass ?? (item as any).Telepass ?? 0;
     const km = (item as any).km ?? (item as any).Km ?? 0;
     const idAutoVal = (item as any).idAuto ?? (item as any).IdAuto;
+    const totale = (item as any).totale ?? (item as any).Totale ?? null;
+    const statoApprovazione = (item as any).statoApprovazione ?? (item as any).StatoApprovazione ?? null;
+    const costoKmApi = (item as any).costoKm ?? (item as any).costoKilometri ?? (item as any).CostoKilometri ?? null;
+    const costo = (item as any).costo ?? (item as any).Costo ?? null;
     return {
       idDettaglio: item.idDettaglio ?? 0,
       idCliente: ordine?.idCliente ?? spesa.idCliente ?? null,
@@ -211,7 +218,10 @@ export class NoteSpese implements OnInit, OnDestroy {
       km,
       parking,
       telepass,
-      costo: 0
+      costo,
+      totale,
+      statoApprovazione,
+      costoKilometri: costoKmApi,
     };
   }
 
