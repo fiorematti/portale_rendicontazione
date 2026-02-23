@@ -84,6 +84,13 @@
         <label class="form-label fw-bold mb-1 small">Marca</label>
         <input type="text" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.marca" placeholder="Marca" />
     </div>
+		<div class="col-12">
+			<label class="form-label fw-bold mb-1 small">Utente</label>
+			<select class="form-select input-soft input-mini" [(ngModel)]="acquirenteSelezionato.idUtente">
+				<option [ngValue]="undefined">Seleziona utente...</option>
+				<option *ngFor="let u of utenti" [ngValue]="u.id">{{ u.fullName }}</option>
+			</select>
+		</div>
     <div class="col-12">
         <label class="form-label fw-bold mb-1 small">Modello</label>
         <input type="text" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.modello" placeholder="Modello" />

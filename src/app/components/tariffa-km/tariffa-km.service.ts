@@ -25,6 +25,15 @@ export interface AutomobiliAdminResponse {
 	automobili: AutomobileDto[];
 }
 
+export interface UtenteDto {
+	idUtente: number;
+	nome: string | null;
+	cognome: string | null;
+	email: string | null;
+	ruolo: string | null;
+	stato: boolean;
+}
+
 export interface UpdateAutomobileRequest {
 	idAuto: number;
 	marca: string;
@@ -62,6 +71,11 @@ export class TariffaKmService {
 
 	getAllAutomobiliAdmin(): Observable<AutomobiliAdminResponse[]> {
 		return this.http.get<AutomobiliAdminResponse[]>('/api/Automobile/admin/getAllAutomobili');
+	}
+
+	getAllUtenti(): Observable<UtenteDto[]> {
+		console.log('Chiamata a getAllUtenti');
+		return this.http.get<UtenteDto[]>('/api/Utente/admin/getAllUtenti');
 	}
 
 	addAutomobile(request: AddAutomobileRequest): Observable<AddAutomobileResponse> {

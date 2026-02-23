@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TariffaKmService } from './tariffa-km.service';
 import { AuthService } from '../../auth/auth.service';
+import { UtenteDto } from './tariffa-km.service';
 
 interface Acquirente {
 	id: number;
@@ -24,6 +25,7 @@ interface Acquirente {
 })
 export class TariffaKmComponent implements OnInit {
 	listaAcquirenti: Acquirente[] = [];
+	utenti: { id: number; fullName: string }[] = [];
 
 	filtroTesto = '';
 	isModalOpen = false;
@@ -36,7 +38,20 @@ export class TariffaKmComponent implements OnInit {
 	constructor(private readonly tariffaKmService: TariffaKmService, private readonly authService: AuthService) {}
 
 	ngOnInit(): void {
+		this.caricaUtenti();
 		this.caricaAutomobili();
+	}
+
+	private caricaUtenti(): void {
+		this.tariffaKmService.getAllUtenti().subscribe({
+			next: (res: UtenteDto[]) => {
+				this.utenti = (res || []).map((u) => ({
+					id: u.idUtente,
+					fullName: [u.nome, u.cognome].filter(Boolean).join(' ') || u.email || 'Senza nome',
+				}));
+			},
+			error: (err) => console.error('Errore caricamento utenti', err),
+		});
 	}
 
 	private caricaAutomobili(): void {
@@ -132,8 +147,8 @@ export class TariffaKmComponent implements OnInit {
 			return;
 		}
 
-		const idUtente = this.getIdUtente();
-		if (!idUtente) {
+		const selectedIdUtente = this.acquirenteSelezionato.idUtente ?? this.getIdUtente();
+		if (!selectedIdUtente) {
 			console.error('Impossibile recuperare l\'idUtente per creare l\'automobile');
 			this.mostraErrore = true;
 			return;
@@ -146,7 +161,7 @@ export class TariffaKmComponent implements OnInit {
 				targa: targa.trim(),
 				tariffaChilometrica: Number(tariffaKm),
 				cilindrata: Number(cilindrata),
-				idUtente,
+				idUtente: selectedIdUtente,
 			})
 			.subscribe({
 				next: () => {
@@ -205,7 +220,7 @@ export class TariffaKmComponent implements OnInit {
 	}
 
 	private creaAcquirenteVuoto(): Acquirente {
-		return { id: 0, marca: '', modello: '', targa: '', tariffaKm: 0, cilindrata: 0, utente: '' };
+		return { id: 0, marca: '', modello: '', targa: '', tariffaKm: 0, cilindrata: 0, utente: '', idUtente: undefined };
 	}
 
 	private generaId(): number {
