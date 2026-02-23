@@ -7,16 +7,13 @@
 				<label class="search-label d-block mb-2">Cerca</label>
 				<div class="search-input d-flex align-items-center">
 					<i class="bi bi-search me-2 text-muted"></i>
-					<input
-						type="text"
-						[(ngModel)]="filtroTesto"
-						class="form-control border-0 shadow-none"
-						placeholder="Cerca..."
-					/>
+					<input type="text" [(ngModel)]="filtroTesto" class="form-control border-0 shadow-none"
+						placeholder="Cerca..." />
 				</div>
 			</div>
 
-			<button class="btn btn-add px-4 py-2 rounded-4 shadow-sm d-inline-flex align-items-center" (click)="apriModal()">
+			<button class="btn btn-add px-4 py-2 rounded-4 shadow-sm d-inline-flex align-items-center"
+				(click)="apriModal()">
 				<i class="bi bi-plus-lg me-2"></i>
 				<span>Aggiungi Auto</span>
 			</button>
@@ -28,10 +25,10 @@
 			<table class="table align-middle mb-0">
 				<thead class="table-light">
 					<tr>
-						<th class="ps-4">Marca</th>
+						<th class="ps-4">Utente</th>
+						<th>Marca</th>
 						<th>Modello</th>
 						<th>Targa</th>
-						<th>Utente</th>
 						<th>Tariffa chilometrica</th>
 						<th class="pe-4 text-center">Azioni</th>
 					</tr>
@@ -39,10 +36,10 @@
 				<tbody>
 					@for (item of acquirentiFiltrati; track item.id) {
 					<tr>
-						<td class="ps-4 text-nowrap">{{ item.marca }}</td>
+						<td class="ps-4 text-nowrap">{{ item.utente }}</td>
+						<td class="text-nowrap">{{ item.marca }}</td>
 						<td class="text-nowrap">{{ item.modello }}</td>
 						<td class="text-nowrap">{{ item.targa }}</td>
-						<td class="text-nowrap">{{ item.utente }}</td>
 						<td class="text-nowrap">{{ item.tariffaKm | number:'1.4-4' }}</td>
 						<td class="pe-4 text-center text-nowrap d-flex gap-2 justify-content-center align-items-center">
 							<button class="btn btn-link text-dark p-1" (click)="apriDettaglio(item)">
@@ -57,9 +54,9 @@
 						</td>
 					</tr>
 					} @empty {
-						<tr>
-							<td colspan="6" class="text-center py-4 text-muted">Nessun acquirente trovato.</td>
-						</tr>
+					<tr>
+						<td colspan="6" class="text-center py-4 text-muted">Nessun acquirente trovato.</td>
+					</tr>
 					}
 				</tbody>
 			</table>
@@ -73,45 +70,53 @@
 		<h2 class="modal-title">{{ isEditMode ? 'Modifica Auto' : 'Aggiungi Auto' }}</h2>
 
 		@if (mostraErrore) {
-		<div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-3" role="alert" style="border-radius: 12px;">
+		<div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-3" role="alert"
+			style="border-radius: 12px;">
 			<i class="bi bi-exclamation-circle-fill me-2"></i>
 			<div>Compila tutti i campi con valori validi.</div>
 		</div>
 		}
 
 		<div class="row g-3">
-    <div class="col-12">
-        <label class="form-label fw-bold mb-1 small">Marca</label>
-        <input type="text" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.marca" placeholder="Marca" />
-    </div>
-		<div class="col-12">
-			<label class="form-label fw-bold mb-1 small">Utente</label>
-			<select class="form-select input-soft input-mini" [(ngModel)]="acquirenteSelezionato.idUtente">
-				<option [ngValue]="undefined">Seleziona utente...</option>
-				<option *ngFor="let u of utenti" [ngValue]="u.id">{{ u.fullName }}</option>
-			</select>
+			<div class="col-12">
+				<label class="form-label fw-bold mb-1 small">Utente</label>
+				<select class="form-select input-soft input-mini" [(ngModel)]="acquirenteSelezionato.idUtente">
+					<option [ngValue]="undefined">Seleziona utente</option>
+					<option *ngFor="let u of utenti" [ngValue]="u.id">{{ u.fullName }}</option>
+				</select>
+			</div>
+			<div class="col-12">
+				<label class="form-label fw-bold mb-1 small">Marca</label>
+				<input type="text" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.marca"
+					placeholder="Marca" />
+			</div>
+
+			<div class="col-12">
+				<label class="form-label fw-bold mb-1 small">Modello</label>
+				<input type="text" class="form-control input-soft input-mini"
+					[(ngModel)]="acquirenteSelezionato.modello" placeholder="Modello" />
+			</div>
+			<div class="col-12">
+				<label class="form-label fw-bold mb-1 small">Targa</label>
+				<input type="text" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.targa"
+					placeholder="AB123CD" />
+			</div>
+			<div class="col-12">
+				<label class="form-label fw-bold mb-1 small">Tariffa chilometrica</label>
+				<input type="number" step="0.0001" class="form-control input-soft input-mini"
+					[(ngModel)]="acquirenteSelezionato.tariffaKm" placeholder="0.1234" />
+			</div>
+			<div class="col-12">
+				<label class="form-label fw-bold mb-1 small">Cilindrata</label>
+				<input type="number" class="form-control input-soft input-mini"
+					[(ngModel)]="acquirenteSelezionato.cilindrata" placeholder="1600" />
+			</div>
 		</div>
-    <div class="col-12">
-        <label class="form-label fw-bold mb-1 small">Modello</label>
-        <input type="text" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.modello" placeholder="Modello" />
-    </div>
-	<div class="col-12">
-		<label class="form-label fw-bold mb-1 small">Targa</label>
-		<input type="text" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.targa" placeholder="AB123CD" />
-	</div>
-    <div class="col-12">
-        <label class="form-label fw-bold mb-1 small">Tariffa chilometrica</label>
-        <input type="number" step="0.0001" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.tariffaKm" placeholder="0.1234" />
-    </div>
-	<div class="col-12">
-		<label class="form-label fw-bold mb-1 small">Cilindrata</label>
-		<input type="number" class="form-control input-soft input-mini" [(ngModel)]="acquirenteSelezionato.cilindrata" placeholder="1600" />
-	</div>
-</div>
 
 		<div class="d-flex justify-content-center gap-3 mt-4">
 			<button type="button" class="btn btn-dark px-4" (click)="chiudiModal()">Annulla</button>
-			<button type="button" class="btn btn-confirm-orange px-4 text-white" (click)="salvaAcquirente()">Conferma</button>
+			<button type="button" class="btn btn-confirm-orange px-4 text-white"
+				(click)="salvaAcquirente()">Conferma</button>
 		</div>
 	</div>
 </div>
@@ -128,19 +133,19 @@
 			<table class="table mb-0 detail-table">
 				<thead>
 					<tr>
+						<th>Utente</th>
 						<th>Marca</th>
 						<th>Modello</th>
 						<th>Targa</th>
-						<th>Utente</th>
 						<th>Tariffa chilometrica</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
+						<td>{{ acquirenteDettaglio?.utente }}</td>
 						<td>{{ acquirenteDettaglio?.marca }}</td>
 						<td>{{ acquirenteDettaglio?.modello }}</td>
 						<td>{{ acquirenteDettaglio?.targa }}</td>
-						<td>{{ acquirenteDettaglio?.utente }}</td>
 						<td>{{ acquirenteDettaglio?.tariffaKm | number:'1.4-4' }}</td>
 					</tr>
 				</tbody>
@@ -149,7 +154,8 @@
 
 		<div class="d-flex justify-content-center gap-3 mt-4">
 			<button type="button" class="btn btn-dark px-4" (click)="chiudiDettaglio()">Esci</button>
-			<button type="button" class="btn btn-confirm-orange px-4 text-white" (click)="modificaDaDettaglio()">Modifica</button>
+			<button type="button" class="btn btn-confirm-orange px-4 text-white"
+				(click)="modificaDaDettaglio()">Modifica</button>
 		</div>
 	</div>
 </div>
