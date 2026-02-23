@@ -11,6 +11,8 @@ interface Acquirente {
 	targa: string;
 	tariffaKm: number;
 	cilindrata: number;
+	utente?: string;
+	idUtente?: number;
 }
 
 @Component({
@@ -40,16 +42,25 @@ export class TariffaKmComponent implements OnInit {
 	private caricaAutomobili(): void {
 		this.tariffaKmService.getAllAutomobiliAdmin().subscribe({
 			next: (res) => {
-				const first = res?.[0];
-				const autos = first?.automobili || [];
-				this.listaAcquirenti = autos.map((a) => ({
-					id: a.idauto,
-					marca: a.marca,
-					modello: a.modello,
-					targa: a.targa,
-					tariffaKm: a.tariffaChilometrica,
-					cilindrata: a.cilindrata,
-				}));
+				const lista: Acquirente[] = [];
+				(res || []).forEach((group) => {
+					const nome = (group.nomeUtente || '').trim();
+					const cogn = (group.cognomeUtente || '').trim();
+					const utenteFull = [nome, cogn].filter(Boolean).join(' ');
+					(group.automobili || []).forEach((a) => {
+						lista.push({
+							id: a.idauto,
+							marca: a.marca,
+							modello: a.modello,
+							targa: a.targa,
+							tariffaKm: a.tariffaChilometrica,
+							cilindrata: a.cilindrata,
+							utente: utenteFull,
+							idUtente: group.idUtente,
+						});
+					});
+				});
+				this.listaAcquirenti = lista;
 			},
 			error: (err: unknown) => {
 				console.error('Errore caricamento automobili admin', err);
@@ -194,7 +205,7 @@ export class TariffaKmComponent implements OnInit {
 	}
 
 	private creaAcquirenteVuoto(): Acquirente {
-		return { id: 0, marca: '', modello: '', targa: '', tariffaKm: 0, cilindrata: 0 };
+		return { id: 0, marca: '', modello: '', targa: '', tariffaKm: 0, cilindrata: 0, utente: '' };
 	}
 
 	private generaId(): number {
