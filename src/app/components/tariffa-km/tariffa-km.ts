@@ -103,11 +103,13 @@ export class TariffaKmComponent implements OnInit {
 		}
 		this.mostraErrore = false;
 		this.isModalOpen = true;
+		this.lockBodyScroll(true);
 	}
 
 	chiudiModal(): void {
 		this.isModalOpen = false;
 		this.mostraErrore = false;
+		this.lockBodyScroll(false);
 	}
 
 	salvaAcquirente(): void {
@@ -196,11 +198,27 @@ export class TariffaKmComponent implements OnInit {
 	apriDettaglio(acquirente: Acquirente): void {
 		this.acquirenteDettaglio = { ...acquirente };
 		this.isDettaglioOpen = true;
+		this.lockBodyScroll(true);
 	}
 
 	chiudiDettaglio(): void {
 		this.isDettaglioOpen = false;
 		this.acquirenteDettaglio = null;
+		this.lockBodyScroll(false);
+	}
+
+	private lockBodyScroll(lock: boolean): void {
+		try {
+			if (lock) {
+				document.documentElement.classList.add('modal-open');
+				document.body.classList.add('modal-open');
+			} else {
+				document.documentElement.classList.remove('modal-open');
+				document.body.classList.remove('modal-open');
+			}
+		} catch (e) {
+			// ignore (e.g. SSR)
+		}
 	}
 
 	elimina(acquirente: Acquirente): void {
