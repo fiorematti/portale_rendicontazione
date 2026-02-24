@@ -228,46 +228,96 @@
               <div class="row g-2">
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Vitto</label>
-                  <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" min="0"
-                    (keydown)="blockNegative($event)"
-                    [(ngModel)]="dettagliSpesa[tabAttiva].vitto"
-                    (ngModelChange)="dettagliSpesa[tabAttiva].vitto = clampNonNegative($event)" />
+                  <div class="input-attach">
+                    <div class="input-left">
+                      <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
+                        type="number" min="0"
+                        (keydown)="blockNegative($event)"
+                        [(ngModel)]="dettagliSpesa[tabAttiva].vitto"
+                        (ngModelChange)="dettagliSpesa[tabAttiva].vitto = clampNonNegative($event)" />
+                    </div>
+                    <div class="input-sep" aria-hidden="true">
+                      <div class="sep-line"></div>
+                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'vitto')" aria-label="Allega pdf">
+                        <i class="bi bi-paperclip"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
                
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Hotel</label>
-                  <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" min="0"
-                    (keydown)="blockNegative($event)"
-                    [(ngModel)]="dettagliSpesa[tabAttiva].hotel"
-                    (ngModelChange)="dettagliSpesa[tabAttiva].hotel = clampNonNegative($event)" />
+                  <div class="input-attach">
+                    <div class="input-left">
+                      <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
+                        type="number" min="0"
+                        (keydown)="blockNegative($event)"
+                        [(ngModel)]="dettagliSpesa[tabAttiva].hotel"
+                        (ngModelChange)="dettagliSpesa[tabAttiva].hotel = clampNonNegative($event)" />
+                    </div>
+                    <div class="input-sep" aria-hidden="true">
+                      <div class="sep-line"></div>
+                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'hotel')" aria-label="Allega pdf">
+                        <i class="bi bi-paperclip"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
 
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Aereo</label>
-                  <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" min="0"
-                    (keydown)="blockNegative($event)"
-                    [(ngModel)]="dettagliSpesa[tabAttiva].aereo"
-                    (ngModelChange)="dettagliSpesa[tabAttiva].aereo = clampNonNegative($event)" />
+                  <div class="input-attach">
+                    <div class="input-left">
+                      <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
+                        type="number" min="0"
+                        (keydown)="blockNegative($event)"
+                        [(ngModel)]="dettagliSpesa[tabAttiva].aereo"
+                        (ngModelChange)="dettagliSpesa[tabAttiva].aereo = clampNonNegative($event)" />
+                    </div>
+                    <div class="input-sep" aria-hidden="true">
+                      <div class="sep-line"></div>
+                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'aereo')" aria-label="Allega pdf">
+                        <i class="bi bi-paperclip"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Trasporti</label>
-                  <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" min="0"
-                    (keydown)="blockNegative($event)"
-                    [(ngModel)]="dettagliSpesa[tabAttiva].trasporti"
-                    (ngModelChange)="dettagliSpesa[tabAttiva].trasporti = clampNonNegative($event)" />
+                  <div class="input-attach">
+                    <div class="input-left">
+                      <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
+                        type="number" min="0"
+                        (keydown)="blockNegative($event)"
+                        [(ngModel)]="dettagliSpesa[tabAttiva].trasporti"
+                        (ngModelChange)="dettagliSpesa[tabAttiva].trasporti = clampNonNegative($event)" />
+                    </div>
+                    <div class="input-sep" aria-hidden="true">
+                      <div class="sep-line"></div>
+                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'trasporti')" aria-label="Allega pdf">
+                        <i class="bi bi-paperclip"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Varie</label>
-                  <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                    type="number" min="0"
-                    (keydown)="blockNegative($event)"
-                    [(ngModel)]="dettagliSpesa[tabAttiva].varie"
-                    (ngModelChange)="dettagliSpesa[tabAttiva].varie = clampNonNegative($event)" />
+                  <div class="input-attach">
+                    <div class="input-left">
+                      <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
+                        type="number" min="0"
+                        (keydown)="blockNegative($event)"
+                        [(ngModel)]="dettagliSpesa[tabAttiva].varie"
+                        (ngModelChange)="dettagliSpesa[tabAttiva].varie = clampNonNegative($event)" />
+                    </div>
+                    <div class="input-sep" aria-hidden="true">
+                      <div class="sep-line"></div>
+                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'varie')" aria-label="Allega pdf">
+                        <i class="bi bi-paperclip"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -317,6 +367,23 @@
           </div>
         </div>
 
+
+        <!-- hidden file input used for attachment upload -->
+        <input id="fileUploader" type="file" accept=".pdf,image/*" style="display:none" (change)="onFileSelected($event)" />
+
+        <!-- attachment preview popup (mini) -->
+        <div class="attachment-popup-overlay" *ngIf="mostraAttachmentPopup">
+          <div class="attachment-popup shadow-lg rounded-3 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="fw-bold text-truncate" style="max-width:70%">{{ attachmentFileName }}</div>
+              <button class="btn btn-sm btn-outline-secondary" (click)="closeAttachmentPopup()">Chiudi</button>
+            </div>
+            <div class="attachment-preview">
+              <img *ngIf="attachmentPreviewType === 'image'" [src]="attachmentPreviewUrl" class="img-fluid" alt="anteprima" />
+              <embed *ngIf="attachmentPreviewType === 'pdf'" [src]="attachmentPreviewUrl" type="application/pdf" width="100%" height="360px">
+            </div>
+          </div>
+        </div>
 
         <div class="mt-4 pt-3 border-top">
           <div class="d-flex align-items-center justify-content-between mb-4">

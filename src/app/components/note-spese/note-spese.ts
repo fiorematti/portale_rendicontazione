@@ -120,6 +120,13 @@ export class NoteSpese implements OnInit, OnDestroy {
   giorniDelMesePopup: number[] = [];
   giorniVuotiPopup: number[] = [];
 
+  // Attachment popup / upload states (non-intrusive, does not change existing logic)
+  mostraAttachmentPopup = false;
+  attachmentPreviewUrl: string | null = null;
+  attachmentPreviewType: 'image' | 'pdf' | null = null;
+  attachmentFileName = '';
+  private currentAttachmentTarget: { tab: number; field: string } | null = null;
+
 
   get isAggiungi(): boolean { return this.modalMode === 'aggiungi'; }
   get isVisualizza(): boolean { return this.modalMode === 'visualizza'; }
@@ -933,6 +940,104 @@ export class NoteSpese implements OnInit, OnDestroy {
       body.classList.remove('modal-open');
       html.classList.remove('modal-open');
     }
+  }
+  
+  openAttachmentUploader(tabIndex: number, field: string): void {
+    this.currentAttachmentTarget = { tab: tabIndex, field };
+    const input = document.getElementById('fileUploader') as HTMLInputElement | null;
+    if (input) {
+      input.value = '';
+      input.click();
+    }
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input?.files && input.files[0];
+    if (!file) return;
+    this.attachmentFileName = file.name;
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (isPdf) {
+      const url = URL.createObjectURL(file);
+      this.renderPdfAsImage(url).then((dataUrl) => {
+        if (dataUrl) {
+          this.attachmentPreviewUrl = dataUrl;
+          this.attachmentPreviewType = 'image';
+        } else {
+          // fallback: show pdf embed
+          this.attachmentPreviewUrl = url;
+          this.attachmentPreviewType = 'pdf';
+        }
+        this.mostraAttachmentPopup = true;
+      }).catch(() => {
+        this.attachmentPreviewUrl = URL.createObjectURL(file);
+        this.attachmentPreviewType = 'pdf';
+        this.mostraAttachmentPopup = true;
+      });
+    } else if (file.type.startsWith('image/')) {
+      this.attachmentPreviewUrl = URL.createObjectURL(file);
+      this.attachmentPreviewType = 'image';
+      this.mostraAttachmentPopup = true;
+    } else {
+      // other files: try to show as image if possible, else as embed
+      this.attachmentPreviewUrl = URL.createObjectURL(file);
+      this.attachmentPreviewType = 'image';
+      this.mostraAttachmentPopup = true;
+    }
+  }
+
+  closeAttachmentPopup(): void {
+    this.mostraAttachmentPopup = false;
+    if (this.attachmentPreviewUrl) {
+      try { URL.revokeObjectURL(this.attachmentPreviewUrl); } catch (e) { /* ignore */ }
+    }
+    this.attachmentPreviewUrl = null;
+    this.attachmentPreviewType = null;
+    this.attachmentFileName = '';
+    this.currentAttachmentTarget = null;
+  }
+
+  // Render first page of PDF to an image (data URL) using pdf.js loaded from CDN.
+  private renderPdfAsImage(pdfUrl: string): Promise<string | null> {
+    return new Promise((resolve, reject) => {
+      const finishRender = () => {
+        const pdfjsLib = (window as any).pdfjsLib;
+        if (!pdfjsLib || !pdfjsLib.getDocument) {
+          resolve(null);
+          return;
+        }
+        try {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+          pdfjsLib.getDocument(pdfUrl).promise.then((pdf: any) => {
+            pdf.getPage(1).then((page: any) => {
+              const viewport = page.getViewport({ scale: 1.5 });
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              canvas.width = viewport.width;
+              canvas.height = viewport.height;
+              page.render({ canvasContext: ctx, viewport }).promise.then(() => {
+                try {
+                  const dataUrl = canvas.toDataURL('image/png');
+                  resolve(dataUrl);
+                } catch (err) {
+                  resolve(null);
+                }
+              }).catch((e: any) => resolve(null));
+            }).catch(() => resolve(null));
+          }).catch(() => resolve(null));
+        } catch (e) { resolve(null); }
+      };
+
+      if (!(window as any).pdfjsLib) {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
+        script.onload = () => finishRender();
+        script.onerror = () => resolve(null);
+        document.head.appendChild(script);
+      } else {
+        finishRender();
+      }
+    });
   }
   
   
