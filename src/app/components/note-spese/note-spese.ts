@@ -79,6 +79,8 @@ export class NoteSpese implements OnInit, OnDestroy {
   filtroCliente: number | 'Tutti' = this.filtroDefault;
   filtroOrdine = this.filtroDefault;
   filtroOrdiniOptions: string[] = [];
+  // if true, do not populate filtroOrdiniOptions from existing spese/ordini
+  private disableOldOrderCodes = true;
 
 
   mostraModal = false;
@@ -147,10 +149,10 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.loadClienti();
     this.loadSpese();
     this.resetNuovaSpesa();
-     this.clientiOrdiniService.getOrdini().subscribe({
-      next: res => this.ordini = res || [],
-      error: () => this.ordini = []
-    });
+    // keep codice ordine dropdown empty until new endpoints are wired
+    this.filtroOrdiniOptions = [this.filtroDefault];
+    // NOTE: removed direct call to clientiOrdiniService.getOrdini() here.
+    // Orders will be fetched with the new endpoints later. Keep `ordini` empty for now.
   }
 
 
@@ -495,20 +497,10 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   onClienteDropdownClick(): void {
+    // fetching clients removed here; kept placeholder to be filled with new endpoint later
     if (this.isClientiLoading) return;
-    this.isClientiLoading = true;
-    this.clientiOrdiniService.getClienti().subscribe({
-      next: (res) => {
-        this.clientiLoaded = true;
-        this.clientiOptions.splice(0, this.clientiOptions.length, ...(res || []));
-      },
-      error: (err) => {
-        console.error('[NoteSpese] getClienteByUtente error:', err);
-      },
-      complete: () => {
-        this.isClientiLoading = false;
-      }
-    });
+    this.isClientiLoading = false;
+    this.clientiLoaded = false;
   }
 
 
@@ -773,6 +765,11 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   private rebuildFiltroOrdiniOptions(): void {
+    if (this.disableOldOrderCodes) {
+      // do not repopulate historic order codes
+      this.filtroOrdiniOptions = [this.filtroDefault];
+      return;
+    }
     const fromSpese = this.listaSpese.map(s => s.codice).filter(Boolean);
     const fromOrdini = (this.ordini || []).map(o => o.codiceOrdine).filter(Boolean);
     const fromCache = Object.values(this.ordiniCache || {}).flat().map(o => o.codiceOrdine).filter(Boolean);
@@ -786,30 +783,13 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   private loadClienti(): void {
+    // Client fetching removed: placeholder kept so UI still calls loadClienti()
     if (this.clientiLoaded || this.isClientiLoading) return;
-    this.isClientiLoading = true;
-    this.clientiOrdiniService.getClienti().subscribe({
-      next: (res) => {
-        this.clientiLoaded = true;
-        this.clientiOptions.splice(0, this.clientiOptions.length, ...(res || []));
-        if (this.clientiOptions.length && this.dettagliSpesa[0]) {
-          const first = this.clientiOptions[0];
-          this.dettagliSpesa[0].idCliente = first.idCliente;
-          this.dettagliSpesa[0].nominativoCliente = first.nominativo;
-          this.loadOrdiniByCliente(first.idCliente, this.dettagliSpesa[0]);
-        }
-        if (!this.clientiOptions.length) {
-          this.loadErrore = 'Nessun cliente disponibile.';
-        }
-      },
-      error: (err) => {
-        console.error('[NoteSpese] getClienteByUtente error:', err);
-        this.loadErrore = `Errore caricamento clienti: ${err?.status || 'n/a'}`;
-      },
-      complete: () => {
-        this.isClientiLoading = false;
-      }
-    });
+    this.isClientiLoading = false;
+    this.clientiLoaded = false;
+    // leave clientiOptions empty; new endpoint should populate it later
+    this.clientiOptions.splice(0, this.clientiOptions.length);
+    this.loadErrore = '';
   }
 
 
@@ -820,29 +800,14 @@ export class NoteSpese implements OnInit, OnDestroy {
       this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
       return;
     }
-
-
-    this.isOrdiniLoading = true;
-    this.clientiOrdiniService.getOrdini(idCliente).subscribe({
-      next: (res) => {
-        this.ordiniCache[idCliente] = res || [];
-        if (!this.ordiniCache[idCliente].length) {
-          this.loadErrore = 'Nessun ordine per il cliente selezionato.';
-        }
-        this.enrichSpeseWithClienti();
-        this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
-      },
-      error: (err) => {
-        console.error('[NoteSpese] getOrdini error:', err);
-        this.loadErrore = `Errore caricamento ordini: ${err?.status || 'n/a'}`;
-        this.ordiniCache[idCliente] = this.ordiniCache[idCliente] || [];
-        this.enrichSpeseWithClienti();
-        this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
-      },
-      complete: () => {
-        this.isOrdiniLoading = false;
-      }
-    });
+    // Order fetching removed: create empty cache entry and proceed so UI doesn't break
+    this.isOrdiniLoading = false;
+    this.ordiniCache[idCliente] = this.ordiniCache[idCliente] || [];
+    if (!this.ordiniCache[idCliente].length) {
+      this.loadErrore = 'Nessun ordine per il cliente selezionato.';
+    }
+    this.enrichSpeseWithClienti();
+    this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
   }
 
 

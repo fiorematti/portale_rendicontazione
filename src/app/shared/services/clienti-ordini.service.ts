@@ -20,14 +20,15 @@ export class ClientiOrdiniService {
   getOrdini(idCliente?: number): Observable<OrdineApiItem[]> {
     let params = new HttpParams();
     if (idCliente !== undefined && idCliente !== null) {
-      params = params.set('IdCliente', idCliente.toString());
+      params = params.set('clienteId', idCliente.toString());
     }
-    return this.http.get<OrdineApiItem[]>('/api/Ordini', { params });
+    // use Utente endpoint to fetch orders filtered by utente+cliente
+    return this.http.get<OrdineApiItem[]>('/api/Utente/utente/getOrdiniByUtenteAndCliente', { params });
   }
 
   getOrdiniByUtenteAndCliente(clienteId: number): Observable<OrdineApiItem[]> {
     const params = new HttpParams().set('clienteId', clienteId.toString());
-    let result = this.http.get<OrdineApiItem[]>('/api/Ordini/getOrdiniByUtenteAndCliente', { params });
+    let result = this.http.get<OrdineApiItem[]>('/api/Utente/utente/getOrdiniByUtenteAndCliente', { params });
     return result;
   }
 }
