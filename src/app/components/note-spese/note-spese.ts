@@ -455,6 +455,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   get speseFiltrate(): Spesa[] {
     const filtroDate = parseDateString(this.filtroData);
     return this.listaSpese.filter((s) => {
+      console.log(s);
       const mPagato = this.filtroPagate === this.filtroDefault || (this.filtroPagate === 'Si' ? s.pagato : !s.pagato);
       let mData = true;
       if (this.filtroData && filtroDate) {
@@ -772,8 +773,12 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   private rebuildFiltroOrdiniOptions(): void {
-    const codes = Array.from(new Set(this.listaSpese.map(s => s.codice).filter(Boolean)));
-    this.filtroOrdiniOptions = [this.filtroDefault, ...codes];
+    const fromSpese = this.listaSpese.map(s => s.codice).filter(Boolean);
+    const fromOrdini = (this.ordini || []).map(o => o.codiceOrdine).filter(Boolean);
+    const fromCache = Object.values(this.ordiniCache || {}).flat().map(o => o.codiceOrdine).filter(Boolean);
+    const allCodes = Array.from(new Set([...fromSpese, ...fromOrdini, ...fromCache]));
+    allCodes.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    this.filtroOrdiniOptions = [this.filtroDefault, ...allCodes];
     if (!this.filtroOrdiniOptions.includes(this.filtroOrdine)) {
       this.filtroOrdine = this.filtroDefault;
     }
