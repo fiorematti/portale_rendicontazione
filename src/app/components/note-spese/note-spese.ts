@@ -497,10 +497,23 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   onClienteDropdownClick(): void {
-    // fetching clients removed here; kept placeholder to be filled with new endpoint later
-    if (this.isClientiLoading) return;
-    this.isClientiLoading = false;
-    this.clientiLoaded = false;
+    if (this.clientiLoaded || this.isClientiLoading) return;
+    this.isClientiLoading = true;
+    this.loadErrore = '';
+    this.clientiOrdiniService.getClienti().subscribe({
+      next: (res) => {
+        // replace contents while keeping the same array instance
+        this.clientiOptions.splice(0, this.clientiOptions.length, ...(res || []));
+        this.clientiLoaded = true;
+      },
+      error: (err) => {
+        console.error('[NoteSpese] getClienti error:', err);
+        this.loadErrore = 'Errore caricamento clienti.';
+      },
+      complete: () => {
+        this.isClientiLoading = false;
+      }
+    });
   }
 
 

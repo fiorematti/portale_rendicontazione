@@ -29,10 +29,11 @@
 
     <div class="filter-group">
       <label class="fw-bold mb-1">Cliente</label>
-      <select class="form-select custom-select" [(ngModel)]="filtroCliente">
-        <option [ngValue]="'Tutti'">Tutti</option>
-        <option *ngIf="isClientiLoading" [ngValue]="'Tutti'">Caricamento clienti...</option>
-        <option *ngIf="!isClientiLoading && !clientiOptions.length" [ngValue]="'Tutti'">Nessun cliente disponibile</option>
+      <select class="form-select custom-select" [(ngModel)]="dettagliSpesa[tabAttiva].idCliente"
+        (focus)="onClienteDropdownClick()" (change)="onClienteChange(dettagliSpesa[tabAttiva])">
+        <option [ngValue]="null">Seleziona cliente</option>
+        <option *ngIf="isClientiLoading" [ngValue]="null">Caricamento clienti...</option>
+        <option *ngIf="!isClientiLoading && !clientiOptions.length" [ngValue]="null">Nessun cliente disponibile</option>
         <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
       </select>
     </div>
