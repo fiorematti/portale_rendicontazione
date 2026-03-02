@@ -458,6 +458,8 @@ export class NoteSpese implements OnInit, OnDestroy {
   onCambioMeseAnno(target: 'filtro' | 'popup'): void {
     if (target === 'filtro') {
       this.syncDateStrings('filtro');
+      // ricarica le spese per mese/anno selezionato
+      this.loadSpese(this.annoFiltro, this.meseFiltro + 1);
     }
   }
 
