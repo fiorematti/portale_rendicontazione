@@ -29,11 +29,10 @@
 
     <div class="filter-group">
       <label class="fw-bold mb-1">Cliente</label>
-      <select class="form-select custom-select" [(ngModel)]="dettagliSpesa[tabAttiva].idCliente"
-        (focus)="onClienteDropdownClick()" (change)="onClienteChange(dettagliSpesa[tabAttiva])">
-        <option [ngValue]="null">Seleziona cliente</option>
-        <option *ngIf="isClientiLoading" [ngValue]="null">Caricamento clienti...</option>
-        <option *ngIf="!isClientiLoading && !clientiOptions.length" [ngValue]="null">Nessun cliente disponibile</option>
+      <select class="form-select custom-select" [(ngModel)]="filtroCliente"
+        (ngModelChange)="onFiltroClienteChange()">
+        <option [ngValue]="'Tutti'">Tutti</option>
+        <option *ngIf="isClientiLoading" [ngValue]="filtroCliente">Caricamento clienti...</option>
         <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
       </select>
     </div>
@@ -41,7 +40,9 @@
 
     <div class="filter-group">
       <label class="fw-bold mb-1">Codice ordine</label>
-      <select class="form-select custom-select" [(ngModel)]="filtroOrdine">
+      <select class="form-select custom-select" [(ngModel)]="filtroOrdine"
+        [disabled]="filtroCliente === 'Tutti' || isOrdiniLoading">
+        <option *ngIf="isOrdiniLoading" [value]="filtroOrdine">Caricamento ordini...</option>
         <option *ngFor="let c of filtroOrdiniOptions" [value]="c">{{ c }}</option>
       </select>
     </div>

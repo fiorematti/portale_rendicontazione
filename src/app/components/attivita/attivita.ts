@@ -67,7 +67,6 @@ export class Attivita implements OnInit {
     this.listaAnni = this.creaIntervalloAnni();
     this.generaCalendario();
     this.loadClienti();
-    this.loadOrdini();
     this.loadLocation();
     this.loadAttivita();
   }
@@ -380,6 +379,11 @@ export class Attivita implements OnInit {
   onClienteChange(): void {
     if (this.selectedClienteId == null) return;
     this.syncClienteFromId(this.selectedClienteId);
+    // Ricarica ordini per il cliente selezionato
+    this.ordiniLoaded = false;
+    this.selectedCodice = null;
+    this.nuovaAttivita.codiceOrdine = '';
+    this.loadOrdini(this.selectedClienteId);
   }
 
   onCodiceChange(): void {
@@ -409,14 +413,17 @@ export class Attivita implements OnInit {
     });
   }
 
-  private loadOrdini(): void {
-    if (this.ordiniLoaded) return;
-    this.clientiOrdiniService.getOrdini().subscribe({
+  private loadOrdini(clienteId?: number): void {
+    if (clienteId == null) {
+      this.ordiniOptions = [];
+      return;
+    }
+    this.clientiOrdiniService.getOrdiniByUtenteAndCliente(clienteId).subscribe({
       next: (res) => {
         this.ordiniOptions = res || [];
         this.ordiniLoaded = true;
       },
-      error: (err) => { console.error('getOrdini error:', err); }
+      error: (err) => { console.error('getOrdiniByUtenteAndCliente error:', err); }
     });
   }
 
