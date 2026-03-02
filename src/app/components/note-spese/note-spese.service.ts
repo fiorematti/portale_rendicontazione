@@ -35,6 +35,12 @@ export interface DettaglioApiResponse {
 }
 
 
+export interface AddSpesaAllegato {
+  scontrino: string;
+  categoriaSpesa: string;
+  pathAllegato: string;
+}
+
 export interface AddSpesaDettaglio {
   dataDettaglio: string;
   vitto: number;
@@ -46,13 +52,7 @@ export interface AddSpesaDettaglio {
   km: number;
   telepass: number;
   parking: number;
-}
-
-
-export interface AddSpesaRequest {
-  codiceOrdine: string;
-  dataNotificazione: string;
-  dettagli: AddSpesaDettaglio[];
+  allegati: AddSpesaAllegato[];
 }
 
 
@@ -94,6 +94,7 @@ export interface DeleteSpesaResponse {
 @Injectable({ providedIn: 'root' })
 export class NoteSpeseService {
   private readonly baseUrl = '/api/SpesaNota/Utente';
+  
 
 
   constructor(private readonly http: HttpClient) {}
@@ -113,8 +114,8 @@ export class NoteSpeseService {
   }
 
 
-  addSpesa(request: AddSpesaRequest): Observable<boolean> {
-    return this.http.post<boolean>(`${this.baseUrl}/AddSpesa`, request);
+  addSpesa(form: FormData): Observable<boolean> {
+    return this.http.post<boolean>(`${this.baseUrl}/AddSpesa`, form);
   }
 
 

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, NgIf, NgForOf, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NoteSpeseService, DettaglioApiResponse, AddSpesaRequest, UpdateSpesaRequest } from './note-spese.service';
+import { NoteSpeseService, DettaglioApiResponse, UpdateSpesaRequest } from './note-spese.service';
 import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
 import { ClienteApiItem } from '../../dto/cliente.dto';
 import { OrdineApiItem } from '../../dto/ordine.dto';
@@ -358,8 +358,8 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
     if (this.isAggiungi) {
-      const payload = this.buildAddPayload();
-      this.noteSpeseService.addSpesa(payload).subscribe({
+      const formData = this.buildAddPayload();
+      this.noteSpeseService.addSpesa(formData).subscribe({
         next: (ok) => {
           if (ok === true) {
             const totaleStringa = this.formattaTotale(this.totaleCalcolato);
@@ -916,7 +916,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
-  private buildAddPayload(): AddSpesaRequest {
+  private buildAddPayload(): FormData {
     const dataNotificazione = formatDateISO(this.nuovaSpesaData);
     const dettagli = this.dettagliSpesa.map(d => ({
       dataDettaglio: formatDateISO(this.nuovaSpesaData),
@@ -928,15 +928,15 @@ export class NoteSpese implements OnInit, OnDestroy {
       idAuto: d.auto ? Number(d.auto) || null : null,
       km: Number(d.km || 0),
       telepass: Number(d.telepass || 0),
-      parking: Number(d.parking || 0)
+      parking: Number(d.parking || 0),
+      allegati: []
     }));
 
-
-    return {
-      codiceOrdine: this.dettagliSpesa[0]?.codiceOrdine || '',
-      dataNotificazione,
-      dettagli
-    };
+    const form = new FormData();
+    form.append('CodiceOrdine', this.dettagliSpesa[0]?.codiceOrdine || '');
+    form.append('DataNotificazione', dataNotificazione);
+    form.append('Dettagli', JSON.stringify(dettagli));
+    return form as any;
   }
 
 
