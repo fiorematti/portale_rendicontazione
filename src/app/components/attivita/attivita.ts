@@ -42,7 +42,6 @@ export class Attivita implements OnInit {
   selectedCodice: string | null = null;
   selectedLocationId: number | null = null;
   private clientiLoaded = false;
-  private ordiniLoaded = false;
   private locationLoaded = false;
 
 
@@ -67,7 +66,6 @@ export class Attivita implements OnInit {
     this.listaAnni = this.creaIntervalloAnni();
     this.generaCalendario();
     this.loadClienti();
-    this.loadOrdini();
     this.loadLocation();
     this.loadAttivita();
   }
@@ -90,6 +88,10 @@ export class Attivita implements OnInit {
     this.selectedClienteId = this.findClienteIdByNome(this.nuovaAttivita.nominativoCliente);
     this.selectedCodice = this.nuovaAttivita.codiceOrdine || null;
     this.selectedLocationId = this.findLocationIdByNome(this.nuovaAttivita.location);
+    this.ordiniOptions = [];
+    if (this.selectedClienteId != null) {
+      this.loadOrdiniByCliente(this.selectedClienteId);
+    }
     this.mostraModal = true;
   }
 
@@ -378,8 +380,12 @@ export class Attivita implements OnInit {
   }
 
   onClienteChange(): void {
+    this.selectedCodice = null;
+    this.nuovaAttivita.codiceOrdine = '';
+    this.ordiniOptions = [];
     if (this.selectedClienteId == null) return;
     this.syncClienteFromId(this.selectedClienteId);
+    this.loadOrdiniByCliente(this.selectedClienteId);
   }
 
   onCodiceChange(): void {
@@ -409,14 +415,12 @@ export class Attivita implements OnInit {
     });
   }
 
-  private loadOrdini(): void {
-    if (this.ordiniLoaded) return;
-    this.clientiOrdiniService.getOrdini().subscribe({
+  private loadOrdiniByCliente(clienteId: number): void {
+    this.clientiOrdiniService.getOrdiniByUtenteAndCliente(clienteId).subscribe({
       next: (res) => {
         this.ordiniOptions = res || [];
-        this.ordiniLoaded = true;
       },
-      error: (err) => { console.error('getOrdini error:', err); }
+      error: (err) => { console.error('getOrdiniByCliente error:', err); }
     });
   }
 

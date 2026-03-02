@@ -152,7 +152,7 @@
       
       <div class="col-6 text-start">
         <label class="fw-bold mb-1">Codice ordine</label>
-        <select class="form-select bg-light" [(ngModel)]="selectedCodice" (change)="onCodiceChange()">
+        <select class="form-select bg-light" [(ngModel)]="selectedCodice" (change)="onCodiceChange()" [disabled]="selectedClienteId == null">
           <option [ngValue]="null">Seleziona codice</option>
           <option *ngFor="let o of ordiniOptions" [ngValue]="o.codiceOrdine">{{ o.codiceOrdine }}</option>
         </select>
