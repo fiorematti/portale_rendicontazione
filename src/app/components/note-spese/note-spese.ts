@@ -41,6 +41,13 @@ interface DettaglioSpesa {
   totale?: number | null;
   statoApprovazione?: string | null;
   costoKilometri?: number | null;
+  attachments?: Record<string, AttachmentInfo>;
+}
+
+interface AttachmentInfo {
+  fileName: string;
+  previewUrl: string;
+  previewType: 'image' | 'pdf';
 }
 
 
@@ -162,6 +169,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   visualizzaDettaglio(spesa: Spesa): void {
+    this.cleanupAttachments();
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
     this.ensureAutomobiliLoaded();
@@ -236,6 +244,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   apriModifica(spesa: Spesa): void {
+    this.cleanupAttachments();
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
     this.ensureAutomobiliLoaded();
@@ -324,14 +333,18 @@ export class NoteSpese implements OnInit, OnDestroy {
       km: 0,
       parking: 0,
       telepass: 0,
-      costo: 0
+      costo: 0,
+      attachments: {}
     }];
     this.tabAttiva = 0;
   }
 
 
   private copiaDettagli(dettagli: DettaglioSpesa[]): DettaglioSpesa[] {
-    return dettagli.map(d => ({ ...d }));
+    return dettagli.map(d => ({
+      ...d,
+      attachments: d.attachments ? { ...d.attachments } : undefined
+    }));
   }
 
 
@@ -397,13 +410,15 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   resetNuovaSpesa(): void {
+    this.cleanupAttachments();
     this.nuovaSpesaData = '';
     this.dettagliSpesa = [{
       idCliente: null,
       nominativoCliente: null,
       codiceOrdine: '',
       vitto: null,
-      auto: 'Modello auto'
+      auto: 'Modello auto',
+      attachments: {}
     }];
     this.tabAttiva = 0;
     this.rigaSelezionata = null;
@@ -427,6 +442,8 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   chiudiModal(): void {
+    this.cleanupAttachments();
+    this.closeAttachmentPopup();
     this.mostraModal = false;
     this.mostraCalendario = false;
     this.rigaSelezionata = null;
@@ -480,10 +497,13 @@ export class NoteSpese implements OnInit, OnDestroy {
       nominativoCliente: first?.nominativoCliente ?? null,
       codiceOrdine: first?.codiceOrdine || '',
       vitto: 0,
-      auto: 'Modello auto'
+      auto: 'Modello auto',
+      attachments: {}
     });
   }
   eliminaDettaglioCorrente(): void {
+    const dett = this.dettagliSpesa[this.tabAttiva];
+    this.cleanupAttachmentForDettaglio(dett);
     this.dettagliSpesa.splice(this.tabAttiva, 1);
     if (this.dettagliSpesa.length === 0) this.chiudiModal();
     else this.tabAttiva = 0;
@@ -926,6 +946,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
   
   openAttachmentUploader(tabIndex: number, field: string): void {
+    this.ensureAttachmentContainer(tabIndex);
     this.currentAttachmentTarget = { tab: tabIndex, field };
     const input = document.getElementById('fileUploader') as HTMLInputElement | null;
     if (input) {
@@ -937,47 +958,111 @@ export class NoteSpese implements OnInit, OnDestroy {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input?.files && input.files[0];
-    if (!file) return;
+    const target = this.currentAttachmentTarget;
+    if (!file || !target) return;
+    const { tab, field } = target;
+    if (!this.dettagliSpesa[tab]) return;
+
+    const finalizeAttachment = (previewUrl: string, previewType: 'image' | 'pdf') => {
+      const info: AttachmentInfo = {
+        fileName: file.name,
+        previewUrl,
+        previewType
+      };
+      this.setAttachment(tab, field, info);
+      this.showAttachment(info);
+    };
+
     this.attachmentFileName = file.name;
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     if (isPdf) {
       const url = URL.createObjectURL(file);
       this.renderPdfAsImage(url).then((dataUrl) => {
         if (dataUrl) {
-          this.attachmentPreviewUrl = dataUrl;
-          this.attachmentPreviewType = 'image';
+          finalizeAttachment(dataUrl, 'image');
         } else {
-          // fallback: show pdf embed
-          this.attachmentPreviewUrl = url;
-          this.attachmentPreviewType = 'pdf';
+          finalizeAttachment(url, 'pdf');
         }
-        this.mostraAttachmentPopup = true;
       }).catch(() => {
-        this.attachmentPreviewUrl = URL.createObjectURL(file);
-        this.attachmentPreviewType = 'pdf';
-        this.mostraAttachmentPopup = true;
+        finalizeAttachment(url, 'pdf');
       });
     } else if (file.type.startsWith('image/')) {
-      this.attachmentPreviewUrl = URL.createObjectURL(file);
-      this.attachmentPreviewType = 'image';
-      this.mostraAttachmentPopup = true;
+      finalizeAttachment(URL.createObjectURL(file), 'image');
     } else {
-      // other files: try to show as image if possible, else as embed
-      this.attachmentPreviewUrl = URL.createObjectURL(file);
-      this.attachmentPreviewType = 'image';
-      this.mostraAttachmentPopup = true;
+      finalizeAttachment(URL.createObjectURL(file), 'image');
     }
   }
 
-  closeAttachmentPopup(): void {
+  closeAttachmentPopup(clearTarget: boolean = true): void {
     this.mostraAttachmentPopup = false;
-    if (this.attachmentPreviewUrl) {
-      try { URL.revokeObjectURL(this.attachmentPreviewUrl); } catch (e) { /* ignore */ }
-    }
     this.attachmentPreviewUrl = null;
     this.attachmentPreviewType = null;
     this.attachmentFileName = '';
-    this.currentAttachmentTarget = null;
+    if (clearTarget) this.currentAttachmentTarget = null;
+  }
+
+  getAttachment(tabIndex: number, field: string): AttachmentInfo | null {
+    const dett = this.dettagliSpesa[tabIndex];
+    return dett?.attachments?.[field] || null;
+  }
+
+  openStoredAttachment(tabIndex: number, field: string): void {
+    const att = this.getAttachment(tabIndex, field);
+    if (!att) return;
+    this.showAttachment(att);
+  }
+
+  removeAttachment(tabIndex: number, field: string): void {
+    const dett = this.dettagliSpesa[tabIndex];
+    if (!dett || !dett.attachments || !dett.attachments[field]) return;
+    const att = dett.attachments[field];
+    this.revokeIfObjectUrl(att.previewUrl);
+    delete dett.attachments[field];
+    if (this.attachmentPreviewUrl === att.previewUrl) {
+      this.closeAttachmentPopup();
+    }
+  }
+
+  private showAttachment(info: AttachmentInfo): void {
+    this.attachmentFileName = info.fileName;
+    this.attachmentPreviewUrl = info.previewUrl;
+    this.attachmentPreviewType = info.previewType;
+    this.mostraAttachmentPopup = true;
+  }
+
+  private ensureAttachmentContainer(tabIndex: number): Record<string, AttachmentInfo> {
+    const dett = this.dettagliSpesa[tabIndex];
+    if (!dett) return {};
+    if (!dett.attachments) dett.attachments = {};
+    return dett.attachments;
+  }
+
+  private setAttachment(tabIndex: number, field: string, info: AttachmentInfo): void {
+    const container = this.ensureAttachmentContainer(tabIndex);
+    const existing = container[field];
+    if (existing && existing.previewUrl !== info.previewUrl) {
+      this.revokeIfObjectUrl(existing.previewUrl);
+    }
+    container[field] = info;
+  }
+
+  private cleanupAttachmentForDettaglio(dett: DettaglioSpesa | undefined): void {
+    if (!dett?.attachments) return;
+    Object.values(dett.attachments).forEach(att => this.revokeIfObjectUrl(att.previewUrl));
+    dett.attachments = {};
+  }
+
+  private cleanupAttachments(): void {
+    this.dettagliSpesa.forEach(d => this.cleanupAttachmentForDettaglio(d));
+  }
+
+  private revokeIfObjectUrl(url: string): void {
+    if (!url || url.startsWith('data:')) return;
+    try {
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      // ignore revoke errors
+    }
   }
 
   // Render first page of PDF to an image (data URL) using pdf.js loaded from CDN.

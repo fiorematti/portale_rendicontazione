@@ -244,6 +244,11 @@
                       </button>
                     </div>
                   </div>
+                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'vitto') as att">
+                    <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                    <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'vitto')">Apri</button>
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'vitto')">Rimuovi</button>
+                  </div>
                 </div>
                
                 <div class="col-4">
@@ -262,6 +267,11 @@
                         <i class="bi bi-paperclip"></i>
                       </button>
                     </div>
+                  </div>
+                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'hotel') as att">
+                    <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                    <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'hotel')">Apri</button>
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'hotel')">Rimuovi</button>
                   </div>
                 </div>
 
@@ -283,6 +293,11 @@
                       </button>
                     </div>
                   </div>
+                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'aereo') as att">
+                    <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                    <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'aereo')">Apri</button>
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'aereo')">Rimuovi</button>
+                  </div>
                 </div>
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Trasporti</label>
@@ -301,6 +316,11 @@
                       </button>
                     </div>
                   </div>
+                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'trasporti') as att">
+                    <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                    <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'trasporti')">Apri</button>
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'trasporti')">Rimuovi</button>
+                  </div>
                 </div>
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Varie</label>
@@ -318,6 +338,11 @@
                         <i class="bi bi-paperclip"></i>
                       </button>
                     </div>
+                  </div>
+                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'varie') as att">
+                    <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                    <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'varie')">Apri</button>
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'varie')">Rimuovi</button>
                   </div>
                 </div>
               </div>
