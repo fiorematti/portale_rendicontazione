@@ -29,8 +29,7 @@
 
     <div class="filter-group">
       <label class="fw-bold mb-1">Cliente</label>
-      <select class="form-select custom-select" [(ngModel)]="filtroCliente"
-        (ngModelChange)="onFiltroClienteChange()">
+      <select class="form-select custom-select" [(ngModel)]="filtroCliente" (ngModelChange)="onFiltroClienteChange()">
         <option [ngValue]="'Tutti'">Tutti</option>
         <option *ngIf="isClientiLoading" [ngValue]="filtroCliente">Caricamento clienti...</option>
         <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
@@ -65,7 +64,8 @@
     </div>
 
 
-    <div *ngIf="errore" class="alert alert-danger border-0 shadow-sm d-flex align-items-center m-3" role="alert" style="border-radius: 15px;">
+    <div *ngIf="errore" class="alert alert-danger border-0 shadow-sm d-flex align-items-center m-3" role="alert"
+      style="border-radius: 15px;">
       <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
       <div>{{ errore }}</div>
     </div>
@@ -110,35 +110,31 @@
       <div class="p-4">
         <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
           <h2 class="fw-bold m-0">
-            {{ modalMode === 'aggiungi' ? 'Aggiungi spesa' : (modalMode === 'visualizza' ? 'Dettaglio spesa' : 'Modifica spesa') }}
+            {{ modalMode === 'aggiungi' ? 'Aggiungi spesa' : (modalMode === 'visualizza' ? 'Dettaglio spesa' : 'Modifica
+            spesa') }}
           </h2>
 
 
           <div *ngIf="dettagliSpesa[tabAttiva]" class="d-flex align-items-center gap-3">
-            <ng-container *ngIf="modalMode !== 'visualizza'; else infoSoloTesto">
-              <div style="min-width:220px;">
-                <label class="small fw-bold">Cliente</label>
-                <select class="form-select custom-select"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].idCliente" (focus)="onClienteDropdownClick()" (change)="onClienteChange(dettagliSpesa[tabAttiva])">
-                  <option [ngValue]="null">Seleziona cliente</option>
-                  <option *ngIf="isClientiLoading" [ngValue]="null">Caricamento clienti...</option>
-                  <option *ngIf="!isClientiLoading && !clientiOptions.length" [ngValue]="null">Nessun cliente disponibile</option>
-                  <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
-                </select>
-              </div>
-              <div style="min-width:220px;">
-                <label class="small fw-bold">Codice ordine</label>
-                <select class="form-select custom-select"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].codiceOrdine"
-                  (change)="onCodiceChange(dettagliSpesa[tabAttiva], dettagliSpesa[tabAttiva].codiceOrdine)">
-                  <option [ngValue]="''">Seleziona codice</option>
-                  <option *ngIf="isOrdiniLoading" [ngValue]="dettagliSpesa[tabAttiva].codiceOrdine">Caricamento ordini...</option>
-                  <option *ngIf="!isOrdiniLoading && !ordini.length" [ngValue]="''">Nessun ordine disponibile</option>
-                  <option *ngFor="let o of ordini" [ngValue]="o.codiceOrdine">{{ o.codiceOrdine }}</option>
-                </select>
-                
-              </div>
-            </ng-container>
+            <div class="filter-group">
+              <label class="fw-bold mb-1">Cliente</label>
+              <select class="form-select custom-select" [(ngModel)]="filtroCliente"
+                (ngModelChange)="onFiltroClienteChange()">
+                <option [ngValue]="'Tutti'">Tutti</option>
+                <option *ngIf="isClientiLoading" [ngValue]="filtroCliente">Caricamento clienti...</option>
+                <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label class="fw-bold mb-1">Codice ordine</label>
+              <select class="form-select custom-select" [(ngModel)]="filtroOrdine"
+                [disabled]="filtroCliente === 'Tutti' || isOrdiniLoading">
+                <option *ngIf="isOrdiniLoading" [value]="filtroOrdine">Caricamento ordini...</option>
+                <option *ngFor="let c of filtroOrdiniOptions" [value]="c">{{ c }}</option>
+              </select>
+            </div>
+
             <ng-template #infoSoloTesto>
               <div aria-label="Cliente" class="text-only-info">
                 <div class="small fw-bold text-muted">Cliente</div>
@@ -196,7 +192,7 @@
         <div class="row" *ngIf="dettagliSpesa[tabAttiva] && !isDettaglioLoading">
           <div class="col-md-7 border-end pe-4">
             <div class="row g-3">
-             
+
               <div class="col-6 position-relative">
                 <label class="small fw-bold">Data</label>
                 <div class="input-with-icon">
@@ -233,46 +229,52 @@
                   <div class="input-attach">
                     <div class="input-left">
                       <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                        type="number" min="0"
-                        (keydown)="blockNegative($event)"
+                        type="number" min="0" (keydown)="blockNegative($event)"
                         [(ngModel)]="dettagliSpesa[tabAttiva].vitto"
                         (ngModelChange)="dettagliSpesa[tabAttiva].vitto = clampNonNegative($event)" />
                     </div>
                     <div class="input-sep" aria-hidden="true">
                       <div class="sep-line"></div>
-                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'vitto')" aria-label="Allega pdf">
+                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip"
+                        (click)="openAttachmentUploader(tabAttiva, 'vitto')" aria-label="Allega pdf">
                         <i class="bi bi-paperclip"></i>
                       </button>
                     </div>
                   </div>
-                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'vitto') as att">
+                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap"
+                    *ngIf="getAttachment(tabAttiva, 'vitto') as att">
                     <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
-                    <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'vitto')">Apri</button>
-                    <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'vitto')">Rimuovi</button>
+                    <button type="button" class="btn btn-link btn-sm p-0"
+                      (click)="openStoredAttachment(tabAttiva, 'vitto')">Apri</button>
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0"
+                      (click)="removeAttachment(tabAttiva, 'vitto')">Rimuovi</button>
                   </div>
                 </div>
-               
+
                 <div class="col-4">
                   <label class="small fw-bold mb-0">Hotel</label>
                   <div class="input-attach">
                     <div class="input-left">
                       <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                        type="number" min="0"
-                        (keydown)="blockNegative($event)"
+                        type="number" min="0" (keydown)="blockNegative($event)"
                         [(ngModel)]="dettagliSpesa[tabAttiva].hotel"
                         (ngModelChange)="dettagliSpesa[tabAttiva].hotel = clampNonNegative($event)" />
                     </div>
                     <div class="input-sep" aria-hidden="true">
                       <div class="sep-line"></div>
-                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'hotel')" aria-label="Allega pdf">
+                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip"
+                        (click)="openAttachmentUploader(tabAttiva, 'hotel')" aria-label="Allega pdf">
                         <i class="bi bi-paperclip"></i>
                       </button>
                     </div>
                   </div>
-                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'hotel') as att">
+                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap"
+                    *ngIf="getAttachment(tabAttiva, 'hotel') as att">
                     <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
-                    <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'hotel')">Apri</button>
-                    <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'hotel')">Rimuovi</button>
+                    <button type="button" class="btn btn-link btn-sm p-0"
+                      (click)="openStoredAttachment(tabAttiva, 'hotel')">Apri</button>
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0"
+                      (click)="removeAttachment(tabAttiva, 'hotel')">Rimuovi</button>
                   </div>
                 </div>
 
@@ -282,22 +284,25 @@
                   <div class="input-attach">
                     <div class="input-left">
                       <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                        type="number" min="0"
-                        (keydown)="blockNegative($event)"
+                        type="number" min="0" (keydown)="blockNegative($event)"
                         [(ngModel)]="dettagliSpesa[tabAttiva].aereo"
                         (ngModelChange)="dettagliSpesa[tabAttiva].aereo = clampNonNegative($event)" />
                     </div>
                     <div class="input-sep" aria-hidden="true">
                       <div class="sep-line"></div>
-                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'aereo')" aria-label="Allega pdf">
+                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip"
+                        (click)="openAttachmentUploader(tabAttiva, 'aereo')" aria-label="Allega pdf">
                         <i class="bi bi-paperclip"></i>
                       </button>
                     </div>
                   </div>
-                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'aereo') as att">
+                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap"
+                    *ngIf="getAttachment(tabAttiva, 'aereo') as att">
                     <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
-                    <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'aereo')">Apri</button>
-                    <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'aereo')">Rimuovi</button>
+                    <button type="button" class="btn btn-link btn-sm p-0"
+                      (click)="openStoredAttachment(tabAttiva, 'aereo')">Apri</button>
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0"
+                      (click)="removeAttachment(tabAttiva, 'aereo')">Rimuovi</button>
                   </div>
                 </div>
                 <div class="col-4">
@@ -305,22 +310,25 @@
                   <div class="input-attach">
                     <div class="input-left">
                       <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                        type="number" min="0"
-                        (keydown)="blockNegative($event)"
+                        type="number" min="0" (keydown)="blockNegative($event)"
                         [(ngModel)]="dettagliSpesa[tabAttiva].trasporti"
                         (ngModelChange)="dettagliSpesa[tabAttiva].trasporti = clampNonNegative($event)" />
                     </div>
                     <div class="input-sep" aria-hidden="true">
                       <div class="sep-line"></div>
-                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'trasporti')" aria-label="Allega pdf">
+                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip"
+                        (click)="openAttachmentUploader(tabAttiva, 'trasporti')" aria-label="Allega pdf">
                         <i class="bi bi-paperclip"></i>
                       </button>
                     </div>
                   </div>
-                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'trasporti') as att">
+                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap"
+                    *ngIf="getAttachment(tabAttiva, 'trasporti') as att">
                     <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
-                    <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'trasporti')">Apri</button>
-                    <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'trasporti')">Rimuovi</button>
+                    <button type="button" class="btn btn-link btn-sm p-0"
+                      (click)="openStoredAttachment(tabAttiva, 'trasporti')">Apri</button>
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0"
+                      (click)="removeAttachment(tabAttiva, 'trasporti')">Rimuovi</button>
                   </div>
                 </div>
                 <div class="col-4">
@@ -328,22 +336,25 @@
                   <div class="input-attach">
                     <div class="input-left">
                       <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                        type="number" min="0"
-                        (keydown)="blockNegative($event)"
+                        type="number" min="0" (keydown)="blockNegative($event)"
                         [(ngModel)]="dettagliSpesa[tabAttiva].varie"
                         (ngModelChange)="dettagliSpesa[tabAttiva].varie = clampNonNegative($event)" />
                     </div>
                     <div class="input-sep" aria-hidden="true">
                       <div class="sep-line"></div>
-                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'varie')" aria-label="Allega pdf">
+                      <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip"
+                        (click)="openAttachmentUploader(tabAttiva, 'varie')" aria-label="Allega pdf">
                         <i class="bi bi-paperclip"></i>
                       </button>
                     </div>
                   </div>
-                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'varie') as att">
+                  <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap"
+                    *ngIf="getAttachment(tabAttiva, 'varie') as att">
                     <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
-                    <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'varie')">Apri</button>
-                    <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'varie')">Rimuovi</button>
+                    <button type="button" class="btn btn-link btn-sm p-0"
+                      (click)="openStoredAttachment(tabAttiva, 'varie')">Apri</button>
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0"
+                      (click)="removeAttachment(tabAttiva, 'varie')">Rimuovi</button>
                   </div>
                 </div>
               </div>
@@ -358,67 +369,79 @@
               <div class="col-12">
                 <label class="small fw-bold mb-0">Auto</label>
                 <select class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].auto" (click)="onAutoDropdownClick()" (focus)="onAutoDropdownClick()">
+                  [(ngModel)]="dettagliSpesa[tabAttiva].auto" (click)="onAutoDropdownClick()"
+                  (focus)="onAutoDropdownClick()">
                   <option value="Modello auto">Modello auto</option>
-                  <option *ngIf="isAutomobiliLoading" [ngValue]="dettagliSpesa[tabAttiva].auto">Caricamento automobili...</option>
-                  <option *ngIf="!isAutomobiliLoading && !automobili.length" value="Modello auto">Nessuna automobile disponibile</option>
-                  <option *ngFor="let a of automobili" [ngValue]="a.idauto.toString()">{{ a.marca }} {{ a.modello }} - {{ a.targa }}</option>
+                  <option *ngIf="isAutomobiliLoading" [ngValue]="dettagliSpesa[tabAttiva].auto">Caricamento
+                    automobili...</option>
+                  <option *ngIf="!isAutomobiliLoading && !automobili.length" value="Modello auto">Nessuna automobile
+                    disponibile</option>
+                  <option *ngFor="let a of automobili" [ngValue]="a.idauto.toString()">{{ a.marca }} {{ a.modello }} -
+                    {{ a.targa }}</option>
                 </select>
               </div>
               <div class="col-6">
                 <label class="small fw-bold mb-0">Km</label>
-                <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
-                  min="0" (keydown)="blockNegative($event)"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].km"
+                <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
+                  type="number" min="0" (keydown)="blockNegative($event)" [(ngModel)]="dettagliSpesa[tabAttiva].km"
                   (ngModelChange)="dettagliSpesa[tabAttiva].km = clampNonNegative($event)" />
               </div>
               <div class="col-6">
                 <label class="small fw-bold mb-0">Parking</label>
                 <div class="input-attach">
                   <div class="input-left">
-                    <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
-                      min="0" (keydown)="blockNegative($event)"
+                    <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
+                      type="number" min="0" (keydown)="blockNegative($event)"
                       [(ngModel)]="dettagliSpesa[tabAttiva].parking"
                       (ngModelChange)="dettagliSpesa[tabAttiva].parking = clampNonNegative($event)" />
                   </div>
                   <div class="input-sep" aria-hidden="true">
                     <div class="sep-line"></div>
-                    <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'parking')" aria-label="Allega pdf">
+                    <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip"
+                      (click)="openAttachmentUploader(tabAttiva, 'parking')" aria-label="Allega pdf">
                       <i class="bi bi-paperclip"></i>
                     </button>
                   </div>
                 </div>
-                <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'parking') as att">
+                <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap"
+                  *ngIf="getAttachment(tabAttiva, 'parking') as att">
                   <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
-                  <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'parking')">Apri</button>
-                  <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'parking')">Rimuovi</button>
+                  <button type="button" class="btn btn-link btn-sm p-0"
+                    (click)="openStoredAttachment(tabAttiva, 'parking')">Apri</button>
+                  <button type="button" class="btn btn-link btn-sm text-danger p-0"
+                    (click)="removeAttachment(tabAttiva, 'parking')">Rimuovi</button>
                 </div>
               </div>
               <div class="col-6">
                 <label class="small fw-bold mb-0">Telepass</label>
                 <div class="input-attach">
                   <div class="input-left">
-                    <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
-                      min="0" (keydown)="blockNegative($event)"
+                    <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'"
+                      type="number" min="0" (keydown)="blockNegative($event)"
                       [(ngModel)]="dettagliSpesa[tabAttiva].telepass"
                       (ngModelChange)="dettagliSpesa[tabAttiva].telepass = clampNonNegative($event)" />
                   </div>
                   <div class="input-sep" aria-hidden="true">
                     <div class="sep-line"></div>
-                    <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'telepass')" aria-label="Allega pdf">
+                    <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip"
+                      (click)="openAttachmentUploader(tabAttiva, 'telepass')" aria-label="Allega pdf">
                       <i class="bi bi-paperclip"></i>
                     </button>
                   </div>
                 </div>
-                <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'telepass') as att">
+                <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap"
+                  *ngIf="getAttachment(tabAttiva, 'telepass') as att">
                   <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
-                  <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'telepass')">Apri</button>
-                  <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'telepass')">Rimuovi</button>
+                  <button type="button" class="btn btn-link btn-sm p-0"
+                    (click)="openStoredAttachment(tabAttiva, 'telepass')">Apri</button>
+                  <button type="button" class="btn btn-link btn-sm text-danger p-0"
+                    (click)="removeAttachment(tabAttiva, 'telepass')">Rimuovi</button>
                 </div>
               </div>
               <div class="col-6">
                 <label class="small fw-bold mb-0">Costo km</label>
-                <input class="form-control custom-input input-mini" type="number" [value]="costoKm | number: '1.2-2'" disabled />
+                <input class="form-control custom-input input-mini" type="number" [value]="costoKm | number: '1.2-2'"
+                  disabled />
               </div>
             </div>
           </div>
@@ -426,7 +449,8 @@
 
 
         <!-- hidden file input used for attachment upload -->
-        <input id="fileUploader" type="file" accept=".pdf,image/*" style="display:none" (change)="onFileSelected($event)" />
+        <input id="fileUploader" type="file" accept=".pdf,image/*" style="display:none"
+          (change)="onFileSelected($event)" />
 
         <!-- attachment preview popup (mini) -->
         <div class="attachment-popup-overlay" *ngIf="mostraAttachmentPopup">
@@ -436,8 +460,10 @@
               <button class="btn btn-sm btn-outline-secondary" (click)="closeAttachmentPopup()">Chiudi</button>
             </div>
             <div class="attachment-preview">
-              <img *ngIf="attachmentPreviewType === 'image'" [src]="attachmentPreviewUrl" class="img-fluid" alt="anteprima" />
-              <embed *ngIf="attachmentPreviewType === 'pdf'" [src]="attachmentPreviewUrl" type="application/pdf" width="100%" height="360px">
+              <img *ngIf="attachmentPreviewType === 'image'" [src]="attachmentPreviewUrl" class="img-fluid"
+                alt="anteprima" />
+              <embed *ngIf="attachmentPreviewType === 'pdf'" [src]="attachmentPreviewUrl" type="application/pdf"
+                width="100%" height="360px">
             </div>
           </div>
         </div>
@@ -446,7 +472,8 @@
           <div class="d-flex align-items-center justify-content-between mb-4">
             <h4 class="fw-bold m-0">Totale: {{ totaleCalcolato | number: '1.2-2' }}€</h4>
             <div *ngIf="modalMode !== 'aggiungi'" class="fw-bold">
-              Stato validazione: <span class="text-muted">{{ dettagliSpesa[tabAttiva]?.statoApprovazione || 'Non Validato' }}</span>
+              Stato validazione: <span class="text-muted">{{ dettagliSpesa[tabAttiva]?.statoApprovazione || 'Non
+                Validato' }}</span>
             </div>
           </div>
 
@@ -454,9 +481,10 @@
           <!-- Footer azioni in base alla modalità -->
           <div class="d-flex justify-content-center gap-3">
             <ng-container *ngIf="modalMode === 'aggiungi'">
-              <button class="btn btn-dark px-5 py-2 fw-bold rounded-3" (click)="chiudiModal()" [disabled]="salvaInCorso">Annulla</button>
-              <button class="btn btn-warning text-white px-5 py-2 fw-bold rounded-3"
-                (click)="confermaSpesa()" [disabled]="salvaInCorso">
+              <button class="btn btn-dark px-5 py-2 fw-bold rounded-3" (click)="chiudiModal()"
+                [disabled]="salvaInCorso">Annulla</button>
+              <button class="btn btn-warning text-white px-5 py-2 fw-bold rounded-3" (click)="confermaSpesa()"
+                [disabled]="salvaInCorso">
                 {{ salvaInCorso ? 'Salvataggio...' : 'Conferma' }}
               </button>
             </ng-container>
