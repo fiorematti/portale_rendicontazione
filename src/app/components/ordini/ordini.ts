@@ -4,14 +4,21 @@ import { FormsModule } from '@angular/forms';
 import { generateCalendarDays, navigateMonth, formatSelectedDay, isDaySelected, MONTH_NAMES_IT } from '../../shared/utils/calendar.utils';
 import { sanitizeDateInput } from '../../shared/utils/date.utils';
 
+/** Rappresenta un ordine gestito nel componente ordini. */
 interface Ordine {
   id: string;
   cliente: string;
+  /** Data di inizio ordine in formato dd/MM/yyyy. */
   dataInizio: string;
   codiceOfferta: string;
   stato: 'Ricevuto' | 'Fatto' | string;
 }
 
+/**
+ * Componente per la gestione degli ordini.
+ * Permette la creazione, modifica, eliminazione e visualizzazione di ordini
+ * con supporto per il calendario e filtri per testo e stato.
+ */
 @Component({
   selector: 'app-ordini',
   standalone: true,
@@ -20,16 +27,19 @@ interface Ordine {
   styleUrls: ['./ordini.css'],
 })
 export class OrdiniComponent implements OnInit {
+  // ── Filtri ─────────────────────────────────────────────────────
   filtroTesto = '';
   filtroStato = '';
+
+  // ── Stato modal ────────────────────────────────────────────────
   mostraModal = false;
   mostraCalendario = false;
   mostraErrore = false;
-
   isModifica = false;
   isDettaglio = false;
   indiceInModifica = -1;
 
+  // ── Calendario ─────────────────────────────────────────────────
   currentMonth = new Date().getMonth();
   currentYear = new Date().getFullYear();
   calendarDays: (number | null)[] = [];
@@ -122,6 +132,7 @@ export class OrdiniComponent implements OnInit {
     this.mostraErrore = false;
   }
 
+  /** Valida e salva l'ordine (creazione o aggiornamento) nella lista locale. */
   confermaOrdine(): void {
     const { id, cliente, dataInizio, codiceOfferta } = this.nuovoOrdineDati;
     const campiValidi = id.trim() && cliente.trim() && dataInizio.trim() && codiceOfferta.trim();
@@ -140,6 +151,7 @@ export class OrdiniComponent implements OnInit {
     this.chiudiModal();
   }
 
+  /** Elimina un ordine previo conferma dell'utente. */
   eliminaOrdine(ordine: Ordine): void {
     if (confirm('Sei sicuro di voler eliminare questo ordine?')) {
       const index = this.elencoOrdini.findIndex(o => o.id === ordine.id);
@@ -153,6 +165,7 @@ export class OrdiniComponent implements OnInit {
     this.nuovoOrdineDati = this.creaOrdineVuoto();
   }
 
+  /** Lista degli ordini filtrata per testo e stato. */
   get ordiniFiltrati(): Ordine[] {
     return this.elencoOrdini.filter(o =>
       (o.cliente + o.id).toLowerCase().includes(this.filtroTesto.toLowerCase()) &&
@@ -164,6 +177,7 @@ export class OrdiniComponent implements OnInit {
     return stato === 'Fatto' ? 'badge-success' : 'badge-warning';
   }
 
+  /** Crea un oggetto ordine vuoto con valori predefiniti. */
   private creaOrdineVuoto(): Ordine {
     return { id: '', cliente: '', dataInizio: '', stato: 'Ricevuto', codiceOfferta: '' };
   }

@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { TariffaKmService } from './tariffa-km.service';
 import { AuthService } from '../../auth/auth.service';
 import { UtenteDto } from './tariffa-km.service';
+import { setBodyScrollLock } from '../../shared/utils/dom.utils';
 
+/** Rappresenta un'automobile con i dati dell'utente proprietario. */
 interface Acquirente {
 	id: number;
 	marca: string;
@@ -12,10 +14,17 @@ interface Acquirente {
 	targa: string;
 	tariffaKm: number;
 	cilindrata: number;
+	/** Nome completo del proprietario dell'automobile. */
 	utente?: string;
+	/** ID dell'utente proprietario (usato per le operazioni admin). */
 	idUtente?: number;
 }
 
+/**
+ * Componente per la gestione delle tariffe chilometriche (sezione admin).
+ * Consente di visualizzare, aggiungere, modificare ed eliminare automobili
+ * associate agli utenti, con le relative tariffe per chilometro.
+ */
 @Component({
 	selector: 'app-tariffa-km',
 	standalone: true,
@@ -25,8 +34,10 @@ interface Acquirente {
 })
 export class TariffaKmComponent implements OnInit {
 	listaAcquirenti: Acquirente[] = [];
+	/** Lista utenti per il dropdown di assegnazione nel form. */
 	utenti: { id: number; fullName: string }[] = [];
 
+	// ── Stato filtri e UI ────────────────────────────────────────
 	filtroTesto = '';
 	isModalOpen = false;
 	isEditMode = false;
@@ -42,6 +53,7 @@ export class TariffaKmComponent implements OnInit {
 		this.caricaAutomobili();
 	}
 
+	/** Carica la lista degli utenti dal backend per il dropdown di assegnazione. */
 	private caricaUtenti(): void {
 		this.tariffaKmService.getAllUtenti().subscribe({
 			next: (res: UtenteDto[]) => {
@@ -54,6 +66,7 @@ export class TariffaKmComponent implements OnInit {
 		});
 	}
 
+	/** Carica tutte le automobili dal backend (endpoint admin) e le mappa nella lista locale. */
 	private caricaAutomobili(): void {
 		this.tariffaKmService.getAllAutomobiliAdmin().subscribe({
 			next: (res) => {
@@ -83,6 +96,7 @@ export class TariffaKmComponent implements OnInit {
 		});
 	}
 
+	/** Lista acquirenti filtrata in base al testo di ricerca (marca, modello, targa). */
 	get acquirentiFiltrati(): Acquirente[] {
 		const filtro = this.filtroTesto.trim().toLowerCase();
 		if (!filtro) return this.listaAcquirenti;
@@ -93,6 +107,7 @@ export class TariffaKmComponent implements OnInit {
 		);
 	}
 
+	/** Apre il modal per creare o modificare un'automobile. */
 	apriModal(acquirente?: Acquirente): void {
 		if (acquirente) {
 			this.isEditMode = true;
@@ -103,15 +118,16 @@ export class TariffaKmComponent implements OnInit {
 		}
 		this.mostraErrore = false;
 		this.isModalOpen = true;
-		this.lockBodyScroll(true);
+		setBodyScrollLock(true);
 	}
 
 	chiudiModal(): void {
 		this.isModalOpen = false;
 		this.mostraErrore = false;
-		this.lockBodyScroll(false);
+		setBodyScrollLock(false);
 	}
 
+	/** Valida i campi e salva o aggiorna l'automobile tramite il servizio backend. */
 	salvaAcquirente(): void {
 		const { marca, modello, targa, tariffaKm, id, cilindrata } = this.acquirenteSelezionato;
 		const tariffaValida = !Number.isNaN(Number(tariffaKm));
@@ -177,6 +193,7 @@ export class TariffaKmComponent implements OnInit {
 			});
 	}
 
+	/** Recupera l'ID dell'utente autenticato dal servizio di autenticazione. */
 	private getIdUtente(): number | null {
 		const id = this.authService.userSnapshot()?.id;
 		if (!id) return null;
@@ -195,32 +212,20 @@ export class TariffaKmComponent implements OnInit {
 		this.apriModal(daModificare);
 	}
 
+	/** Apre il pannello di dettaglio per un'automobile. */
 	apriDettaglio(acquirente: Acquirente): void {
 		this.acquirenteDettaglio = { ...acquirente };
 		this.isDettaglioOpen = true;
-		this.lockBodyScroll(true);
+		setBodyScrollLock(true);
 	}
 
 	chiudiDettaglio(): void {
 		this.isDettaglioOpen = false;
 		this.acquirenteDettaglio = null;
-		this.lockBodyScroll(false);
+		setBodyScrollLock(false);
 	}
 
-	private lockBodyScroll(lock: boolean): void {
-		try {
-			if (lock) {
-				document.documentElement.classList.add('modal-open');
-				document.body.classList.add('modal-open');
-			} else {
-				document.documentElement.classList.remove('modal-open');
-				document.body.classList.remove('modal-open');
-			}
-		} catch (e) {
-			// ignore (e.g. SSR)
-		}
-	}
-
+	/** Elimina un'automobile previo conferma dell'utente. */
 	elimina(acquirente: Acquirente): void {
 		const conferma = confirm('Sei sicuro di voler eliminare questo elemento?');
 		if (!conferma) return;
@@ -237,12 +242,8 @@ export class TariffaKmComponent implements OnInit {
 		});
 	}
 
+	/** Crea un oggetto automobile vuoto con valori predefiniti. */
 	private creaAcquirenteVuoto(): Acquirente {
 		return { id: 0, marca: '', modello: '', targa: '', tariffaKm: 0, cilindrata: 0, utente: '', idUtente: undefined };
-	}
-
-	private generaId(): number {
-		if (this.listaAcquirenti.length === 0) return 1;
-		return Math.max(...this.listaAcquirenti.map((item) => item.id)) + 1;
 	}
 }

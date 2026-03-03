@@ -4,8 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { generateCalendarDays, navigateMonth, formatSelectedDay, isDaySelected, MONTH_NAMES_IT } from '../../shared/utils/calendar.utils';
 import { sanitizeDateInput } from '../../shared/utils/date.utils';
 
+/** Rappresenta una nota nel registro (sezione admin). */
 interface Nota {
   id: string;
+  /** Data della nota in formato dd/MM/yyyy. */
   data: string;
   totaleAnnullato: string;
   totaleComplessivo: string;
@@ -15,6 +17,10 @@ interface Nota {
 
 type CalendarContext = 'filter' | 'form';
 
+/**
+ * Componente per il registro delle note spese (sezione admin/convalida).
+ * Permette di filtrare, creare, modificare, eliminare ed esportare le note.
+ */
 @Component({
   selector: 'app-registro-note',
   standalone: true,
@@ -23,8 +29,11 @@ type CalendarContext = 'filter' | 'form';
   styleUrl: './registro-note.css',
 })
 export class RegistroNoteComponent implements OnInit {
+  // ── Filtri ─────────────────────────────────────────────────────
   filtroTesto: string = '';
   filtroData: string = '';
+
+  // ── Stato modal ────────────────────────────────────────────────
   mostraModal: boolean = false;
   mostraCalendario: boolean = false;
   mostraErrore: boolean = false;
@@ -32,14 +41,17 @@ export class RegistroNoteComponent implements OnInit {
   isDettaglioOpen: boolean = false;
   notaDettaglio: Nota | null = null;
 
+  // ── Esportazione ───────────────────────────────────────────────
   showExportPopup = false;
   exportMese: string = 'AUG';
   exportUtente: string = '';
   formatoSelezionato: 'PDF' | 'EXCEL' | null = null;
 
+  // ── Stato modifica ─────────────────────────────────────────────
   isModifica: boolean = false;
   indiceInModifica: number = -1;
 
+  // ── Calendario ─────────────────────────────────────────────────
   currentMonth = new Date().getMonth();
   currentYear = new Date().getFullYear();
   calendarDays: (number | null)[] = [];
@@ -159,6 +171,7 @@ export class RegistroNoteComponent implements OnInit {
     this.mostraErrore = false;
   }
 
+  /** Valida e salva la nota (creazione o aggiornamento) nella lista locale. */
   confermaNota(): void {
     if (!this.isNotaValida(this.nuovaNota)) {
       this.mostraErrore = true;
@@ -174,6 +187,7 @@ export class RegistroNoteComponent implements OnInit {
     this.chiudiModal();
   }
 
+  /** Elimina una nota previo conferma dell'utente. */
   eliminaNota(nota: any): void {
     if (confirm('Sei sicuro di voler eliminare questa nota?')) {
       const index = this.elencoNote.findIndex(n => n.id === nota.id);
@@ -187,6 +201,7 @@ export class RegistroNoteComponent implements OnInit {
     this.nuovaNota = this.buildNota();
   }
 
+  /** Lista delle note filtrate per testo e data. */
   get noteFiltrate() {
     return this.elencoNote.filter(n =>
       (n.totaleAnnullato + n.totaleComplessivo).toLowerCase().includes(this.filtroTesto.toLowerCase()) &&
@@ -204,6 +219,7 @@ export class RegistroNoteComponent implements OnInit {
     this.mostraModal = true;
   }
 
+  /** Crea un oggetto nota vuoto con valori predefiniti. */
   private buildNota(): Nota {
     return {
       id: '',

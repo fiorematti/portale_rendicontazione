@@ -2,11 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+/** Rappresenta un ordine associato a un cliente. */
 export interface Ordine {
   codice: string;
   stato: 'completato' | 'problema';
 }
 
+/** Rappresenta un cliente con i suoi ordini. */
 export interface Cliente {
   id: number;
   nome: string;
@@ -18,12 +20,17 @@ type ModalMode = 'aggiungi' | 'modifica' | 'dettaglio';
 type FiltroStatoCliente = 'tutti' | 'attivo' | 'non-attivo';
 type FiltroStatoOrdini = 'tutti' | 'ok' | 'ko';
 
+/** Mappa i valori del filtro stato ordini allo stato effettivo dell'ordine. */
 const STATO_ORDINE_BY_FILTRO: Record<FiltroStatoOrdini, Ordine['stato'] | undefined> = {
   tutti: undefined,
   ok: 'completato',
   ko: 'problema',
 };
 
+/**
+ * Componente per la gestione dei clienti.
+ * Permette di aggiungere, modificare, eliminare e filtrare clienti con i relativi ordini.
+ */
 @Component({
   selector: 'app-clienti',
   standalone: true,
@@ -35,18 +42,21 @@ export class ClientiComponent implements OnInit {
   readonly filtroStatoClienteDefault: FiltroStatoCliente = 'tutti';
   readonly filtroStatoOrdiniDefault: FiltroStatoOrdini = 'tutti';
 
+  // ── Dati clienti ───────────────────────────────────────────────
   listaClienti: Cliente[] = [
     { id: 1, nome: 'Cliente 1', statoAttivo: true, ordini: [{ codice: 'AAAA/xxxx', stato: 'completato' }] },
     { id: 2, nome: 'Cliente 2', statoAttivo: true, ordini: [{ codice: 'BBBB/yyyy', stato: 'problema' }] },
   ];
-
   listaClientiFiltrata: Cliente[] = [];
+
+  // ── Stato modal ────────────────────────────────────────────────
   clienteSelezionato: Cliente = this.creaClienteVuoto();
   mostraModal = false;
   mostraErrore = false;
   ordineInput = '';
   private modalMode: ModalMode = 'aggiungi';
 
+  // ── Filtri ─────────────────────────────────────────────────────
   filtroTesto = '';
   filtroStatoCliente: FiltroStatoCliente = this.filtroStatoClienteDefault;
   filtroStatoOrdini: FiltroStatoOrdini = this.filtroStatoOrdiniDefault;
@@ -90,6 +100,7 @@ export class ClientiComponent implements OnInit {
     this.apriModal('modifica', this.clienteSelezionato);
   }
 
+  /** Valida e salva il cliente (creazione o aggiornamento) nella lista locale. */
   salvaModifica(): void {
     const nomePulito = this.clienteSelezionato.nome.trim();
 
@@ -120,6 +131,7 @@ export class ClientiComponent implements OnInit {
     this.resetModal();
   }
 
+  /** Elimina un cliente previo conferma dell'utente. */
   eliminaCliente(id: number): void {
     if (confirm('Sei sicuro?')) {
       this.listaClienti = this.listaClienti.filter((c) => c.id !== id);
@@ -146,6 +158,7 @@ export class ClientiComponent implements OnInit {
     }
   }
 
+  /** Crea un oggetto cliente vuoto con valori predefiniti. */
   private creaClienteVuoto(): Cliente {
     return { id: 0, nome: '', statoAttivo: true, ordini: [] };
   }
@@ -175,6 +188,7 @@ export class ClientiComponent implements OnInit {
     return cliente.ordini.some((ordine) => ordine.stato === statoRichiesto);
   }
 
+  /** Verifica se il cliente soddisfa tutti i criteri di filtro attivi. */
   private isClienteVisibile(cliente: Cliente): boolean {
     return this.matchNome(cliente) && this.matchStatoCliente(cliente) && this.matchStatoOrdini(cliente);
   }
