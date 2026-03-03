@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+/** Rappresenta un utente del sistema. */
 interface Utente {
   nome: string;
   cognome: string;
@@ -10,6 +11,11 @@ interface Utente {
   email: string;
 }
 
+/**
+ * Componente per la gestione degli utenti.
+ * Permette la creazione, modifica, eliminazione e filtraggio degli utenti
+ * con supporto per dettaglio e ricerca per testo, ruolo e stato.
+ */
 @Component({
   selector: 'app-utenti',
   standalone: true,
@@ -18,6 +24,7 @@ interface Utente {
   styleUrls: ['./utenti.css'],
 })
 export class UtentiComponent {
+  // ── Dati utenti ────────────────────────────────────────────────
   utentiOriginali: Utente[] = [
     { nome: 'Giovanni', cognome: 'Bianchi', ruolo: 'Admin', attivo: true, email: 'giovanni@syncpoint.it' },
     { nome: 'Lorenzo', cognome: 'Ostuni', ruolo: 'Amministratore', attivo: true, email: 'lorenzo@syncpoint.it' },
@@ -25,17 +32,19 @@ export class UtentiComponent {
     { nome: 'Giulia', cognome: 'Lilla', ruolo: 'Admin', attivo: false, email: 'giulia@syncpoint.it' },
   ];
 
+  // ── Stato modal ────────────────────────────────────────────────
   isModalOpen = false;
   isEditMode = false;
   mostraErrore = false;
   utenteSelezionatoIndex: number | null = null;
-
   nuovoUtente: Utente = this.creaUtenteVuoto();
 
+  // ── Filtri ─────────────────────────────────────────────────────
   filtroTesto = '';
   filtroRuolo = '';
   filtroStato = '';
 
+  // ── Stato dettaglio ────────────────────────────────────────────
   isDettaglioOpen = false;
   utenteDettaglio: Utente | null = null;
 
@@ -62,6 +71,7 @@ export class UtentiComponent {
     this.nuovoUtente = this.creaUtenteVuoto();
   }
 
+  /** Valida i campi obbligatori e salva l'utente (creazione o aggiornamento). */
   salvaUtente(): void {
     if (!this.nuovoUtente.nome || !this.nuovoUtente.cognome || !this.nuovoUtente.email || !this.nuovoUtente.ruolo) {
       this.mostraErrore = true;
@@ -78,6 +88,7 @@ export class UtentiComponent {
     this.closeModal();
   }
 
+  /** Lista degli utenti filtrata per testo, ruolo e stato. */
   get utentiFiltrati(): Utente[] {
     return this.utentiOriginali.filter(utente => {
       const matchTesto = (utente.nome + ' ' + utente.cognome).toLowerCase().includes(this.filtroTesto.toLowerCase());
@@ -87,6 +98,7 @@ export class UtentiComponent {
     });
   }
 
+  /** Elimina un utente previo conferma. */
   eliminaUtente(index: number): void {
     const conferma = confirm("Sei sicuro di voler eliminare questo utente?");
     if (conferma) {
@@ -114,6 +126,7 @@ export class UtentiComponent {
     this.closeDettaglio();
   }
 
+  /** Crea un oggetto utente vuoto con valori predefiniti. */
   private creaUtenteVuoto(): Utente {
     return { nome: '', cognome: '', email: '', ruolo: '', attivo: true };
   }

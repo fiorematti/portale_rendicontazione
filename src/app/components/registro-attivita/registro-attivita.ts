@@ -7,14 +7,20 @@ import { sanitizeDateInput, formatDateIt } from '../../shared/utils/date.utils';
 type FormatoExport = 'PDF' | 'EXCEL';
 type StatoConvalidaFiltro = '' | 'convalidato' | 'da-convalidare';
 
+/** Rappresenta un'attività nel registro convalide (admin). */
 interface Attivita {
   nome: string;
   cognome: string;
-  data: string; // yyyy-mm-dd
+  /** Data dell'attività in formato ISO (yyyy-MM-dd). */
+  data: string;
   location: 'In sede' | 'Trasferta';
   convalidato: boolean;
 }
 
+/**
+ * Componente per il registro delle attività (sezione admin/convalida).
+ * Permette di filtrare, convalidare ed esportare le attività degli utenti.
+ */
 @Component({
   selector: 'app-registro-attivita',
   standalone: true,
@@ -23,6 +29,7 @@ interface Attivita {
   styleUrl: './registro-attivita.css',
 })
 export class RegistroAttivitaComponent {
+  // ── Dati attività ──────────────────────────────────────────────
   elencoAttivita: Attivita[] = [
     { nome: 'Giovanni', cognome: 'Bianchi', data: '2025-09-14', location: 'In sede', convalidato: false },
     { nome: 'Lorenzo', cognome: 'Ostuni', data: '2025-09-14', location: 'Trasferta', convalidato: false },
@@ -30,16 +37,19 @@ export class RegistroAttivitaComponent {
     { nome: 'Giulia', cognome: 'Lilla', data: '2025-09-14', location: 'Trasferta', convalidato: false },
   ];
 
+  // ── Filtri ─────────────────────────────────────────────────────
   filtroTesto: string = '';
   filtroData: string = '';
   filtroConvalida: StatoConvalidaFiltro = '';
   filtroLocation: string = '';
 
+  // ── Esportazione ───────────────────────────────────────────────
   showExportPopup = false;
   exportMese: string = 'AUG';
   exportUtente: string = '';
   formatoSelezionato: FormatoExport | null = null;
 
+  // ── Calendario ─────────────────────────────────────────────────
   showCalendar = false;
   currentMonth = new Date().getMonth();
   currentYear = new Date().getFullYear();
@@ -72,6 +82,7 @@ export class RegistroAttivitaComponent {
     return this.elencoAttivita.filter(a => a.convalidato).length;
   }
 
+  /** Lista delle attività filtrate in base ai criteri attivi (testo, data, convalida, location). */
   get attivitaFiltrate() {
     const testo = this.filtroTesto.toLowerCase();
     return this.elencoAttivita.filter(a => {
@@ -127,6 +138,7 @@ export class RegistroAttivitaComponent {
     this.attivitaFiltrate.forEach(a => a.convalidato = isChecked);
   }
 
+  /** Convalida in blocco tutte le attività selezionate. */
   confermaConvalide(): void {
     const count = this.countSelezionati;
     if (count > 0) {

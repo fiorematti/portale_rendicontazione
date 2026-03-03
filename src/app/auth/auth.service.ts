@@ -9,6 +9,11 @@ import { AuthResponse } from '../dto/authresponsdto';
 import { User } from '../dto/userdto';
 import { environment } from '../config/env';
 
+/**
+ * Servizio di autenticazione basato su Microsoft Entra (Azure AD).
+ * Gestisce il flusso MSAL, l'acquisizione del token e il recupero dell'utente
+ * dal backend tramite l'endpoint `/api/Auth/microsoft-login`.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 	private readonly scopes = environment.msal.scopes;
@@ -26,6 +31,10 @@ export class AuthService {
 		this.initialize();
 	}
 
+	/**
+	 * Inizializza MSAL e gestisce il redirect di ritorno dopo il login.
+	 * Se un account è già presente, imposta l'account attivo e naviga alla pagina attività.
+	 */
 	async initialize(): Promise<void> { 
 		if (this.initPromise) return this.initPromise;
 
@@ -57,10 +66,15 @@ export class AuthService {
 		return this.initPromise;
 	}
 
+	/** Avvia il flusso di login con redirect verso Microsoft Entra. */
 	login(): void {
 		this.msal.loginRedirect({ scopes: this.scopes, redirectUri: environment.msal.redirectUri });
 	}
 
+	/**
+	 * Acquisisce il token di accesso in modo silenzioso (senza interazione utente).
+	 * Avvia anche il recupero dell'utente dal backend se non ancora effettuato.
+	 */
 	async acquireToken(): Promise<string | null> { 
 		await this.initialize();
 		const account = this.getAccount();
@@ -85,6 +99,7 @@ export class AuthService {
 		}
 	}
 
+	/** Effettua il logout e reindirizza alla pagina post-logout. */
 	logout(): void {
 		this.token$.next(null);
 		this.msal.logoutRedirect({ postLogoutRedirectUri: environment.msal.postLogoutRedirectUri });
@@ -106,6 +121,7 @@ export class AuthService {
 		return this.user$.asObservable();
 	}
 
+	/** Recupera i dati dell'utente dal backend tramite l'endpoint di login Microsoft. */
 	async fetchMicrosoftLogin(): Promise<User> {
 		const dto = await firstValueFrom(this.http.get<AuthResponse>('/api/Auth/microsoft-login'));
 		const user = mapAuthResponseToUser(dto);
