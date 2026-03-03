@@ -47,11 +47,13 @@ export function sanitizeDateInput(raw: string): string {
 /**
  * Genera un array di anni consecutivi a partire da `start` fino a `end` (inclusi).
  * Utilizzato per popolare i selettori anno nel calendario e nei filtri.
+ * Se `start > end`, restituisce un array vuoto.
  *
  * @param start - Anno di partenza (es. 2020).
  * @param end   - Anno finale (es. 2030).
  * @returns Array di numeri rappresentanti gli anni nell'intervallo.
  */
 export function creaIntervalloAnni(start: number, end: number): number[] {
+  if (start > end) return [];
   return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 }
