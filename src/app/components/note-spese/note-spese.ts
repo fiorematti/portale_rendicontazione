@@ -7,9 +7,10 @@ import { ClienteApiItem } from '../../dto/cliente.dto';
 import { OrdineApiItem } from '../../dto/ordine.dto';
 import { AutomobileDto } from '../../dto/automobile.dto';
 import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
-import { parseDateString, formatDateIt, formatDateISO, sanitizeDateInput } from '../../shared/utils/date.utils';
+import { parseDateString, formatDateIt, formatDateISO, sanitizeDateInput, creaIntervalloAnni } from '../../shared/utils/date.utils';
+import { setBodyScrollLock } from '../../shared/utils/dom.utils';
 
-
+/** Rappresenta una nota spesa nella lista principale. */
 interface Spesa {
   id?: number | null;
   data: string;
@@ -22,6 +23,7 @@ interface Spesa {
 }
 
 
+/** Singolo dettaglio di una nota spesa (una riga di costi per giornata). */
 interface DettaglioSpesa {
   idDettaglio?: number;
   idCliente?: number | null;
@@ -44,6 +46,7 @@ interface DettaglioSpesa {
   attachments?: Record<string, AttachmentInfo>;
 }
 
+/** Informazioni su un allegato (scontrino/ricevuta) caricato dall'utente. */
 interface AttachmentInfo {
   fileName: string;
   previewUrl: string;
@@ -62,9 +65,13 @@ interface AttachmentInfo {
 
 
 
-//
-
+/**
+ * Componente per la gestione delle note spese.
+ * Permette la creazione, visualizzazione, modifica ed eliminazione di note spese
+ * con dettagli multipli (tab), gestione allegati e filtri avanzati.
+ */
 export class NoteSpese implements OnInit, OnDestroy {
+  // ── Opzioni dropdown (clienti, ordini, automobili) ──
   readonly filtroDefault = 'Tutti';
   readonly clientiOptions: ClienteApiItem[] = [];
   private ordiniCache: Record<number, OrdineApiItem[]> = {};
@@ -76,11 +83,13 @@ export class NoteSpese implements OnInit, OnDestroy {
   isAutomobiliLoading = false;
 
 
+  // ── Dati spese e stato caricamento ──
   listaSpese: Spesa[] = [];
   loading = false;
   errore: string | null = null;
 
 
+  // ── Filtri pagina principale ──
   filtroPagate = this.filtroDefault;
   filtroData = '';
   filtroCliente: number | 'Tutti' = this.filtroDefault;
@@ -88,6 +97,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   filtroOrdiniOptions: string[] = [];
 
 
+  // ── Stato modal ──
   mostraModal = false;
   modalMode: 'aggiungi' | 'visualizza' | 'modifica' = 'aggiungi';
   nuovaSpesaData = '';
@@ -110,6 +120,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   readonly costoKm = 0;
 
 
+  // ── Calendario e date ──
   mostraCalendario = false;
   targetData: 'filtro' | 'popup' = 'filtro';
 
@@ -127,7 +138,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   giorniDelMesePopup: number[] = [];
   giorniVuotiPopup: number[] = [];
 
-  // Attachment popup / upload states (non-intrusive, does not change existing logic)
+  // ── Allegati ──
   mostraAttachmentPopup = false;
   attachmentPreviewUrl: string | null = null;
   attachmentPreviewType: 'image' | 'pdf' | null = null;
@@ -147,7 +158,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   ngOnInit(): void {
-    this.listaAnni = this.creaIntervalloAnni();
+    this.listaAnni = creaIntervalloAnni(2020, new Date().getFullYear() + 5);
     this.syncDateStrings('filtro');
     this.syncDatePopupFromString();
     this.generaCalendarioPopup();
@@ -162,10 +173,11 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   ngOnDestroy(): void {
-    this.setBodyScrollLock(false);
+    setBodyScrollLock(false);
   }
 
 
+  /** Apre il modal in modalità visualizzazione per la spesa selezionata, caricando i dettagli dal backend. */
   visualizzaDettaglio(spesa: Spesa): void {
     this.cleanupAttachments();
     this.rigaSelezionata = spesa;
@@ -203,6 +215,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Converte un dettaglio dalla risposta API al formato locale DettaglioSpesa. */
   private mapDettaglioApiToDettaglioSpesa(item: DettaglioApiResponse, spesa: Spesa): DettaglioSpesa {
     const ordine = this.findOrdineByCodice(spesa.codice);
     const cliente = ordine ? this.clientiOptions.find(c => c.idCliente === ordine.idCliente) : null;
@@ -241,6 +254,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Apre il modal in modalità modifica per la spesa selezionata. */
   apriModifica(spesa: Spesa): void {
     this.cleanupAttachments();
     this.rigaSelezionata = spesa;
@@ -278,6 +292,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Elimina una nota spesa previo conferma dell'utente. */
   eliminaSpesa(indexTable: number): void {
     const spesaDaEliminare = this.speseFiltrate[indexTable];
     if (!spesaDaEliminare) return;
@@ -346,6 +361,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Valida e salva la spesa (creazione o aggiornamento) inviando i dati al backend. */
   confermaSpesa(): void {
     const dett = this.dettagliSpesa[this.tabAttiva] || this.dettagliSpesa[0];
     if (!this.isDettaglioValido(dett)) {
@@ -362,7 +378,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       this.noteSpeseService.addSpesa(formData).subscribe({
         next: (ok) => {
           if (ok === true) {
-            const totaleStringa = this.formattaTotale(this.totaleCalcolato);
+            const totaleStringa = this.formattaImporto(this.totaleCalcolato);
             this.listaSpese.unshift(this.creaSpesaDaDettaglio(dett, totaleStringa));
             this.chiudiModal();
           } else {
@@ -381,7 +397,7 @@ export class NoteSpese implements OnInit, OnDestroy {
         next: (res) => {
           const esitoOk = typeof res?.esito === 'string' && res.esito.toLowerCase().includes('riuscita');
           if (esitoOk) {
-            const totaleStringa = this.formattaTotale(this.totaleCalcolato);
+            const totaleStringa = this.formattaImporto(this.totaleCalcolato);
             this.rigaSelezionata!.data = this.nuovaSpesaData;
             this.rigaSelezionata!.codice = dett.codiceOrdine;
             this.rigaSelezionata!.richiesto = totaleStringa;
@@ -397,7 +413,7 @@ export class NoteSpese implements OnInit, OnDestroy {
         complete: () => { this.salvaInCorso = false; }
       });
     } else if (this.rigaSelezionata) {
-      const totaleStringa = this.formattaTotale(this.totaleCalcolato);
+      const totaleStringa = this.formattaImporto(this.totaleCalcolato);
       this.rigaSelezionata.data = this.nuovaSpesaData;
       this.rigaSelezionata.codice = dett.codiceOrdine;
       this.rigaSelezionata.richiesto = totaleStringa;
@@ -407,6 +423,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Resetta il form della nuova spesa ai valori iniziali. */
   resetNuovaSpesa(): void {
     this.cleanupAttachments();
     this.nuovaSpesaData = '';
@@ -433,12 +450,14 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Apre il modal per l'aggiunta di una nuova spesa. */
   apriModalSpesa(): void {
     this.resetNuovaSpesa();
     this.apriModalConModalita('aggiungi');
   }
 
 
+  /** Chiude il modal e pulisce lo stato associato (allegati, errori, scroll lock). */
   chiudiModal(): void {
     this.cleanupAttachments();
     this.closeAttachmentPopup();
@@ -446,7 +465,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.mostraCalendario = false;
     this.rigaSelezionata = null;
     this.mostraErrore = false;
-    this.setBodyScrollLock(false);
+    setBodyScrollLock(false);
   }
 
 
@@ -471,6 +490,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Lista delle spese filtrate in base ai criteri selezionati (data, pagamento, cliente, ordine). */
   get speseFiltrate(): Spesa[] {
     const filtroDate = parseDateString(this.filtroData);
     return this.listaSpese.filter((s) => {
@@ -537,6 +557,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Aggiorna la lista ordini e il nominativo quando l'utente cambia il cliente nel dettaglio. */
   onClienteChange(dett: DettaglioSpesa): void {
     if (!dett) return;
     const cliente = this.clientiOptions.find(c => c.idCliente === dett.idCliente);
@@ -544,7 +565,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.loadOrdiniByCliente(dett.idCliente ?? null, dett);
   }
 
-  /** Chiamata quando cambia il filtro Cliente nella pagina principale */
+  /** Carica gli ordini per il cliente selezionato nel filtro della pagina principale. */
   onFiltroClienteChange(): void {
     if (typeof this.filtroCliente === 'number') {
       this.isOrdiniLoading = true;
@@ -672,13 +693,6 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
-  private creaIntervalloAnni(): number[] {
-    const start = 2020;
-    const end = new Date().getFullYear() + 5;
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  }
-
-
   private syncDateStrings(target: 'filtro' | 'popup'): void {
     const giorno = '01';
     if (target === 'filtro') {
@@ -697,7 +711,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   private apriModalConModalita(mode: 'aggiungi' | 'visualizza' | 'modifica'): void {
     this.modalMode = mode;
     this.mostraModal = true;
-    this.setBodyScrollLock(true);
+    setBodyScrollLock(true);
   }
 
 
@@ -734,6 +748,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Carica le note spese dal backend per anno e mese specificati. */
   private loadSpese(year: number = new Date().getFullYear(), month: number = new Date().getMonth() + 1): void {
     this.isSpeseLoading = true;
     this.loading = true;
@@ -747,8 +762,8 @@ export class NoteSpese implements OnInit, OnDestroy {
             id,
             data: formatDateIt(item.dataNotificazione),
             codice: item.codiceOrdine || '',
-            richiesto: this.formattaTotaleNumber(item.totaleComplessivo || 0),
-            validato: this.formattaTotaleNumber((item as any).totaleValidato || 0),
+            richiesto: this.formattaImporto(item.totaleComplessivo || 0),
+            validato: this.formattaImporto((item as any).totaleValidato || 0),
             pagato: Boolean(item.statoPagamento),
             idCliente,
           } as Spesa;
@@ -793,13 +808,9 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
-  private formattaTotale(totale: number): string {
-    return totale.toFixed(2).replace('.', ',') + '€';
-  }
-
-
-  private formattaTotaleNumber(tot: number): string {
-    const n = Number(tot || 0);
+  /** Formatta un importo numerico in stringa con formato italiano (es. "123,45€"). */
+  private formattaImporto(valore: number): string {
+    const n = Number(valore || 0);
     return n.toFixed(2).replace('.', ',') + '€';
   }
 
@@ -814,6 +825,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Calcola la somma di tutti gli importi di un singolo dettaglio. */
   private sommaDettaglio(dett: DettaglioSpesa): number {
     return (
       Number(dett.vitto || 0) +
@@ -916,6 +928,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Costruisce il FormData per la creazione di una nuova nota spesa. */
   private buildAddPayload(): FormData {
     const dataNotificazione = formatDateISO(this.nuovaSpesaData);
     const dettagli = this.dettagliSpesa.map(d => ({
@@ -940,6 +953,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Costruisce il payload JSON per l'aggiornamento di una nota spesa esistente. */
   private buildUpdatePayload(): UpdateSpesaRequest {
     const dettagli = this.dettagliSpesa.map(d => ({
       idDettaglio: d.idDettaglio ?? 0,
@@ -965,28 +979,6 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
-  private formatDateISO(valore: string): string {
-    const data = parseDateString(valore) || new Date();
-    const yyyy = data.getFullYear();
-    const mm = String(data.getMonth() + 1).padStart(2, '0');
-    const dd = String(data.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-
-  private setBodyScrollLock(lock: boolean): void {
-    const body = document.body;
-    const html = document.documentElement;
-    if (!body || !html) return;
-    if (lock) {
-      body.classList.add('modal-open');
-      html.classList.add('modal-open');
-    } else {
-      body.classList.remove('modal-open');
-      html.classList.remove('modal-open');
-    }
-  }
-  
   openAttachmentUploader(tabIndex: number, field: string): void {
     this.ensureAttachmentContainer(tabIndex);
     this.currentAttachmentTarget = { tab: tabIndex, field };
