@@ -62,7 +62,7 @@ interface AttachmentInfo {
 
 
 
-
+//
 
 export class NoteSpese implements OnInit, OnDestroy {
   readonly filtroDefault = 'Tutti';

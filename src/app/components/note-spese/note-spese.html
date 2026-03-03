@@ -374,17 +374,47 @@
               </div>
               <div class="col-6">
                 <label class="small fw-bold mb-0">Parking</label>
-                <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
-                  min="0" (keydown)="blockNegative($event)"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].parking"
-                  (ngModelChange)="dettagliSpesa[tabAttiva].parking = clampNonNegative($event)" />
+                <div class="input-attach">
+                  <div class="input-left">
+                    <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
+                      min="0" (keydown)="blockNegative($event)"
+                      [(ngModel)]="dettagliSpesa[tabAttiva].parking"
+                      (ngModelChange)="dettagliSpesa[tabAttiva].parking = clampNonNegative($event)" />
+                  </div>
+                  <div class="input-sep" aria-hidden="true">
+                    <div class="sep-line"></div>
+                    <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'parking')" aria-label="Allega pdf">
+                      <i class="bi bi-paperclip"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'parking') as att">
+                  <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                  <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'parking')">Apri</button>
+                  <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'parking')">Rimuovi</button>
+                </div>
               </div>
               <div class="col-6">
                 <label class="small fw-bold mb-0">Telepass</label>
-                <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
-                  min="0" (keydown)="blockNegative($event)"
-                  [(ngModel)]="dettagliSpesa[tabAttiva].telepass"
-                  (ngModelChange)="dettagliSpesa[tabAttiva].telepass = clampNonNegative($event)" />
+                <div class="input-attach">
+                  <div class="input-left">
+                    <input class="form-control custom-input input-mini" [disabled]="modalMode === 'visualizza'" type="number"
+                      min="0" (keydown)="blockNegative($event)"
+                      [(ngModel)]="dettagliSpesa[tabAttiva].telepass"
+                      (ngModelChange)="dettagliSpesa[tabAttiva].telepass = clampNonNegative($event)" />
+                  </div>
+                  <div class="input-sep" aria-hidden="true">
+                    <div class="sep-line"></div>
+                    <button *ngIf="modalMode !== 'visualizza'" type="button" class="btn-clip" (click)="openAttachmentUploader(tabAttiva, 'telepass')" aria-label="Allega pdf">
+                      <i class="bi bi-paperclip"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(tabAttiva, 'telepass') as att">
+                  <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                  <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(tabAttiva, 'telepass')">Apri</button>
+                  <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(tabAttiva, 'telepass')">Rimuovi</button>
+                </div>
               </div>
               <div class="col-6">
                 <label class="small fw-bold mb-0">Costo km</label>
