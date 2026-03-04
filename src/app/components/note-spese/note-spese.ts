@@ -954,25 +954,30 @@ export class NoteSpese implements OnInit, OnDestroy {
   /** Costruisce il FormData payload per la creazione di una nuova spesa */
   private buildAddPayload(): FormData {
     const dataNotificazione = formatDateISO(this.nuovaSpesaData);
-    const dettagli = this.dettagliSpesa.map(d => ({
-      dataDettaglio: formatDateISO(this.nuovaSpesaData),
-      vitto: Number(d.vitto || 0),
-      hotel: Number(d.hotel || 0),
-      trasportiLocali: Number(d.trasporti || 0),
-      aereo: Number(d.aereo || 0),
-      spesaVaria: Number(d.varie || 0),
-      idAuto: d.auto ? Number(d.auto) || null : null,
-      km: Number(d.km || 0),
-      telepass: Number(d.telepass || 0),
-      parking: Number(d.parking || 0),
-      allegati: []
-    }));
-
     const form = new FormData();
+
     form.append('CodiceOrdine', this.dettagliSpesa[0]?.codiceOrdine || '');
     form.append('DataNotificazione', dataNotificazione);
-    form.append('Dettagli', JSON.stringify(dettagli));
-    return form as any;
+
+    this.dettagliSpesa.forEach((dett, index) => {
+      const prefix = `Dettagli[${index}]`;
+      const dataDettaglio = formatDateISO(this.nuovaSpesaData);
+      const idAutoValue = dett.auto && dett.auto !== 'Modello auto' ? Number(dett.auto) || 0 : 0;
+
+      form.append(`${prefix}.dataDettaglio`, dataDettaglio);
+      form.append(`${prefix}.km`, String(Number(dett.km || 0)));
+      form.append(`${prefix}.spesaVaria`, String(Number(dett.varie || 0)));
+      form.append(`${prefix}.idAuto`, String(idAutoValue));
+      form.append(`${prefix}.allegati`, JSON.stringify([]));
+      form.append(`${prefix}.hotel`, String(Number(dett.hotel || 0)));
+      form.append(`${prefix}.trasportiLocali`, String(Number(dett.trasporti || 0)));
+      form.append(`${prefix}.aereo`, String(Number(dett.aereo || 0)));
+      form.append(`${prefix}.parking`, String(Number(dett.parking || 0)));
+      form.append(`${prefix}.telepass`, String(Number(dett.telepass || 0)));
+      form.append(`${prefix}.vitto`, String(Number(dett.vitto || 0)));
+    });
+
+    return form;
   }
 
 
