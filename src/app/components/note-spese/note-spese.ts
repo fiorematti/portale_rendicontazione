@@ -316,7 +316,10 @@ export class NoteSpese implements OnInit, OnDestroy {
       this.deletingSpesaId = spesaDaEliminare.id;
       this.noteSpeseService.deleteSpesa(spesaDaEliminare.id).subscribe({
         next: (res) => {
-          const esitoOk = typeof res?.esito === 'string' ? res.esito.toLowerCase().includes('riuscita') : true;
+          const esitoStr = typeof res?.esito === 'string' ? res.esito.toLowerCase() : '';
+          const esitoOk = !res?.esito
+            || esitoStr.includes('riuscita')
+            || esitoStr.includes('completata');
           if (esitoOk) {
             if (indexReale >= 0) this.listaSpese.splice(indexReale, 1);
             this.rebuildFiltroOrdiniOptions();
