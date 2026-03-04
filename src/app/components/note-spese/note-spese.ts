@@ -225,7 +225,12 @@ export class NoteSpese implements OnInit, OnDestroy {
    */
   private mapDettaglioApiToDettaglioSpesa(item: DettaglioApiResponse, spesa: Spesa): DettaglioSpesa {
     const ordine = this.findOrdineByCodice(spesa.codice);
-    const cliente = ordine ? this.clientiOptions.find(c => c.idCliente === ordine.idCliente) : null;
+    const clienteId = ordine?.idCliente
+      ?? spesa.idCliente
+      ?? (item as any).idCliente
+      ?? (item as any).clienteId
+      ?? null;
+    const cliente = clienteId != null ? this.clientiOptions.find(c => c.idCliente === clienteId) : null;
     const vitto = (item as any).vitto ?? (item as any).Vitto ?? 0;
     const hotel = (item as any).hotel ?? (item as any).Hotel ?? 0;
     const trasporti = (item as any).trasportiLocali ?? (item as any).TrasportiLocali ?? 0;
@@ -241,7 +246,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     const costo = (item as any).costo ?? (item as any).Costo ?? null;
     return {
       idDettaglio: item.idDettaglio ?? 0,
-      idCliente: ordine?.idCliente ?? spesa.idCliente ?? null,
+      idCliente: clienteId,
       nominativoCliente: cliente?.nominativo ?? null,
       codiceOrdine: spesa.codice,
       vitto,

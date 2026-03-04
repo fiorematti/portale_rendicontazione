@@ -116,24 +116,26 @@
 
 
           <div *ngIf="dettagliSpesa[tabAttiva]" class="d-flex align-items-center gap-3">
-            <div class="filter-group">
-              <label class="fw-bold mb-1">Cliente</label>
-              <select class="form-select custom-select" [(ngModel)]="filtroCliente"
-                (ngModelChange)="onFiltroClienteChange()">
-                <option [ngValue]="'Tutti'">Tutti</option>
-                <option *ngIf="isClientiLoading" [ngValue]="filtroCliente">Caricamento clienti...</option>
-                <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
-              </select>
-            </div>
+            <ng-container *ngIf="!isVisualizza; else infoSoloTesto">
+              <div class="filter-group">
+                <label class="fw-bold mb-1">Cliente</label>
+                <select class="form-select custom-select" [(ngModel)]="filtroCliente"
+                  (ngModelChange)="onFiltroClienteChange()">
+                  <option [ngValue]="'Tutti'">Tutti</option>
+                  <option *ngIf="isClientiLoading" [ngValue]="filtroCliente">Caricamento clienti...</option>
+                  <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
+                </select>
+              </div>
 
-            <div class="filter-group">
-              <label class="fw-bold mb-1">Codice ordine</label>
-              <select class="form-select custom-select" [(ngModel)]="filtroOrdine"
-                [disabled]="filtroCliente === 'Tutti' || isOrdiniLoading">
-                <option *ngIf="isOrdiniLoading" [value]="filtroOrdine">Caricamento ordini...</option>
-                <option *ngFor="let c of filtroOrdiniOptions" [value]="c">{{ c }}</option>
-              </select>
-            </div>
+              <div class="filter-group">
+                <label class="fw-bold mb-1">Codice ordine</label>
+                <select class="form-select custom-select" [(ngModel)]="filtroOrdine"
+                  [disabled]="filtroCliente === 'Tutti' || isOrdiniLoading">
+                  <option *ngIf="isOrdiniLoading" [value]="filtroOrdine">Caricamento ordini...</option>
+                  <option *ngFor="let c of filtroOrdiniOptions" [value]="c">{{ c }}</option>
+                </select>
+              </div>
+            </ng-container>
 
             <ng-template #infoSoloTesto>
               <div aria-label="Cliente" class="text-only-info">
