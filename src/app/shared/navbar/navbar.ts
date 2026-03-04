@@ -5,6 +5,11 @@ import { filter } from 'rxjs/operators';
 import { AuthService } from '../../auth/auth.service';
 import { User } from '../../dto/userdto';
 
+/**
+ * Componente sidebar di navigazione.
+ * Si nasconde nella pagina di login e mostra il nome dell'utente autenticato.
+ * Supporta collapsing con hover per mostrare/nascondere le etichette dei link.
+ */
 @Component({
   selector: 'app-navbar',
   standalone: true,

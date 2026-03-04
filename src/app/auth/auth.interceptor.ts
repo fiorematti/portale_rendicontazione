@@ -6,6 +6,11 @@ import { switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { environment } from '../config/env';
 
+/**
+ * Interceptor HTTP che gestisce l'autenticazione automatica delle richieste.
+ * - Aggiunge il token Bearer alle richieste API
+ * - Converte gli URL relativi in assoluti usando l'apiBaseUrl dall'environment
+ */
 @Injectable()
 export class AuthTokenInterceptor implements HttpInterceptor {
   private readonly baseUrl = environment.apiBaseUrl;

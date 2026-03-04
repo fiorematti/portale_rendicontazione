@@ -5,12 +5,17 @@ import { map } from 'rxjs/operators';
 import { ClienteApiItem } from '../../dto/cliente.dto';
 import { OrdineApiItem } from '../../dto/ordine.dto';
 
+/**
+ * Service condiviso per il recupero dei clienti e degli ordini dell'utente.
+ * Utilizzato da più componenti (attivita, note-spese) per evitare duplicazione
+ * delle chiamate API relative a clienti e ordini.
+ */
 @Injectable({ providedIn: 'root' })
 export class ClientiOrdiniService {
   constructor(private readonly http: HttpClient) {}
 
   /**
-   * GET /api/Utente/utente/getClienteByUtente
+   * Recupera i clienti associati all'utente corrente.
    * L'API ritorna { id, nominativo } — mappiamo id -> idCliente per il DTO.
    */
   getClienti(): Observable<ClienteApiItem[]> {
@@ -23,7 +28,8 @@ export class ClientiOrdiniService {
   }
 
   /**
-   * GET /api/Utente/utente/getOrdiniByUtenteAndCliente?clienteId=X
+   * Recupera gli ordini di un utente filtrati per cliente specifico.
+   * @param clienteId - ID del cliente per cui filtrare gli ordini
    */
   getOrdiniByUtenteAndCliente(clienteId: number): Observable<OrdineApiItem[]> {
     const params = new HttpParams().set('clienteId', clienteId.toString());

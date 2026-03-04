@@ -7,8 +7,9 @@ import { ClienteApiItem } from '../../dto/cliente.dto';
 import { OrdineApiItem } from '../../dto/ordine.dto';
 import { LuogoApiItem } from '../../dto/luogo.dto';
 import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
+import { creaIntervalloAnni } from '../../shared/utils/date.utils';
 
-
+/** Rappresenta un giorno nella griglia del calendario */
 interface GiornoCalendario {
   valore: number;
   corrente: boolean;
@@ -21,39 +22,55 @@ interface GiornoCalendario {
   templateUrl: './attivita.html',
   styleUrls: ['./attivita.css'],
 })
+/**
+ * Componente per la gestione delle attività lavorative giornaliere.
+ * Permette di visualizzare, aggiungere, modificare ed eliminare attività
+ * associate a ordini e clienti, con un limite massimo di 8 ore al giorno.
+ */
 export class Attivita implements OnInit {
+  /** Abbreviazioni dei mesi per il selettore calendario */
   readonly listaMesi = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   private readonly annoInizio = 2020;
   private readonly annoFine = 2030;
+  /** Limite massimo di ore lavorative inseribili per un singolo giorno */
   private readonly maxOreGiornaliere = 8;
 
+  /** Giorno attualmente selezionato nel calendario */
   giornoSelezionato = 1;
   meseCorrente = 0;
   annoCorrente = 2000;
 
+  /** Griglia dei giorni del calendario corrente */
   giorniCalendario: GiornoCalendario[] = [];
+  /** Anni disponibili nel selettore */
   listaAnni: number[] = [];
+  /** Attività caricate per il giorno selezionato */
   listaAttivita: AttivitaItem[] = [];
+  /** Opzioni disponibili per il luogo di lavoro */
   locationOptions: LuogoApiItem[] = [];
 
+  /** Opzioni per il dropdown dei clienti */
   clientiOptions: ClienteApiItem[] = [];
+  /** Opzioni per il dropdown degli ordini (filtrate per cliente) */
   ordiniOptions: OrdineApiItem[] = [];
   selectedClienteId: number | null = null;
   selectedCodice: string | null = null;
   selectedLocationId: number | null = null;
+  /** Flag per evitare ricaricamenti multipli dei dati */
   private clientiLoaded = false;
   private ordiniLoaded = false;
   private locationLoaded = false;
 
-
   isLoading = false;
   errorMsg = '';
 
+  /** Attività in fase di creazione o modifica nel form */
   nuovaAttivita: AttivitaItem = this.creaAttivitaVuota();
   mostraModal = false;
   isModifica = false;
   indiceInModifica = -1;
   mostraErrore = false;
+  /** Indica se è aperta la vista dettaglio di un'attività */
   isDettaglioOpen = false;
   attivitaDettaglio: AttivitaItem | null = null;
 
@@ -64,13 +81,14 @@ export class Attivita implements OnInit {
 
   ngOnInit(): void {
     this.impostaDataOggi();
-    this.listaAnni = this.creaIntervalloAnni();
+    this.listaAnni = creaIntervalloAnni(this.annoInizio, this.annoFine);
     this.generaCalendario();
     this.loadClienti();
     this.loadLocation();
     this.loadAttivita();
   }
 
+  /** Apre la modale in modalità creazione, resettando il form */
   apriModal(): void {
     this.isModifica = false;
     this.mostraErrore = false;
@@ -82,6 +100,7 @@ export class Attivita implements OnInit {
     this.mostraModal = true;
   }
 
+  /** Apre la modale in modalità modifica, precaricando i dati dell'attività selezionata */
   modificaAttivita(index: number): void {
     this.isModifica = true;
     this.indiceInModifica = index;
@@ -92,6 +111,7 @@ export class Attivita implements OnInit {
     this.mostraModal = true;
   }
 
+  /** Apre il pannello dettaglio per un'attività specifica */
   apriDettaglio(attivita: AttivitaItem, index: number): void {
     this.attivitaDettaglio = attivita;
     this.indiceInModifica = index;
@@ -115,6 +135,11 @@ export class Attivita implements OnInit {
     this.mostraErrore = false;
   }
 
+  /**
+   * Conferma l'aggiunta o la modifica di un'attività.
+   * Valida i campi obbligatori e controlla il limite ore giornaliere
+   * prima di inviare la richiesta al backend.
+   */
   confermaAggiunta(): void {
     if (!this.isAttivitaValida(this.nuovaAttivita)) {
       this.mostraErrore = true;
@@ -155,6 +180,7 @@ export class Attivita implements OnInit {
     });
   }
 
+  /** Invia la richiesta di modifica al backend dopo validazione ore */
   private confermaModifica(): void {
     const idx = this.indiceInModifica;
     const target = this.listaAttivita[idx];
@@ -192,6 +218,7 @@ export class Attivita implements OnInit {
     });
   }
 
+  /** Elimina un'attività dopo conferma utente */
   eliminaAttivita(index: number): void {
     const target = this.listaAttivita[index];
     if (!target) return;
@@ -217,11 +244,16 @@ export class Attivita implements OnInit {
     });
   }
 
+  /** Totale ore formattato (es. "6:00") per il giorno selezionato */
   get totaleOreCalcolato(): string {
     const totale = this.totaleOreGiornata();
     return `${totale}:00`;
   }
 
+  /**
+   * Genera la griglia del calendario per il mese/anno corrente.
+   * Include i giorni del mese precedente e successivo per riempire la griglia 6x7.
+   */
   generaCalendario(): void {
     this.meseCorrente = Number(this.meseCorrente);
     this.annoCorrente = Number(this.annoCorrente);
@@ -247,6 +279,7 @@ export class Attivita implements OnInit {
     }
   }
 
+  /** Avanza o retrocede di un giorno e ricarica le attività */
   cambiaGiorno(direzione: number): void {
     const data = new Date(this.annoCorrente, this.meseCorrente, this.giornoSelezionato);
     data.setDate(data.getDate() + direzione);
@@ -264,6 +297,7 @@ export class Attivita implements OnInit {
     }
   }
 
+  /** Crea un oggetto attività vuoto con valori di default */
   private creaAttivitaVuota(): AttivitaItem {
     return {
       idAttivita: 0,
@@ -275,14 +309,7 @@ export class Attivita implements OnInit {
     };
   }
 
-  private creaIntervalloAnni(): number[] {
-    const anni: number[] = [];
-    for (let anno = this.annoInizio; anno <= this.annoFine; anno++) {
-      anni.push(anno);
-    }
-    return anni;
-  }
-
+  /** Imposta giorno, mese e anno alla data odierna */
   private impostaDataOggi(): void {
     const oggi = new Date();
     this.giornoSelezionato = oggi.getDate();
@@ -290,11 +317,13 @@ export class Attivita implements OnInit {
     this.annoCorrente = oggi.getFullYear();
   }
 
+  /** Callback al cambio del selettore mese/anno */
   onCambioMeseAnno(): void {
     this.generaCalendario();
     this.aggiornaAttivitaPerData();
   }
 
+  /** Valida che l'attività abbia codice ordine, luogo e ore > 0 */
   private isAttivitaValida(attivita: AttivitaItem): boolean {
     const { codiceOrdine, ore } = attivita;
     const hasLocation = this.selectedLocationId != null || Boolean(attivita.location.trim());
@@ -309,6 +338,7 @@ export class Attivita implements OnInit {
     blockNegative(event);
   }
 
+  /** Restituisce la data selezionata in formato ISO yyyy-MM-dd */
   private dataSelezionataISO(): string {
     const month = this.meseCorrente + 1;
     const mm = month < 10 ? `0${month}` : `${month}`;
@@ -347,6 +377,7 @@ export class Attivita implements OnInit {
     });
   }
 
+  /** Costruisce il payload per la creazione di una nuova attività */
   private buildAddPayload(): AddAttivitaPayload {
     const dataInizio = this.dataSelezionataISO();
     const luogoId = this.selectedLocationId ?? this.findLocationIdByNome(this.nuovaAttivita.location) ?? 0;
@@ -360,6 +391,7 @@ export class Attivita implements OnInit {
     };
   }
 
+  /** Costruisce il payload per l'aggiornamento di un'attività esistente */
   private buildUpdatePayload(): UpdateAttivitaPayload {
     const dataAttivita = (this.nuovaAttivita.dataAttivita || this.dataSelezionataISO()).slice(0, 10);
     const luogoId = this.selectedLocationId ?? this.findLocationIdByNome(this.nuovaAttivita.location) ?? 0;
@@ -372,10 +404,12 @@ export class Attivita implements OnInit {
     };
   }
 
+  /** Verifica se l'esito dell'API indica operazione riuscita */
   private esitoRiuscito(esito?: string): boolean {
     return (esito || '').toLowerCase().includes('riuscita');
   }
 
+  /** Quando cambia il cliente selezionato, ricarica gli ordini associati */
   onClienteChange(): void {
     if (this.selectedClienteId == null) return;
     this.syncClienteFromId(this.selectedClienteId);
@@ -438,6 +472,10 @@ export class Attivita implements OnInit {
     this.nuovaAttivita.nominativoCliente = cliente.nominativo;
   }
 
+  /**
+   * Calcola il totale ore del giorno, escludendo opzionalmente un'attività (utile in modifica).
+   * @param excludeIndex - Indice dell'attività da escludere dal calcolo
+   */
   private totaleOreGiornata(excludeIndex: number = -1): number {
     return this.listaAttivita.reduce((acc, item, idx) => {
       const ore = Number(item.ore) || 0;
@@ -445,10 +483,12 @@ export class Attivita implements OnInit {
     }, 0);
   }
 
+  /** Verifica se aggiungere le ore supererebbe il limite giornaliero */
   private eccedeLimiteGiornaliero(oreDaAggiungere: number, excludeIndex: number): boolean {
     return this.totaleOreGiornata(excludeIndex) + oreDaAggiungere > this.maxOreGiornaliere;
   }
 
+  /** Imposta il messaggio di errore per superamento limite ore */
   private setLimiteOreMsg(totaleAttuale: number, oreRichieste: number): void {
     const restante = this.maxOreGiornaliere - totaleAttuale;
     this.errorMsg = restante <= 0
