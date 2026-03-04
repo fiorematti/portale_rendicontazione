@@ -150,8 +150,6 @@ export class NoteSpese implements OnInit, OnDestroy {
   private currentAttachmentTarget: { tab: number; field: string } | null = null;
 
   /** Shortcut per verificare la modalità corrente della modale */
-
-
   get isAggiungi(): boolean { return this.modalMode === 'aggiungi'; }
   get isVisualizza(): boolean { return this.modalMode === 'visualizza'; }
   get isModifica(): boolean { return this.modalMode === 'modifica'; }
