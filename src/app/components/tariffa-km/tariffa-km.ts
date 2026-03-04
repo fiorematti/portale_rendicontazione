@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { TariffaKmService } from './tariffa-km.service';
 import { AuthService } from '../../auth/auth.service';
 import { UtenteDto } from './tariffa-km.service';
+import { setBodyScrollLock } from '../../shared/utils/dom.utils';
 
+/** Rappresenta un veicolo con la relativa tariffa chilometrica */
 interface Acquirente {
 	id: number;
 	marca: string;
@@ -23,6 +25,11 @@ interface Acquirente {
 	templateUrl: './tariffa-km.html',
 	styleUrls: ['./tariffa-km.css'],
 })
+/**
+ * Componente per la gestione delle tariffe chilometriche (admin).
+ * Permette di visualizzare, aggiungere, modificare ed eliminare automobili
+ * con le relative tariffe chilometriche per ciascun utente.
+ */
 export class TariffaKmComponent implements OnInit {
 	listaAcquirenti: Acquirente[] = [];
 	utenti: { id: number; fullName: string }[] = [];
@@ -93,6 +100,7 @@ export class TariffaKmComponent implements OnInit {
 		);
 	}
 
+	/** Apre la modale per aggiunta o modifica di un veicolo */
 	apriModal(acquirente?: Acquirente): void {
 		if (acquirente) {
 			this.isEditMode = true;
@@ -103,13 +111,13 @@ export class TariffaKmComponent implements OnInit {
 		}
 		this.mostraErrore = false;
 		this.isModalOpen = true;
-		this.lockBodyScroll(true);
+		setBodyScrollLock(true);
 	}
 
 	chiudiModal(): void {
 		this.isModalOpen = false;
 		this.mostraErrore = false;
-		this.lockBodyScroll(false);
+		setBodyScrollLock(false);
 	}
 
 	salvaAcquirente(): void {
@@ -195,32 +203,20 @@ export class TariffaKmComponent implements OnInit {
 		this.apriModal(daModificare);
 	}
 
+	/** Apre il pannello dettaglio di un veicolo */
 	apriDettaglio(acquirente: Acquirente): void {
 		this.acquirenteDettaglio = { ...acquirente };
 		this.isDettaglioOpen = true;
-		this.lockBodyScroll(true);
+		setBodyScrollLock(true);
 	}
 
 	chiudiDettaglio(): void {
 		this.isDettaglioOpen = false;
 		this.acquirenteDettaglio = null;
-		this.lockBodyScroll(false);
+		setBodyScrollLock(false);
 	}
 
-	private lockBodyScroll(lock: boolean): void {
-		try {
-			if (lock) {
-				document.documentElement.classList.add('modal-open');
-				document.body.classList.add('modal-open');
-			} else {
-				document.documentElement.classList.remove('modal-open');
-				document.body.classList.remove('modal-open');
-			}
-		} catch (e) {
-			// ignore (e.g. SSR)
-		}
-	}
-
+	/** Elimina un veicolo dopo conferma utente */
 	elimina(acquirente: Acquirente): void {
 		const conferma = confirm('Sei sicuro di voler eliminare questo elemento?');
 		if (!conferma) return;
