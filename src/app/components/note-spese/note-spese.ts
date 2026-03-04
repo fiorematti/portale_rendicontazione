@@ -392,6 +392,9 @@ export class NoteSpese implements OnInit, OnDestroy {
 
     if (this.isAggiungi) {
       const formData = this.buildAddPayload();
+      for (const [k, v] of formData.entries()) {
+    console.log('AddSpesa payload ->', k, v);
+  }
       this.noteSpeseService.addSpesa(formData).subscribe({
         next: (ok) => {
           if (ok === true) {

@@ -120,6 +120,7 @@ export class NoteSpeseService {
   /** Crea una nuova nota spesa con allegati (FormData) */
   addSpesa(form: FormData): Observable<boolean> {
     return this.http.post<boolean>(`${this.baseUrl}/AddSpesa`, form);
+  
   }
 
   /** Aggiorna una nota spesa esistente */
