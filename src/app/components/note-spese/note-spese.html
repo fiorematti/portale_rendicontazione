@@ -121,6 +121,7 @@
                 <label class="fw-bold mb-1">Cliente</label>
                 <select class="form-select custom-select" [(ngModel)]="dettagliSpesa[tabAttiva].idCliente"
                   (ngModelChange)="onClienteChange(dettagliSpesa[tabAttiva])">
+                  <option [ngValue]="null" disabled selected>Seleziona cliente</option>
                   <option *ngIf="isClientiLoading" [ngValue]="dettagliSpesa[tabAttiva].idCliente">Caricamento clienti...</option>
                   <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
                 </select>
@@ -131,6 +132,7 @@
                 <select class="form-select custom-select" [(ngModel)]="dettagliSpesa[tabAttiva].codiceOrdine"
                   (ngModelChange)="onCodiceChange(dettagliSpesa[tabAttiva], $event)"
                   [disabled]="!dettagliSpesa[tabAttiva].idCliente || isOrdiniLoading">
+                  <option value="" disabled selected>Seleziona ordine</option>
                   <option *ngIf="isOrdiniLoading" [value]="dettagliSpesa[tabAttiva].codiceOrdine">Caricamento ordini...</option>
                   <option *ngFor="let o of ordiniDisponibili(dettagliSpesa[tabAttiva])" [value]="o.codiceOrdine">{{ o.codiceOrdine }}</option>
                 </select>
@@ -374,6 +376,10 @@
                   [(ngModel)]="dettagliSpesa[tabAttiva].auto" (click)="onAutoDropdownClick()"
                   (focus)="onAutoDropdownClick()">
                   <option value="Modello auto">Modello auto</option>
+                  <option *ngIf="dettagliSpesa[tabAttiva].auto && !isAutoInList(dettagliSpesa[tabAttiva].auto)"
+                    [ngValue]="dettagliSpesa[tabAttiva].auto">
+                    {{ dettagliSpesa[tabAttiva].auto }}
+                  </option>
                   <option *ngIf="isAutomobiliLoading" [ngValue]="dettagliSpesa[tabAttiva].auto">Caricamento
                     automobili...</option>
                   <option *ngIf="!isAutomobiliLoading && !automobili.length" value="Modello auto">Nessuna automobile
