@@ -559,7 +559,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
     if (this.rigaSelezionata?.id != null) {
       const spesaId = this.rigaSelezionata.id;
-      if (!confirm('Sei sicuro di voler eliminare questa nota spesa?')) return;
+      if (!confirm('Sei sicuro di voler eliminare questo dettaglio e la nota spesa associata?')) return;
       this.deletingSpesaId = spesaId;
       this.noteSpeseService.deleteSpesa(spesaId).subscribe({
         next: (res) => {
@@ -578,7 +578,7 @@ export class NoteSpese implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('DeleteSpesa error:', err);
-          this.salvaErrore = 'Errore durante l\'eliminazione della spesa.';
+          this.salvaErrore = 'Errore durante l\'eliminazione del dettaglio.';
         },
         complete: () => {
           this.deletingSpesaId = null;
