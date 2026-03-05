@@ -201,7 +201,9 @@
   width: 90%;
   max-width: 850px;
   border-radius: 25px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 90vh;
   position: relative;
 }
 
@@ -352,11 +354,6 @@ label.small.fw-bold {
     border-right: none !important;
     border-bottom: 1px solid #dee2e6;
     padding-bottom: 20px;
-  }
-
-  .custom-modal {
-    max-height: 90vh;
-    overflow-y: auto;
   }
 }
 

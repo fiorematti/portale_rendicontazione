@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AutomobileDto } from '../../dto/automobile.dto';
 
+/** Payload per l'aggiunta di un nuovo veicolo */
 export interface AddAutomobileRequest {
 	marca: string;
 	modello: string;
@@ -12,12 +13,14 @@ export interface AddAutomobileRequest {
 	idUtente: number;
 }
 
+/** Risposta API all'aggiunta di un veicolo */
 export interface AddAutomobileResponse {
 	esito: string;
 	skippedDates: string[];
 	motivazione: string | null;
 }
 
+/** Risposta API per la lista automobili (raggruppate per utente) */
 export interface AutomobiliAdminResponse {
 	idUtente: number;
 	nomeUtente: string;
@@ -25,6 +28,7 @@ export interface AutomobiliAdminResponse {
 	automobili: AutomobileDto[];
 }
 
+/** DTO utente restituito dall'endpoint admin */
 export interface UtenteDto {
 	idUtente: number;
 	nome: string | null;
@@ -34,6 +38,7 @@ export interface UtenteDto {
 	stato: boolean;
 }
 
+/** Payload per l'aggiornamento di un veicolo esistente */
 export interface UpdateAutomobileRequest {
 	idAuto: number;
 	marca: string;
@@ -43,55 +48,43 @@ export interface UpdateAutomobileRequest {
 	cilindrata: number;
 }
 
+/** Risposta API all'aggiornamento di un veicolo */
 export interface UpdateAutomobileResponse {
 	esito: string;
 	motivazione: string | null;
 }
 
-// export interface AddSpesaDettaglio {
-//   dataDettaglio: string;
-//   vitto: number;
-//   hotel: number;
-//   trasportiLocali: number;
-//   aereo: number;
-//   spesaVaria: number;
-//   idAuto: number | null;
-//   km: number;
-//   telepass: number;
-//   parking: number;
-// }
-
-
-
+/**
+ * Service per la gestione delle automobili e tariffe chilometriche (admin).
+ * Fornisce operazioni CRUD sui veicoli e il recupero della lista utenti.
+ */
 @Injectable({ providedIn: 'root' })
 export class TariffaKmService {
 	constructor(private readonly http: HttpClient) {}
 
-	
-
+	/** Recupera tutte le automobili (endpoint admin, raggruppate per utente) */
 	getAllAutomobiliAdmin(): Observable<AutomobiliAdminResponse[]> {
 		return this.http.get<AutomobiliAdminResponse[]>('/api/Automobile/admin/getAllAutomobili');
 	}
 
+	/** Recupera la lista di tutti gli utenti (endpoint admin) */
 	getAllUtenti(): Observable<UtenteDto[]> {
-		console.log('Chiamata a getAllUtenti');
 		return this.http.get<UtenteDto[]>('/api/Utente/admin/getAllUtenti');
 	}
 
+	/** Aggiunge un nuovo veicolo associato a un utente */
 	addAutomobile(request: AddAutomobileRequest): Observable<AddAutomobileResponse> {
 		return this.http.post<AddAutomobileResponse>('/api/Automobile/admin/addAutomobile', request);
 	}
 
+	/** Aggiorna i dati di un veicolo esistente */
 	updateAutomobile(request: UpdateAutomobileRequest): Observable<UpdateAutomobileResponse> {
 		return this.http.put<UpdateAutomobileResponse>('/api/Automobile/admin/updateAutomobile', request);
 	}
 
+	/** Elimina un veicolo tramite il suo ID */
 	deleteAutomobile(id: number): Observable<boolean> {
 		const params = new HttpParams().set('id', id.toString());
 		return this.http.delete<boolean>('/api/Automobile/admin/deleteAutomobile', { params });
 	}
-
-	// addSpesa(request: AddSpesaRequest): Observable<boolean> {
-	// 	return this.http.post<boolean>(`${this.baseUrl}/AddSpesa`, request);
-	//   }
 }

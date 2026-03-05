@@ -7,21 +7,28 @@ import { ClienteApiItem } from '../../dto/cliente.dto';
 import { OrdineApiItem } from '../../dto/ordine.dto';
 import { AutomobileDto } from '../../dto/automobile.dto';
 import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
-import { parseDateString, formatDateIt, formatDateISO, sanitizeDateInput } from '../../shared/utils/date.utils';
+import { parseDateString, formatDateIt, formatDateISO, sanitizeDateInput, creaIntervalloAnni } from '../../shared/utils/date.utils';
+import { setBodyScrollLock } from '../../shared/utils/dom.utils';
 
 
+/** Rappresenta una nota spesa nella lista principale */
 interface Spesa {
   id?: number | null;
+  /** Data in formato dd/MM/yyyy */
   data: string;
   codice: string;
+  /** Totale richiesto formattato (es. "215,00€") */
   richiesto: string;
+  /** Totale validato formattato */
   validato: string;
   pagato: boolean;
   idCliente?: number | null;
+  /** Dettagli salvati localmente (prima del salvataggio su backend) */
   dettagliLocali?: DettaglioSpesa[];
 }
 
 
+/** Rappresenta un singolo dettaglio/riga di una nota spesa */
 interface DettaglioSpesa {
   idDettaglio?: number;
   idCliente?: number | null;
@@ -41,9 +48,11 @@ interface DettaglioSpesa {
   totale?: number | null;
   statoApprovazione?: string | null;
   costoKilometri?: number | null;
+  /** Allegati associati al dettaglio, indicizzati per campo */
   attachments?: Record<string, AttachmentInfo>;
 }
 
+/** Informazioni su un allegato caricato */
 interface AttachmentInfo {
   fileName: string;
   previewUrl: string;
@@ -62,11 +71,15 @@ interface AttachmentInfo {
 
 
 
-//
-
+/**
+ * Componente per la gestione delle note spese dell'utente.
+ * Permette di visualizzare, aggiungere, modificare ed eliminare note spese
+ * con supporto per dettagli multipli (tab), allegati, filtri e calendario.
+ */
 export class NoteSpese implements OnInit, OnDestroy {
   readonly filtroDefault = 'Tutti';
   readonly clientiOptions: ClienteApiItem[] = [];
+  /** Cache degli ordini per cliente, evita chiamate API ripetute */
   private ordiniCache: Record<number, OrdineApiItem[]> = {};
 
   ordini: OrdineApiItem[] = [];
@@ -75,23 +88,25 @@ export class NoteSpese implements OnInit, OnDestroy {
   automobili: AutomobileDto[] = [];
   isAutomobiliLoading = false;
 
-
+  /** Lista completa delle spese caricate dal backend */
   listaSpese: Spesa[] = [];
   loading = false;
   errore: string | null = null;
 
-
+  /* --- Stato dei filtri nella pagina principale --- */
   filtroPagate = this.filtroDefault;
   filtroData = '';
   filtroCliente: number | 'Tutti' = this.filtroDefault;
   filtroOrdine = this.filtroDefault;
   filtroOrdiniOptions: string[] = [];
 
-
+  /* --- Stato della modale di creazione/modifica/visualizzazione --- */
   mostraModal = false;
   modalMode: 'aggiungi' | 'visualizza' | 'modifica' = 'aggiungi';
   nuovaSpesaData = '';
+  /** Indice del tab (dettaglio) attivo nella modale */
   tabAttiva = 0;
+  /** Dettagli della spesa nella modale (ogni tab = un dettaglio) */
   dettagliSpesa: DettaglioSpesa[] = [];
   mostraErrore = false;
   salvaInCorso = false;
@@ -104,16 +119,16 @@ export class NoteSpese implements OnInit, OnDestroy {
   deletingSpesaId: number | null = null;
   isDettaglioLoading = false;
 
-
+  /** Spesa attualmente selezionata per modifica/visualizzazione */
   rigaSelezionata: Spesa | null = null;
 
   readonly costoKm = 0;
 
-
+  /* --- Stato del calendario popup --- */
   mostraCalendario = false;
   targetData: 'filtro' | 'popup' = 'filtro';
 
-
+  /** Abbreviazioni dei mesi per i selettori */
   readonly listaMesi = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   listaAnni: number[] = [];
 
@@ -127,14 +142,14 @@ export class NoteSpese implements OnInit, OnDestroy {
   giorniDelMesePopup: number[] = [];
   giorniVuotiPopup: number[] = [];
 
-  // Attachment popup / upload states (non-intrusive, does not change existing logic)
+  /* --- Stato popup allegati --- */
   mostraAttachmentPopup = false;
   attachmentPreviewUrl: string | null = null;
   attachmentPreviewType: 'image' | 'pdf' | null = null;
   attachmentFileName = '';
   private currentAttachmentTarget: { tab: number; field: string } | null = null;
 
-
+  /** Shortcut per verificare la modalità corrente della modale */
   get isAggiungi(): boolean { return this.modalMode === 'aggiungi'; }
   get isVisualizza(): boolean { return this.modalMode === 'visualizza'; }
   get isModifica(): boolean { return this.modalMode === 'modifica'; }
@@ -147,7 +162,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   ngOnInit(): void {
-    this.listaAnni = this.creaIntervalloAnni();
+    this.listaAnni = creaIntervalloAnni(2020, new Date().getFullYear() + 5);
     this.syncDateStrings('filtro');
     this.syncDatePopupFromString();
     this.generaCalendarioPopup();
@@ -162,14 +177,17 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   ngOnDestroy(): void {
-    this.setBodyScrollLock(false);
+    setBodyScrollLock(false);
   }
 
 
+  /** Apre la modale in modalità visualizzazione e carica i dettagli dal backend */
   visualizzaDettaglio(spesa: Spesa): void {
     this.cleanupAttachments();
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
+    this.dettagliSpesa = [];
+    this.tabAttiva = 0;
     this.ensureAutomobiliLoaded();
     this.apriModalConModalita('visualizza');
 
@@ -184,6 +202,7 @@ export class NoteSpese implements OnInit, OnDestroy {
             this.caricaDatiNellaModal(spesa);
           }
           this.tabAttiva = 0;
+          this.loadOrdiniPerDettagli();
         },
         error: (err) => {
           console.error('[NoteSpese] getDettagliBySpesa error:', err);
@@ -199,13 +218,23 @@ export class NoteSpese implements OnInit, OnDestroy {
       } else {
         this.caricaDatiNellaModal(spesa);
       }
+      this.loadOrdiniPerDettagli();
     }
   }
 
 
+  /**
+   * Mappa un dettaglio ricevuto dall'API nel formato locale DettaglioSpesa.
+   * Gestisce sia la naming convention camelCase che PascalCase dell'API.
+   */
   private mapDettaglioApiToDettaglioSpesa(item: DettaglioApiResponse, spesa: Spesa): DettaglioSpesa {
     const ordine = this.findOrdineByCodice(spesa.codice);
-    const cliente = ordine ? this.clientiOptions.find(c => c.idCliente === ordine.idCliente) : null;
+    const clienteId = ordine?.idCliente
+      ?? spesa.idCliente
+      ?? (item as any).idCliente
+      ?? (item as any).clienteId
+      ?? null;
+    const cliente = clienteId != null ? this.clientiOptions.find(c => c.idCliente === clienteId) : null;
     const vitto = (item as any).vitto ?? (item as any).Vitto ?? 0;
     const hotel = (item as any).hotel ?? (item as any).Hotel ?? 0;
     const trasporti = (item as any).trasportiLocali ?? (item as any).TrasportiLocali ?? 0;
@@ -221,7 +250,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     const costo = (item as any).costo ?? (item as any).Costo ?? null;
     return {
       idDettaglio: item.idDettaglio ?? 0,
-      idCliente: ordine?.idCliente ?? spesa.idCliente ?? null,
+      idCliente: clienteId,
       nominativoCliente: cliente?.nominativo ?? null,
       codiceOrdine: spesa.codice,
       vitto,
@@ -229,7 +258,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       trasporti,
       aereo,
       varie,
-      auto: idAutoVal != null ? String(idAutoVal) : 'Modello auto',
+      auto: idAutoVal != null && idAutoVal > 0 ? String(idAutoVal) : 'Modello auto',
       km,
       parking,
       telepass,
@@ -241,10 +270,13 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Apre la modale in modalità modifica e carica i dettagli dal backend */
   apriModifica(spesa: Spesa): void {
     this.cleanupAttachments();
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
+    this.dettagliSpesa = [];
+    this.tabAttiva = 0;
     this.ensureAutomobiliLoaded();
     this.apriModalConModalita('modifica');
 
@@ -259,6 +291,7 @@ export class NoteSpese implements OnInit, OnDestroy {
             this.caricaDatiNellaModal(spesa);
           }
           this.tabAttiva = 0;
+          this.loadOrdiniPerDettagli();
         },
         error: (err) => {
           console.error('[NoteSpese] getDettagliBySpesa error:', err);
@@ -274,10 +307,12 @@ export class NoteSpese implements OnInit, OnDestroy {
       } else {
         this.caricaDatiNellaModal(spesa);
       }
+      this.loadOrdiniPerDettagli();
     }
   }
 
 
+  /** Elimina una spesa dopo conferma utente. Gestisce sia spese remote che locali. */
   eliminaSpesa(indexTable: number): void {
     const spesaDaEliminare = this.speseFiltrate[indexTable];
     if (!spesaDaEliminare) return;
@@ -289,7 +324,10 @@ export class NoteSpese implements OnInit, OnDestroy {
       this.deletingSpesaId = spesaDaEliminare.id;
       this.noteSpeseService.deleteSpesa(spesaDaEliminare.id).subscribe({
         next: (res) => {
-          const esitoOk = typeof res?.esito === 'string' ? res.esito.toLowerCase().includes('riuscita') : true;
+          const esitoStr = typeof res?.esito === 'string' ? res.esito.toLowerCase() : '';
+          const esitoOk = !res?.esito
+            || esitoStr.includes('riuscita')
+            || esitoStr.includes('completata');
           if (esitoOk) {
             if (indexReale >= 0) this.listaSpese.splice(indexReale, 1);
             this.rebuildFiltroOrdiniOptions();
@@ -312,6 +350,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Popola la modale con i dati base di una spesa (fallback se non ci sono dettagli API) */
   private caricaDatiNellaModal(spesa: Spesa): void {
     this.nuovaSpesaData = spesa.data;
     const importoPulito = this.parseImporto(spesa.richiesto);
@@ -338,6 +377,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Deep-copy dei dettagli preservando gli allegati */
   private copiaDettagli(dettagli: DettaglioSpesa[]): DettaglioSpesa[] {
     return dettagli.map(d => ({
       ...d,
@@ -346,6 +386,10 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /**
+   * Conferma il salvataggio della spesa (creazione o modifica).
+   * Valida il dettaglio attivo prima dell'invio.
+   */
   confermaSpesa(): void {
     const dett = this.dettagliSpesa[this.tabAttiva] || this.dettagliSpesa[0];
     if (!this.isDettaglioValido(dett)) {
@@ -359,6 +403,9 @@ export class NoteSpese implements OnInit, OnDestroy {
 
     if (this.isAggiungi) {
       const formData = this.buildAddPayload();
+      for (const [k, v] of formData.entries()) {
+    console.log('AddSpesa payload ->', k, v);
+  }
       this.noteSpeseService.addSpesa(formData).subscribe({
         next: (ok) => {
           if (ok === true) {
@@ -407,6 +454,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Resetta il form della spesa e prepara per una nuova creazione */
   resetNuovaSpesa(): void {
     this.cleanupAttachments();
     this.nuovaSpesaData = '';
@@ -439,6 +487,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Chiude la modale e ripristina lo stato */
   chiudiModal(): void {
     this.cleanupAttachments();
     this.closeAttachmentPopup();
@@ -446,15 +495,17 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.mostraCalendario = false;
     this.rigaSelezionata = null;
     this.mostraErrore = false;
-    this.setBodyScrollLock(false);
+    setBodyScrollLock(false);
   }
 
 
+  /** Totale complessivo di tutti i dettagli della spesa corrente */
   get totaleCalcolato(): number {
     return this.dettagliSpesa.reduce((acc, dett) => acc + this.sommaDettaglio(dett), 0);
   }
 
 
+  /** Callback al cambio mese/anno nel filtro principale — ricarica le spese */
   onCambioMeseAnno(target: 'filtro' | 'popup'): void {
     if (target === 'filtro') {
       this.syncDateStrings('filtro');
@@ -471,6 +522,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Filtra la lista spese in base a pagamento, data, ordine e cliente */
   get speseFiltrate(): Spesa[] {
     const filtroDate = parseDateString(this.filtroData);
     return this.listaSpese.filter((s) => {
@@ -504,18 +556,72 @@ export class NoteSpese implements OnInit, OnDestroy {
   eliminaDettaglioCorrente(): void {
     const dett = this.dettagliSpesa[this.tabAttiva];
     this.cleanupAttachmentForDettaglio(dett);
-    this.dettagliSpesa.splice(this.tabAttiva, 1);
-    if (this.dettagliSpesa.length === 0) this.chiudiModal();
-    else this.tabAttiva = 0;
+
+    if (this.rigaSelezionata?.id != null) {
+      const spesaId = this.rigaSelezionata.id;
+      if (!confirm('Sei sicuro di voler eliminare questo dettaglio e la nota spesa associata?')) return;
+      this.deletingSpesaId = spesaId;
+      this.noteSpeseService.deleteSpesa(spesaId).subscribe({
+        next: (res) => {
+          const esitoStr = typeof res?.esito === 'string' ? res.esito.toLowerCase() : '';
+          const esitoOk = !res?.esito
+            || esitoStr.includes('riuscita')
+            || esitoStr.includes('completata');
+          if (esitoOk) {
+            const indexReale = this.listaSpese.indexOf(this.rigaSelezionata!);
+            if (indexReale >= 0) this.listaSpese.splice(indexReale, 1);
+            this.rebuildFiltroOrdiniOptions();
+            this.chiudiModal();
+          } else {
+            this.salvaErrore = res?.motivazione || 'Eliminazione non riuscita.';
+          }
+        },
+        error: (err) => {
+          console.error('DeleteSpesa error:', err);
+          this.salvaErrore = 'Errore durante l\'eliminazione del dettaglio.';
+        },
+        complete: () => {
+          this.deletingSpesaId = null;
+        }
+      });
+    } else {
+      this.dettagliSpesa.splice(this.tabAttiva, 1);
+      if (this.dettagliSpesa.length === 0) this.chiudiModal();
+      else this.tabAttiva = 0;
+    }
   }
 
 
+  /** Restituisce gli ordini disponibili per il cliente del dettaglio corrente */
   ordiniDisponibili(dett: DettaglioSpesa): { codiceOrdine: string; idCliente: number }[] {
     if (!dett || dett.idCliente == null) return [];
     return this.ordiniCache[dett.idCliente] || [];
   }
 
 
+  /** Restituisce il nome dell'auto (marca modello - targa) per un dettaglio */
+  nomeAutoPerDettaglio(dett: DettaglioSpesa): string {
+    if (!dett?.auto || dett.auto === 'Modello auto') return '';
+    const auto = this.automobili.find(a => a.idauto.toString() === dett.auto);
+    return auto ? `${auto.marca} ${auto.modello} - ${auto.targa}` : '';
+  }
+
+
+  /** Carica gli ordini per tutti i clienti presenti nei dettagli correnti */
+  private loadOrdiniPerDettagli(): void {
+    const clienteIds = new Set<number>();
+    this.dettagliSpesa.forEach(d => {
+      if (d.idCliente != null) clienteIds.add(d.idCliente);
+    });
+    clienteIds.forEach(id => {
+      if (!this.ordiniCache[id]) {
+        this.loadOrdiniByCliente(id);
+      }
+    });
+  }
+
+
+  /** Carica i clienti su prima apertura del dropdown (lazy loading) */
   onClienteDropdownClick(): void {
     if (this.clientiLoaded || this.isClientiLoading) return;
     this.isClientiLoading = true;
@@ -537,6 +643,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Quando cambia il cliente nel dettaglio, aggiorna il nominativo e ricarica gli ordini */
   onClienteChange(dett: DettaglioSpesa): void {
     if (!dett) return;
     const cliente = this.clientiOptions.find(c => c.idCliente === dett.idCliente);
@@ -672,13 +779,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
-  private creaIntervalloAnni(): number[] {
-    const start = 2020;
-    const end = new Date().getFullYear() + 5;
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  }
-
-
+  /** Sincronizza la data del filtro stringa dal selettore mese/anno */
   private syncDateStrings(target: 'filtro' | 'popup'): void {
     const giorno = '01';
     if (target === 'filtro') {
@@ -694,10 +795,11 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Apre la modale nella modalità specificata e blocca lo scroll del body */
   private apriModalConModalita(mode: 'aggiungi' | 'visualizza' | 'modifica'): void {
     this.modalMode = mode;
     this.mostraModal = true;
-    this.setBodyScrollLock(true);
+    setBodyScrollLock(true);
   }
 
 
@@ -734,6 +836,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Carica le spese dal backend filtrando per anno e mese */
   private loadSpese(year: number = new Date().getFullYear(), month: number = new Date().getMonth() + 1): void {
     this.isSpeseLoading = true;
     this.loading = true;
@@ -747,8 +850,8 @@ export class NoteSpese implements OnInit, OnDestroy {
             id,
             data: formatDateIt(item.dataNotificazione),
             codice: item.codiceOrdine || '',
-            richiesto: this.formattaTotaleNumber(item.totaleComplessivo || 0),
-            validato: this.formattaTotaleNumber((item as any).totaleValidato || 0),
+            richiesto: this.formattaTotale(item.totaleComplessivo || 0),
+            validato: this.formattaTotale((item as any).totaleValidato || 0),
             pagato: Boolean(item.statoPagamento),
             idCliente,
           } as Spesa;
@@ -793,13 +896,12 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /**
+   * Formatta un importo numerico in stringa con virgola e simbolo euro.
+   * Es: 215.50 → "215,50€"
+   */
   private formattaTotale(totale: number): string {
-    return totale.toFixed(2).replace('.', ',') + '€';
-  }
-
-
-  private formattaTotaleNumber(tot: number): string {
-    const n = Number(tot || 0);
+    const n = Number(totale || 0);
     return n.toFixed(2).replace('.', ',') + '€';
   }
 
@@ -814,6 +916,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Somma tutte le voci di spesa di un singolo dettaglio */
   private sommaDettaglio(dett: DettaglioSpesa): number {
     return (
       Number(dett.vitto || 0) +
@@ -829,6 +932,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Ricostruisce le opzioni del filtro ordini dai dati in cache */
   private rebuildFiltroOrdiniOptions(): void {
     const fromOrdini = (this.ordini || []).map(o => o.codiceOrdine).filter(Boolean);
     const fromCache = Object.values(this.ordiniCache || {}).flat().map(o => o.codiceOrdine).filter(Boolean);
@@ -841,6 +945,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Carica la lista dei clienti dell'utente dal backend */
   private loadClienti(): void {
     if (this.clientiLoaded || this.isClientiLoading) return;
     this.isClientiLoading = true;
@@ -859,6 +964,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Carica gli ordini per un cliente (usa cache se disponibile) */
   private loadOrdiniByCliente(idCliente: number | null, dett?: DettaglioSpesa): void {
     if (idCliente == null) return;
     if (this.ordiniCache[idCliente]) {
@@ -916,30 +1022,37 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
+  /** Costruisce il FormData payload per la creazione di una nuova spesa */
   private buildAddPayload(): FormData {
     const dataNotificazione = formatDateISO(this.nuovaSpesaData);
-    const dettagli = this.dettagliSpesa.map(d => ({
-      dataDettaglio: formatDateISO(this.nuovaSpesaData),
-      vitto: Number(d.vitto || 0),
-      hotel: Number(d.hotel || 0),
-      trasportiLocali: Number(d.trasporti || 0),
-      aereo: Number(d.aereo || 0),
-      spesaVaria: Number(d.varie || 0),
-      idAuto: d.auto ? Number(d.auto) || null : null,
-      km: Number(d.km || 0),
-      telepass: Number(d.telepass || 0),
-      parking: Number(d.parking || 0),
-      allegati: []
-    }));
-
     const form = new FormData();
+
     form.append('CodiceOrdine', this.dettagliSpesa[0]?.codiceOrdine || '');
     form.append('DataNotificazione', dataNotificazione);
-    form.append('Dettagli', JSON.stringify(dettagli));
-    return form as any;
+
+    this.dettagliSpesa.forEach((dett, index) => {
+      const prefix = `Dettagli[${index}]`;
+      const dataDettaglio = formatDateISO(this.nuovaSpesaData);
+      const idAutoValue = dett.auto && dett.auto !== 'Modello auto' ? Number(dett.auto) || 0 : 0;
+
+      form.append(`${prefix}.dataDettaglio`, dataDettaglio);
+      form.append(`${prefix}.km`, String(Number(dett.km || 0)));
+      form.append(`${prefix}.spesaVaria`, String(Number(dett.varie || 0)));
+      form.append(`${prefix}.idAuto`, String(idAutoValue));
+      form.append(`${prefix}.allegati`, JSON.stringify([]));
+      form.append(`${prefix}.hotel`, String(Number(dett.hotel || 0)));
+      form.append(`${prefix}.trasportiLocali`, String(Number(dett.trasporti || 0)));
+      form.append(`${prefix}.aereo`, String(Number(dett.aereo || 0)));
+      form.append(`${prefix}.parking`, String(Number(dett.parking || 0)));
+      form.append(`${prefix}.telepass`, String(Number(dett.telepass || 0)));
+      form.append(`${prefix}.vitto`, String(Number(dett.vitto || 0)));
+    });
+
+    return form;
   }
 
 
+  /** Costruisce il payload per l'aggiornamento di una spesa esistente */
   private buildUpdatePayload(): UpdateSpesaRequest {
     const dettagli = this.dettagliSpesa.map(d => ({
       idDettaglio: d.idDettaglio ?? 0,
@@ -965,28 +1078,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
-  private formatDateISO(valore: string): string {
-    const data = parseDateString(valore) || new Date();
-    const yyyy = data.getFullYear();
-    const mm = String(data.getMonth() + 1).padStart(2, '0');
-    const dd = String(data.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-
-  private setBodyScrollLock(lock: boolean): void {
-    const body = document.body;
-    const html = document.documentElement;
-    if (!body || !html) return;
-    if (lock) {
-      body.classList.add('modal-open');
-      html.classList.add('modal-open');
-    } else {
-      body.classList.remove('modal-open');
-      html.classList.remove('modal-open');
-    }
-  }
-  
+  /** Apre il selettore file per un campo allegato specifico */
   openAttachmentUploader(tabIndex: number, field: string): void {
     this.ensureAttachmentContainer(tabIndex);
     this.currentAttachmentTarget = { tab: tabIndex, field };
@@ -997,6 +1089,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     }
   }
 
+  /** Gestisce la selezione del file e genera anteprima (immagine o PDF) */
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input?.files && input.files[0];
@@ -1107,7 +1200,10 @@ export class NoteSpese implements OnInit, OnDestroy {
     }
   }
 
-  // Render first page of PDF to an image (data URL) using pdf.js loaded from CDN.
+  /**
+   * Renderizza la prima pagina di un PDF come immagine (data URL) usando pdf.js.
+   * Carica la libreria pdf.js dal CDN se non ancora disponibile.
+   */
   private renderPdfAsImage(pdfUrl: string): Promise<string | null> {
     return new Promise((resolve, reject) => {
       const finishRender = () => {

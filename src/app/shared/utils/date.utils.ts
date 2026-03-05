@@ -43,3 +43,14 @@ export function sanitizeDateInput(raw: string): string {
   if (v.length > 2) return `${v.substring(0, 2)}/${v.substring(2)}`;
   return v;
 }
+
+/**
+ * Genera un array di anni consecutivi, utile per i selettori anno nei calendari.
+ *
+ * @param start - Anno di inizio dell'intervallo
+ * @param end   - Anno di fine dell'intervallo (incluso)
+ * @returns Array di numeri da start a end
+ */
+export function creaIntervalloAnni(start: number, end: number): number[] {
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+}
