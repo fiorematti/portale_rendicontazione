@@ -186,6 +186,8 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.cleanupAttachments();
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
+    this.dettagliSpesa = [];
+    this.tabAttiva = 0;
     this.ensureAutomobiliLoaded();
     this.apriModalConModalita('visualizza');
 
@@ -200,6 +202,7 @@ export class NoteSpese implements OnInit, OnDestroy {
             this.caricaDatiNellaModal(spesa);
           }
           this.tabAttiva = 0;
+          this.loadOrdiniPerDettagli();
         },
         error: (err) => {
           console.error('[NoteSpese] getDettagliBySpesa error:', err);
@@ -215,6 +218,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       } else {
         this.caricaDatiNellaModal(spesa);
       }
+      this.loadOrdiniPerDettagli();
     }
   }
 
@@ -254,7 +258,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       trasporti,
       aereo,
       varie,
-      auto: idAutoVal != null ? String(idAutoVal) : 'Modello auto',
+      auto: idAutoVal != null && idAutoVal > 0 ? String(idAutoVal) : 'Modello auto',
       km,
       parking,
       telepass,
@@ -271,6 +275,8 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.cleanupAttachments();
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
+    this.dettagliSpesa = [];
+    this.tabAttiva = 0;
     this.ensureAutomobiliLoaded();
     this.apriModalConModalita('modifica');
 
@@ -285,6 +291,7 @@ export class NoteSpese implements OnInit, OnDestroy {
             this.caricaDatiNellaModal(spesa);
           }
           this.tabAttiva = 0;
+          this.loadOrdiniPerDettagli();
         },
         error: (err) => {
           console.error('[NoteSpese] getDettagliBySpesa error:', err);
@@ -300,6 +307,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       } else {
         this.caricaDatiNellaModal(spesa);
       }
+      this.loadOrdiniPerDettagli();
     }
   }
 
@@ -548,9 +556,39 @@ export class NoteSpese implements OnInit, OnDestroy {
   eliminaDettaglioCorrente(): void {
     const dett = this.dettagliSpesa[this.tabAttiva];
     this.cleanupAttachmentForDettaglio(dett);
-    this.dettagliSpesa.splice(this.tabAttiva, 1);
-    if (this.dettagliSpesa.length === 0) this.chiudiModal();
-    else this.tabAttiva = 0;
+
+    if (this.rigaSelezionata?.id != null) {
+      const spesaId = this.rigaSelezionata.id;
+      if (!confirm('Sei sicuro di voler eliminare questa nota spesa?')) return;
+      this.deletingSpesaId = spesaId;
+      this.noteSpeseService.deleteSpesa(spesaId).subscribe({
+        next: (res) => {
+          const esitoStr = typeof res?.esito === 'string' ? res.esito.toLowerCase() : '';
+          const esitoOk = !res?.esito
+            || esitoStr.includes('riuscita')
+            || esitoStr.includes('completata');
+          if (esitoOk) {
+            const indexReale = this.listaSpese.indexOf(this.rigaSelezionata!);
+            if (indexReale >= 0) this.listaSpese.splice(indexReale, 1);
+            this.rebuildFiltroOrdiniOptions();
+            this.chiudiModal();
+          } else {
+            this.salvaErrore = res?.motivazione || 'Eliminazione non riuscita.';
+          }
+        },
+        error: (err) => {
+          console.error('DeleteSpesa error:', err);
+          this.salvaErrore = 'Errore durante l\'eliminazione della spesa.';
+        },
+        complete: () => {
+          this.deletingSpesaId = null;
+        }
+      });
+    } else {
+      this.dettagliSpesa.splice(this.tabAttiva, 1);
+      if (this.dettagliSpesa.length === 0) this.chiudiModal();
+      else this.tabAttiva = 0;
+    }
   }
 
 
@@ -558,6 +596,28 @@ export class NoteSpese implements OnInit, OnDestroy {
   ordiniDisponibili(dett: DettaglioSpesa): { codiceOrdine: string; idCliente: number }[] {
     if (!dett || dett.idCliente == null) return [];
     return this.ordiniCache[dett.idCliente] || [];
+  }
+
+
+  /** Restituisce il nome dell'auto (marca modello - targa) per un dettaglio */
+  nomeAutoPerDettaglio(dett: DettaglioSpesa): string {
+    if (!dett?.auto || dett.auto === 'Modello auto') return '';
+    const auto = this.automobili.find(a => a.idauto.toString() === dett.auto);
+    return auto ? `${auto.marca} ${auto.modello} - ${auto.targa}` : '';
+  }
+
+
+  /** Carica gli ordini per tutti i clienti presenti nei dettagli correnti */
+  private loadOrdiniPerDettagli(): void {
+    const clienteIds = new Set<number>();
+    this.dettagliSpesa.forEach(d => {
+      if (d.idCliente != null) clienteIds.add(d.idCliente);
+    });
+    clienteIds.forEach(id => {
+      if (!this.ordiniCache[id]) {
+        this.loadOrdiniByCliente(id);
+      }
+    });
   }
 
 

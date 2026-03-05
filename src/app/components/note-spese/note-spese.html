@@ -146,6 +146,10 @@
                 <div class="small fw-bold text-muted">Codice ordine</div>
                 <div class="fw-semibold">{{ dettagliSpesa[tabAttiva].codiceOrdine || '—' }}</div>
               </div>
+              <div aria-label="Modello auto" class="text-only-info ms-3">
+                <div class="small fw-bold text-muted">Modello auto</div>
+                <div class="fw-semibold">{{ nomeAutoPerDettaglio(dettagliSpesa[tabAttiva]) || '—' }}</div>
+              </div>
             </ng-template>
           </div>
         </div>
