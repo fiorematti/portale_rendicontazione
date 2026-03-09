@@ -74,9 +74,10 @@
               <td>{{ nota.totaleNonValidato }}</td>
               <td>{{ nota.totaleAnnullato }}</td>
               <td class="text-center">
-                <input type="checkbox" class="form-check-input border-secondary" [(ngModel)]="nota.pagato" disabled>
+                <input type="checkbox" class="form-check-input border-secondary" [checked]="nota.pagato" (change)="pagaNota(nota)" [disabled]="nota.pagato || payingId === nota.idSpesa">
               </td>
               <td class="text-center">
+                <button class="btn btn-link text-success p-1" (click)="openValidazione(nota)"><i class="bi bi-check-lg"></i></button>
                 <button (click)="openDettaglio(nota)" class="btn btn-link text-dark p-1"><i class="bi bi-eye"></i></button>
                 <button (click)="eliminaNota(nota)" class="btn btn-link text-dark p-1"><i class="bi bi-trash3"></i></button>
                 <button (click)="modificaNota(nota)" class="btn btn-link text-dark p-1"><i class="bi bi-pencil"></i></button>
@@ -257,3 +258,21 @@
     </div>
   </div>
 }
+
+<!-- Popup validazione spesa -->
+<div class="modal-overlay" *ngIf="showValidazionePopup" (click)="annullaValidazione()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <h2 class="modal-title-custom mb-3">Conferma validazione</h2>
+    <p class="mb-4">Confermi la validazione della spesa ID <strong>{{ notaDaValidare?.idSpesa || notaDaValidare?.id }}</strong> per {{ notaDaValidare?.utente || 'utente' }}?</p>
+    @if (validazioneError) {
+      <div class="alert alert-danger py-2 px-3 small" role="alert">{{ validazioneError }}</div>
+    }
+    <div class="d-flex justify-content-center gap-3 mt-2">
+      <button class="btn btn-modal-annulla" (click)="annullaValidazione()">Annulla</button>
+      <button class="btn btn-modal-conferma" (click)="confermaValidazione()" [disabled]="isValidazioneLoading">
+        <span *ngIf="isValidazioneLoading" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+        Conferma
+      </button>
+    </div>
+  </div>
+</div>

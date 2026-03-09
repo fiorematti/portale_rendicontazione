@@ -1,13 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpClientModule, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { generateCalendarDays, navigateMonth, formatSelectedDay, isDaySelected, MONTH_NAMES_IT } from '../../shared/utils/calendar.utils';
 import { creaIntervalloAnni, sanitizeDateInput } from '../../shared/utils/date.utils';
 import { setBodyScrollLock } from '../../shared/utils/dom.utils';
 
 interface Nota {
   id: string;
+  idSpesa?: number;
   data: string;
   totaleAnnullato: string;
   totaleComplessivo: string;
@@ -107,6 +108,11 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   utentiLoadError: string | null = null;
   isExporting = false;
   exportError: string | null = null;
+  payingId: number | null = null;
+  showValidazionePopup = false;
+  notaDaValidare: Nota | null = null;
+  isValidazioneLoading = false;
+  validazioneError: string | null = null;
 
   elencoNote: Nota[] = [];
 
@@ -218,6 +224,80 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  pagaNota(nota: Nota): void {
+    if (!nota.idSpesa && Number.isNaN(Number(nota.id))) {
+      return;
+    }
+    const spesaId = nota.idSpesa ?? Number(nota.id);
+    this.payingId = spesaId;
+     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+     // use http.put with explicit body; many backends expect a JSON array
+     this.http.put('/api/SpesaNota/admin/pagaSpese', [spesaId], { headers, observe: 'response' }).subscribe({
+       next: (res: HttpResponse<any>) => {
+         console.log('[RegistroNote] pagaSpese response', res.status, res.body);
+         // if backend reports success, reload list to reflect persisted state
+         if (res.status >= 200 && res.status < 300) {
+           this.loadRegistroNote(this.filtroAnno, this.filtroMese + 1);
+         } else {
+           this.tableError = `Server response ${res.status}`;
+         }
+       },
+       error: (err) => {
+         console.error('[RegistroNote] pagaSpese error', err);
+         this.tableError = 'Errore durante l\'operazione di pagamento.';
+       },
+       complete: () => {
+         this.payingId = null;
+       }
+     });
+  }
+
+    openValidazione(nota: Nota): void {
+      this.notaDaValidare = nota;
+      this.showValidazionePopup = true;
+      setBodyScrollLock(true);
+    }
+
+    annullaValidazione(): void {
+      this.showValidazionePopup = false;
+      this.notaDaValidare = null;
+      setBodyScrollLock(false);
+    }
+
+    confermaValidazione(): void {
+      if (!this.notaDaValidare) return;
+      const spesaId = this.notaDaValidare.idSpesa ?? Number(this.notaDaValidare.id);
+      if (!spesaId) return;
+
+      this.validazioneError = null;
+      this.isValidazioneLoading = true;
+
+      const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+      this.http.put('/api/Dettaglio/admin/validaDettaglio', [spesaId], { headers, observe: 'response' }).subscribe({
+        next: (res: HttpResponse<any>) => {
+          const esito: string = (res.body?.esito || '').toLowerCase();
+          console.log('[RegistroNote] validaDettaglio response', res.status, res.body);
+
+          if (res.status >= 200 && res.status < 300 && !esito.includes('parzialmente')) {
+            this.showValidazionePopup = false;
+            this.notaDaValidare = null;
+            setBodyScrollLock(false);
+            // reload elenco to reflect new stato approvazione/pagato
+            this.loadRegistroNote(this.filtroAnno, this.filtroMese + 1);
+          } else {
+            this.validazioneError = res.body?.esito || 'Operazione parzialmente riuscita.';
+          }
+        },
+        error: (err) => {
+          console.error('[RegistroNote] validaDettaglio error', err);
+          this.validazioneError = 'Errore durante la validazione. Riprova.';
+        },
+        complete: () => {
+          this.isValidazioneLoading = false;
+        }
+      });
+    }
 
   loadRegistroNote(year: number, month: number): void {
     this.isTableLoading = true;
@@ -411,6 +491,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
 
     return {
       id: String(api.idSpesa ?? idx + 1),
+      idSpesa: api.idSpesa,
       data: dataVal,
       totaleAnnullato: this.formatAmount(totaleAnn),
       totaleComplessivo: this.formatAmount(totaleComp),
