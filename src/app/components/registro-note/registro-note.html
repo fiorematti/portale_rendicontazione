@@ -231,10 +231,10 @@
         </div>
         <div class="col-12 col-md-4">
           <label class="fw-bold small mb-1">Utente</label>
-          <select class="form-select custom-select" [(ngModel)]="exportUtente" (click)="onUtentiDropdownOpen()" (focus)="onUtentiDropdownOpen()">
+          <select class="form-select custom-select" [(ngModel)]="exportUtenteId" (click)="onUtentiDropdownOpen()" (focus)="onUtentiDropdownOpen()">
             <option [ngValue]="'Tutti'">Tutti</option>
-            <option *ngIf="isUtentiLoading" [ngValue]="exportUtente">Caricamento utenti...</option>
-            <option *ngFor="let u of utentiExportOptions.slice(1)" [ngValue]="u">{{ u }}</option>
+            <option *ngIf="isUtentiLoading" [ngValue]="exportUtenteId">Caricamento utenti...</option>
+            <option *ngFor="let u of utentiExportOptions" [ngValue]="u.id">{{ u.label }}</option>
           </select>
           @if (utentiLoadError) {
             <small class="text-danger d-block mt-1">{{ utentiLoadError }}</small>
@@ -242,9 +242,18 @@
         </div>
       </div>
 
+      @if (exportError) {
+        <div class="alert alert-danger border-0 py-2 px-3 small mb-3" role="alert">
+          {{ exportError }}
+        </div>
+      }
+
       <div class="d-flex justify-content-center gap-3">
-        <button class="btn btn-dark px-4" (click)="toggleExportPopup()">Annulla</button>
-        <button class="btn btn-warning text-white px-4" (click)="esportaDati()">Esporta</button>
+        <button class="btn btn-dark px-4" (click)="toggleExportPopup()" [disabled]="isExporting">Annulla</button>
+        <button class="btn btn-warning text-white px-4" (click)="esportaDati()" [disabled]="isExporting">
+          <span *ngIf="isExporting" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          Esporta
+        </button>
       </div>
     </div>
   </div>

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient, HttpClientModule, HttpResponse } from '@angular/common/http';
 import { generateCalendarDays, navigateMonth, formatSelectedDay, isDaySelected, MONTH_NAMES_IT } from '../../shared/utils/calendar.utils';
 import { creaIntervalloAnni, sanitizeDateInput } from '../../shared/utils/date.utils';
 import { setBodyScrollLock } from '../../shared/utils/dom.utils';
@@ -27,6 +27,11 @@ interface UtenteApi {
   stato: boolean;
 }
 
+interface UtenteOption {
+  id: number;
+  label: string;
+}
+
 @Component({
   selector: 'app-registro-note',
   standalone: true,
@@ -47,7 +52,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   showExportPopup = false;
   exportMese = new Date().getMonth();
   exportAnno = new Date().getFullYear();
-  exportUtente: string = 'Tutti';
+  exportUtenteId: number | 'Tutti' = 'Tutti';
   readonly listaMesi = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   listaAnni: number[] = [];
 
@@ -61,10 +66,12 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
 
   nuovaNota: Nota = this.buildNota();
 
-  utentiExportOptions: string[] = ['Tutti'];
+  utentiExportOptions: UtenteOption[] = [];
   isUtentiLoading = false;
   utentiLoaded = false;
   utentiLoadError: string | null = null;
+  isExporting = false;
+  exportError: string | null = null;
 
   elencoNote: Nota[] = [
     { id: '1', data: '14/01/2026', totaleAnnullato: '25,00€', totaleComplessivo: '215,00€', totaleNonValidato: '190,00€', pagato: true, utente: 'Mario Rossi' },
@@ -136,17 +143,44 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
 
   toggleExportPopup(): void {
     this.showExportPopup = !this.showExportPopup;
+    if (this.showExportPopup) {
+      this.exportError = null;
+      this.isExporting = false;
+    }
     setBodyScrollLock(this.showExportPopup);
   }
 
   esportaDati(): void {
-    console.log('[RegistroNote] export richiesta', {
-      meseIndex: this.exportMese,
+    if (this.isExporting) return;
+    this.exportError = null;
+    this.isExporting = true;
+
+    const params: Record<string, any> = {
+      mese: this.exportMese + 1,
       anno: this.exportAnno,
-      utente: this.exportUtente,
+    };
+    if (this.exportUtenteId !== 'Tutti') {
+      params['userId'] = this.exportUtenteId;
+    }
+
+    this.http.get('/api/SpesaNota/pdf', {
+      params,
+      observe: 'response',
+      responseType: 'blob'
+    }).subscribe({
+      next: (res: HttpResponse<Blob>) => {
+        this.downloadBlob(res, `NotaSpese_${params['anno']}_${String(params['mese']).padStart(2, '0')}.pdf`);
+        this.showExportPopup = false;
+        setBodyScrollLock(false);
+      },
+      error: (err) => {
+        console.error('[RegistroNote] export pdf error', err);
+        this.exportError = 'Errore durante l\'esportazione. Riprova.';
+      },
+      complete: () => {
+        this.isExporting = false;
+      }
     });
-    this.showExportPopup = false;
-    setBodyScrollLock(false);
   }
 
   onUtentiDropdownOpen(): void {
@@ -156,11 +190,14 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
 
     this.http.get<UtenteApi[]>('/api/Utente/admin/getAllUtenti').subscribe({
       next: (res) => {
-        const names = res
-          .map(u => `${u.nome ?? ''} ${u.cognome ?? ''}`.trim())
-          .filter(Boolean);
-        const uniqueNames = Array.from(new Set(names)).sort();
-        this.utentiExportOptions = ['Tutti', ...uniqueNames];
+        const map = new Map<number, string>();
+        res.forEach(u => {
+          const label = `${u.nome ?? ''} ${u.cognome ?? ''}`.trim() || u.email || `Utente ${u.idUtente}`;
+          map.set(u.idUtente, label);
+        });
+        this.utentiExportOptions = Array.from(map.entries())
+          .map(([id, label]) => ({ id, label }))
+          .sort((a, b) => a.label.localeCompare(b.label));
         this.utentiLoaded = true;
       },
       error: (err) => {
@@ -271,5 +308,26 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   private nextId(): string {
     const maxId = this.elencoNote.reduce((acc, n) => Math.max(acc, Number(n.id) || 0), 0);
     return String(maxId + 1);
+  }
+
+  private downloadBlob(res: HttpResponse<Blob>, fallbackName: string): void {
+    const blob = res.body;
+    if (!blob) return;
+    let fileName = fallbackName;
+    const disposition = res.headers.get('content-disposition');
+    if (disposition) {
+      const match = disposition.match(/filename\*?=UTF-8''([^;]+)|filename="?([^;"]+)"?/i);
+      const extracted = match?.[1] || match?.[2];
+      if (extracted) {
+        fileName = decodeURIComponent(extracted);
+      }
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }
