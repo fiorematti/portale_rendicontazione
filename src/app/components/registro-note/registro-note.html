@@ -17,30 +17,23 @@
         </div>
       </div>
 
-      <div class="col-md-2 position-relative">
-        <label class="label-filter">In data</label>
-        <div class="search-wrapper">
-          <input type="text" [(ngModel)]="filtroData" (input)="formattaDataFiltro($event)" placeholder="gg/mm/aaaa" (click)="calendarContext='filter'; mostraCalendario = !mostraCalendario">
-          <i class="bi bi-calendar3" (click)="calendarContext='filter'; mostraCalendario = !mostraCalendario" style="cursor: pointer;"></i>
+      <div class="col-md-3">
+        <label class="label-filter">Mese</label>
+        <div class="custom-dropdown" (click)="toggleMeseDropdown()">
+          <div class="custom-dropdown-toggle">{{ listaMesi[filtroMese] }}</div>
+          <ul class="custom-dropdown-menu" [class.show]="isMeseDropdownOpen">
+            <li *ngFor="let m of listaMesi; let i = index" (click)="selezionaMese(i, $event)">{{ m }}</li>
+          </ul>
+        </div>
+      </div>
 
-          @if (mostraCalendario) {
-            <div class="calendar-popup shadow border-0">
-              <div class="calendar-header d-flex justify-content-between align-items-center">
-                <i class="bi bi-chevron-left nav-arrow" (click)="prevMonth($event)"></i>
-                <span class="month-display">{{ nomeMeseAnno }}</span>
-                <i class="bi bi-chevron-right nav-arrow" (click)="nextMonth($event)"></i>
-              </div>
-              <div class="calendar-grid">
-                <div class="day-name">L</div><div class="day-name">M</div><div class="day-name">M</div>
-                <div class="day-name">G</div><div class="day-name">V</div><div class="day-name">S</div><div class="day-name">D</div>
-                @for (day of calendarDays; track $index) {
-                    <div class="calendar-day" [class.empty]="!day" [class.selected]="isSelected(day, 'filter')" (click)="selectDate(day, 'filter')">
-                    {{ day }}
-                  </div>
-                }
-              </div>
-            </div>
-          }
+      <div class="col-md-2">
+        <label class="label-filter">Anno</label>
+        <div class="custom-dropdown" (click)="toggleAnnoDropdown()">
+          <div class="custom-dropdown-toggle">{{ filtroAnno }}</div>
+          <ul class="custom-dropdown-menu" [class.show]="isAnnoDropdownOpen">
+            <li *ngFor="let a of listaAnni" (click)="selezionaAnno(a, $event)">{{ a }}</li>
+          </ul>
         </div>
       </div>
 
@@ -60,10 +53,13 @@
         <thead>
           <tr>
             <th class="ps-4">Data</th>
+            <th>Codice ordine</th>
+            <th>Utente</th>
             <th>Totale complessivo</th>
+            <th>Totale validato</th>
             <th>Totale non validato</th>
             <th>Totale annullato</th>
-            <th>Pagato</th>
+            <th class="text-center">Pagato</th>
             <th class="text-center">Azioni</th>
           </tr>
         </thead>
@@ -71,11 +67,14 @@
           @for (nota of noteFiltrate; track $index) {
             <tr>
               <td class="ps-4">{{ nota.data }}</td>
+              <td>{{ nota.codiceOrdine || '—' }}</td>
+              <td>{{ nota.utente || '—' }}</td>
               <td>{{ nota.totaleComplessivo }}</td>
+              <td>{{ nota.totaleValidato || '—' }}</td>
               <td>{{ nota.totaleNonValidato }}</td>
               <td>{{ nota.totaleAnnullato }}</td>
               <td class="text-center">
-                <input type="checkbox" class="form-check-input border-secondary" [(ngModel)]="nota.pagato">
+                <input type="checkbox" class="form-check-input border-secondary" [(ngModel)]="nota.pagato" disabled>
               </td>
               <td class="text-center">
                 <button (click)="openDettaglio(nota)" class="btn btn-link text-dark p-1"><i class="bi bi-eye"></i></button>

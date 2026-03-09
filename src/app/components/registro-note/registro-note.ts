@@ -12,8 +12,11 @@ interface Nota {
   totaleAnnullato: string;
   totaleComplessivo: string;
   totaleNonValidato: string;
+  totaleValidato?: string;
   pagato: boolean;
   utente?: string;
+  codiceOrdine?: string;
+  idUtente?: number;
 }
 
 type CalendarContext = 'filter' | 'form';
@@ -30,6 +33,33 @@ interface UtenteApi {
 interface UtenteOption {
   id: number;
   label: string;
+}
+
+interface SpesaNotaApi {
+  idSpesa?: number;
+  idUtente?: number;
+  nomeUtente?: string;
+  idCliente?: number;
+  codiceOrdine?: string;
+  dataNotificazione?: string;
+  data?: string;
+  dataNota?: string;
+  dataSpesa?: string;
+  totaleComplessivo?: number | string;
+  totaleValidato?: number | string;
+  totale?: string | number;
+  totaleRichiesto?: string | number;
+  totaleNonValidato?: number | string;
+  totaleNonVal?: string | number;
+  totaleAnnullato?: number | string;
+  annullato?: number | string;
+  statoPagamento?: boolean;
+  pagato?: boolean;
+  isPagato?: boolean;
+  paid?: boolean;
+  nome?: string;
+  cognome?: string;
+  utente?: string;
 }
 
 @Component({
@@ -56,6 +86,11 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   readonly listaMesi = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   listaAnni: number[] = [];
 
+  filtroMese = new Date().getMonth();
+  filtroAnno = new Date().getFullYear();
+  isMeseDropdownOpen = false;
+  isAnnoDropdownOpen = false;
+
   isModifica: boolean = false;
   indiceInModifica: number = -1;
 
@@ -73,16 +108,17 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   isExporting = false;
   exportError: string | null = null;
 
-  elencoNote: Nota[] = [
-    { id: '1', data: '14/01/2026', totaleAnnullato: '25,00€', totaleComplessivo: '215,00€', totaleNonValidato: '190,00€', pagato: true, utente: 'Mario Rossi' },
-    { id: '2', data: '15/01/2026', totaleAnnullato: '0,00€', totaleComplessivo: '120,00€', totaleNonValidato: '120,00€', pagato: false, utente: 'Lucia Bianchi' },
-  ];
+  elencoNote: Nota[] = [];
+
+  isTableLoading = false;
+  tableError: string | null = null;
 
   constructor(private readonly http: HttpClient) {}
 
   ngOnInit(): void {
     this.listaAnni = creaIntervalloAnni(2020, new Date().getFullYear() + 5);
     this.generateCalendar();
+    this.loadRegistroNote(this.filtroAnno, this.filtroMese + 1);
   }
 
   ngOnDestroy(): void {
@@ -183,6 +219,54 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadRegistroNote(year: number, month: number): void {
+    this.isTableLoading = true;
+    this.tableError = null;
+
+    this.http.get<SpesaNotaApi[]>('/api/SpesaNota/Admin/GetSpeseByYearAndMonth', {
+      params: { year, month }
+    }).subscribe({
+      next: (res) => {
+        this.elencoNote = (res || []).map((item, idx) => this.mapApiToNota(item, idx));
+      },
+      error: (err) => {
+        console.error('[RegistroNote] loadRegistroNote error', err);
+        this.tableError = 'Errore nel caricamento delle note.';
+      },
+      complete: () => {
+        this.isTableLoading = false;
+      }
+    });
+  }
+
+  onFiltroPeriodoChange(): void {
+    this.loadRegistroNote(this.filtroAnno, this.filtroMese + 1);
+  }
+
+  toggleMeseDropdown(): void {
+    this.isMeseDropdownOpen = !this.isMeseDropdownOpen;
+    if (this.isMeseDropdownOpen) this.isAnnoDropdownOpen = false;
+  }
+
+  toggleAnnoDropdown(): void {
+    this.isAnnoDropdownOpen = !this.isAnnoDropdownOpen;
+    if (this.isAnnoDropdownOpen) this.isMeseDropdownOpen = false;
+  }
+
+  selezionaMese(idx: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.filtroMese = idx;
+    this.isMeseDropdownOpen = false;
+    this.onFiltroPeriodoChange();
+  }
+
+  selezionaAnno(anno: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.filtroAnno = anno;
+    this.isAnnoDropdownOpen = false;
+    this.onFiltroPeriodoChange();
+  }
+
   onUtentiDropdownOpen(): void {
     if (this.utentiLoaded || this.isUtentiLoading) return;
     this.isUtentiLoading = true;
@@ -274,8 +358,14 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
 
   get noteFiltrate() {
     return this.elencoNote.filter(n =>
-      (n.totaleAnnullato + n.totaleComplessivo).toLowerCase().includes(this.filtroTesto.toLowerCase()) &&
-      n.data.includes(this.filtroData)
+      [
+        n.totaleAnnullato,
+        n.totaleComplessivo,
+        n.totaleNonValidato,
+        n.totaleValidato ?? '',
+        n.codiceOrdine ?? '',
+        n.utente ?? ''
+      ].join(' ').toLowerCase().includes(this.filtroTesto.toLowerCase())
     );
   }
 
@@ -308,6 +398,45 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   private nextId(): string {
     const maxId = this.elencoNote.reduce((acc, n) => Math.max(acc, Number(n.id) || 0), 0);
     return String(maxId + 1);
+  }
+
+  private mapApiToNota(api: SpesaNotaApi, idx: number): Nota {
+    const isoDate = api.dataNotificazione || api.data || api.dataNota || api.dataSpesa || '';
+    const dataVal = this.formatIsoDate(isoDate);
+    const totaleComp = api.totaleComplessivo ?? api.totale ?? api.totaleRichiesto ?? '';
+    const totaleNonVal = api.totaleNonValidato ?? api.totaleNonVal ?? 0;
+    const totaleAnn = api.totaleAnnullato ?? api.annullato ?? 0;
+    const pagatoVal = api.statoPagamento ?? api.pagato ?? api.isPagato ?? api.paid ?? false;
+    const labelUtente = api.nomeUtente || api.utente || `${api.nome ?? ''} ${api.cognome ?? ''}`.trim();
+
+    return {
+      id: String(api.idSpesa ?? idx + 1),
+      data: dataVal,
+      totaleAnnullato: this.formatAmount(totaleAnn),
+      totaleComplessivo: this.formatAmount(totaleComp),
+      totaleNonValidato: this.formatAmount(totaleNonVal),
+      totaleValidato: this.formatAmount(api.totaleValidato ?? 0),
+      pagato: Boolean(pagatoVal),
+      utente: labelUtente || undefined,
+      codiceOrdine: api.codiceOrdine,
+      idUtente: api.idUtente,
+    };
+  }
+
+  private formatIsoDate(isoDate: string): string {
+    if (!isoDate) return '';
+    const parts = isoDate.split('T')[0]?.split('-');
+    if (parts.length === 3) {
+      const [y, m, d] = parts;
+      return `${d}/${m}/${y}`;
+    }
+    return isoDate;
+  }
+
+  private formatAmount(value: number | string | undefined): string {
+    const num = typeof value === 'string' ? Number(value) : value;
+    if (num === null || num === undefined || Number.isNaN(num)) return String(value ?? '');
+    return new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num as number) + ' €';
   }
 
   private downloadBlob(res: HttpResponse<Blob>, fallbackName: string): void {
