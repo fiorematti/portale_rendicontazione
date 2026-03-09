@@ -137,6 +137,13 @@ export class NoteSpese implements OnInit, OnDestroy {
   annoFiltro = new Date().getFullYear();
 
 
+  /* --- Stato esportazione --- */
+  showExportPopup = false;
+  exportMese = this.meseFiltro;
+  exportAnno = this.annoFiltro;
+  exportUtente: string = 'Tutti';
+
+
   mostraCalendarioPopup = false;
   dataVisualizzataPopup: Date = new Date();
   giorniDelMesePopup: number[] = [];
@@ -153,6 +160,15 @@ export class NoteSpese implements OnInit, OnDestroy {
   get isAggiungi(): boolean { return this.modalMode === 'aggiungi'; }
   get isVisualizza(): boolean { return this.modalMode === 'visualizza'; }
   get isModifica(): boolean { return this.modalMode === 'modifica'; }
+
+  get utentiExport(): string[] {
+    const set = new Set<string>();
+    this.listaSpese.forEach(s => {
+      const val = (s.richiesto || '').trim();
+      if (val) set.add(val);
+    });
+    return Array.from(set).sort();
+  }
 
 
   constructor(
@@ -177,6 +193,23 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   ngOnDestroy(): void {
+    setBodyScrollLock(false);
+  }
+
+
+  toggleExportPopup(): void {
+    this.showExportPopup = !this.showExportPopup;
+    setBodyScrollLock(this.showExportPopup);
+  }
+
+
+  confermaExport(): void {
+    console.log('[NoteSpese] export richiesta', {
+      meseIndex: this.exportMese,
+      anno: this.exportAnno,
+      utente: this.exportUtente,
+    });
+    this.showExportPopup = false;
     setBodyScrollLock(false);
   }
 
