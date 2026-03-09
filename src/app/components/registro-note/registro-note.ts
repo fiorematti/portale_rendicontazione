@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { generateCalendarDays, navigateMonth, formatSelectedDay, isDaySelected, MONTH_NAMES_IT } from '../../shared/utils/calendar.utils';
-import { sanitizeDateInput } from '../../shared/utils/date.utils';
+import { creaIntervalloAnni, sanitizeDateInput } from '../../shared/utils/date.utils';
+import { setBodyScrollLock } from '../../shared/utils/dom.utils';
 
 interface Nota {
   id: string;
@@ -11,18 +13,28 @@ interface Nota {
   totaleComplessivo: string;
   totaleNonValidato: string;
   pagato: boolean;
+  utente?: string;
 }
 
 type CalendarContext = 'filter' | 'form';
 
+interface UtenteApi {
+  idUtente: number;
+  nome: string;
+  cognome: string;
+  email: string | null;
+  ruolo: string;
+  stato: boolean;
+}
+
 @Component({
   selector: 'app-registro-note',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './registro-note.html',
   styleUrl: './registro-note.css',
 })
-export class RegistroNoteComponent implements OnInit {
+export class RegistroNoteComponent implements OnInit, OnDestroy {
   filtroTesto: string = '';
   filtroData: string = '';
   mostraModal: boolean = false;
@@ -33,9 +45,11 @@ export class RegistroNoteComponent implements OnInit {
   notaDettaglio: Nota | null = null;
 
   showExportPopup = false;
-  exportMese: string = 'AUG';
-  exportUtente: string = '';
-  formatoSelezionato: 'PDF' | 'EXCEL' | null = null;
+  exportMese = new Date().getMonth();
+  exportAnno = new Date().getFullYear();
+  exportUtente: string = 'Tutti';
+  readonly listaMesi = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  listaAnni: number[] = [];
 
   isModifica: boolean = false;
   indiceInModifica: number = -1;
@@ -47,13 +61,25 @@ export class RegistroNoteComponent implements OnInit {
 
   nuovaNota: Nota = this.buildNota();
 
+  utentiExportOptions: string[] = ['Tutti'];
+  isUtentiLoading = false;
+  utentiLoaded = false;
+  utentiLoadError: string | null = null;
+
   elencoNote: Nota[] = [
-    { id: '1', data: '14/01/2026', totaleAnnullato: '25,00€', totaleComplessivo: '215,00€', totaleNonValidato: '190,00€', pagato: true },
-    { id: '2', data: '15/01/2026', totaleAnnullato: '0,00€', totaleComplessivo: '120,00€', totaleNonValidato: '120,00€', pagato: false },
+    { id: '1', data: '14/01/2026', totaleAnnullato: '25,00€', totaleComplessivo: '215,00€', totaleNonValidato: '190,00€', pagato: true, utente: 'Mario Rossi' },
+    { id: '2', data: '15/01/2026', totaleAnnullato: '0,00€', totaleComplessivo: '120,00€', totaleNonValidato: '120,00€', pagato: false, utente: 'Lucia Bianchi' },
   ];
 
+  constructor(private readonly http: HttpClient) {}
+
   ngOnInit(): void {
+    this.listaAnni = creaIntervalloAnni(2020, new Date().getFullYear() + 5);
     this.generateCalendar();
+  }
+
+  ngOnDestroy(): void {
+    setBodyScrollLock(false);
   }
 
   generateCalendar(): void {
@@ -110,20 +136,41 @@ export class RegistroNoteComponent implements OnInit {
 
   toggleExportPopup(): void {
     this.showExportPopup = !this.showExportPopup;
-    if (!this.showExportPopup) this.formatoSelezionato = null;
-  }
-
-  selezionaFormato(f: 'PDF' | 'EXCEL'): void {
-    this.formatoSelezionato = f;
+    setBodyScrollLock(this.showExportPopup);
   }
 
   esportaDati(): void {
-    if (!this.formatoSelezionato) {
-      alert("Seleziona PDF o EXCEL");
-      return;
-    }
-    alert("Esportazione avviata!");
+    console.log('[RegistroNote] export richiesta', {
+      meseIndex: this.exportMese,
+      anno: this.exportAnno,
+      utente: this.exportUtente,
+    });
     this.showExportPopup = false;
+    setBodyScrollLock(false);
+  }
+
+  onUtentiDropdownOpen(): void {
+    if (this.utentiLoaded || this.isUtentiLoading) return;
+    this.isUtentiLoading = true;
+    this.utentiLoadError = null;
+
+    this.http.get<UtenteApi[]>('/api/Utente/admin/getAllUtenti').subscribe({
+      next: (res) => {
+        const names = res
+          .map(u => `${u.nome ?? ''} ${u.cognome ?? ''}`.trim())
+          .filter(Boolean);
+        const uniqueNames = Array.from(new Set(names)).sort();
+        this.utentiExportOptions = ['Tutti', ...uniqueNames];
+        this.utentiLoaded = true;
+      },
+      error: (err) => {
+        console.error('[RegistroNote] getAllUtenti error', err);
+        this.utentiLoadError = 'Non è stato possibile caricare gli utenti.';
+      },
+      complete: () => {
+        this.isUtentiLoading = false;
+      }
+    });
   }
 
   modificaNota(nota: Nota): void {
@@ -186,6 +233,7 @@ export class RegistroNoteComponent implements OnInit {
   resetForm(): void {
     this.nuovaNota = this.buildNota();
   }
+
 
   get noteFiltrate() {
     return this.elencoNote.filter(n =>

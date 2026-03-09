@@ -9,6 +9,15 @@
   border: 1px solid #e0e0e0;
 }
 
+.custom-select {
+  border-radius: 10px;
+  border: 1px solid #ced4da;
+  background-color: #f8f9fa;
+  height: 38px;
+  padding: 0.375rem 0.75rem;
+  min-width: 160px;
+}
+
 .col-grow { flex: 1; }
 
 .label-filter {
