@@ -63,11 +63,49 @@ interface SpesaNotaApi {
   utente?: string;
 }
 
+interface DettaglioSpesaApi {
+  idDettaglio?: number;
+  dataDettaglio?: string;
+  vitto?: number;
+  hotel?: number;
+  trasportiLocali?: number;
+  trasporti?: number;
+  aereo?: number;
+  spesaVaria?: number;
+  varie?: number;
+  auto?: string;
+  km?: number;
+  telepass?: number;
+  parking?: number;
+  totale?: number;
+  costoKilometri?: number;
+  statoApprovazione?: string;
+  allegati?: any[];
+}
+
+interface DettaglioSpesa {
+  idDettaglio: number;
+  dataDettaglio: string;
+  vitto: number;
+  hotel: number;
+  trasporti: number;
+  aereo: number;
+  spesaVaria: number;
+  auto: string;
+  km: number;
+  telepass: number;
+  parking: number;
+  costoKilometri: number;
+  totale: number;
+  statoApprovazione?: string;
+  allegati: { fileName?: string; url?: string }[];
+}
+
 @Component({
   selector: 'app-registro-note',
   standalone: true,
   imports: [CommonModule, FormsModule, HttpClientModule],
-  templateUrl: './registro-note.html',
+  templateUrl: 'registro-note.html',
   styleUrl: './registro-note.css',
 })
 export class RegistroNoteComponent implements OnInit, OnDestroy {
@@ -113,6 +151,10 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   notaDaValidare: Nota | null = null;
   isValidazioneLoading = false;
   validazioneError: string | null = null;
+  dettagliSpesa: DettaglioSpesa[] = [];
+  dettaglioTabAttiva = 0;
+  isDettaglioLoading = false;
+  dettaglioError: string | null = null;
 
   elencoNote: Nota[] = [];
 
@@ -299,6 +341,36 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
       });
     }
 
+  loadDettagliSpesa(spesaId: number): void {
+    this.isDettaglioLoading = true;
+    this.dettaglioError = null;
+
+    this.http.get<DettaglioSpesaApi[]>('/api/Dettaglio/getDettagliBySpesa', {
+      params: { idSpesa: spesaId }
+    }).subscribe({
+      next: (res) => {
+        this.dettagliSpesa = (res || []).map((item, idx) => this.mapDettaglio(item, idx));
+        this.dettagliSpesa.forEach(d => this.syncTotaleDettaglio(d));
+        this.dettaglioTabAttiva = 0;
+
+        if (!this.dettagliSpesa.length) {
+          this.dettaglioError = 'Nessun dettaglio trovato per questa spesa.';
+          this.dettagliSpesa.push(this.buildDettaglioVuoto());
+        }
+      },
+      error: (err) => {
+        console.error('[RegistroNote] loadDettagliSpesa error', err);
+        this.dettaglioError = 'Errore nel caricamento dei dettagli della spesa.';
+        if (!this.dettagliSpesa.length) {
+          this.dettagliSpesa.push(this.buildDettaglioVuoto());
+        }
+      },
+      complete: () => {
+        this.isDettaglioLoading = false;
+      }
+    });
+  }
+
   loadRegistroNote(year: number, month: number): void {
     this.isTableLoading = true;
     this.tableError = null;
@@ -321,6 +393,68 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
 
   onFiltroPeriodoChange(): void {
     this.loadRegistroNote(this.filtroAnno, this.filtroMese + 1);
+  }
+
+  selezionaDettaglio(idx: number): void {
+    this.dettaglioTabAttiva = idx;
+  }
+
+  get dettaglioCorrente(): DettaglioSpesa | null {
+    return this.dettagliSpesa[this.dettaglioTabAttiva] ?? null;
+  }
+
+  aggiungiDettaglio(): void {
+    this.dettagliSpesa.push(this.buildDettaglioVuoto());
+    this.dettaglioTabAttiva = this.dettagliSpesa.length - 1;
+  }
+
+  rimuoviDettaglioCorrente(): void {
+    if (!this.dettagliSpesa.length) return;
+    this.dettagliSpesa.splice(this.dettaglioTabAttiva, 1);
+    this.dettaglioTabAttiva = Math.max(0, this.dettaglioTabAttiva - 1);
+    if (!this.dettagliSpesa.length) {
+      this.dettagliSpesa.push(this.buildDettaglioVuoto());
+    }
+  }
+
+  formattaDataDettaglio(event: any, dett: DettaglioSpesa): void {
+    dett.dataDettaglio = sanitizeDateInput(event.target.value);
+  }
+
+  onDettaglioValueChange(dett: DettaglioSpesa): void {
+    this.syncTotaleDettaglio(dett);
+  }
+
+  calcolaTotaleDettaglio(dett: DettaglioSpesa): number {
+    const somma =
+      this.toNumber(dett.vitto) +
+      this.toNumber(dett.hotel) +
+      this.toNumber(dett.trasporti) +
+      this.toNumber(dett.aereo) +
+      this.toNumber(dett.spesaVaria) +
+      this.toNumber(dett.telepass) +
+      this.toNumber(dett.parking);
+    const costoKm = this.toNumber(dett.km) * this.toNumber(dett.costoKilometri);
+    return Number((somma + costoKm).toFixed(2));
+  }
+
+  private toNumber(value: number | string | undefined | null): number {
+    const num = typeof value === 'string' ? Number(value.replace(',', '.')) : Number(value);
+    return Number.isFinite(num) ? num : 0;
+  }
+
+  private syncTotaleDettaglio(dett: DettaglioSpesa): void {
+    dett.totale = this.calcolaTotaleDettaglio(dett);
+  }
+
+  onToggleValidato(dett: DettaglioSpesa, value?: boolean): void {
+    const nextVal = typeof value === 'boolean' ? value : !this.isValidato(dett);
+    dett.statoApprovazione = nextVal ? 'Validato' : 'Non validato';
+  }
+
+  isValidato(dett: DettaglioSpesa | null | undefined): boolean {
+    if (!dett) return false;
+    return (dett.statoApprovazione || '').toLowerCase().includes('valid');
   }
 
   toggleMeseDropdown(): void {
@@ -385,11 +519,26 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   openDettaglio(nota: Nota): void {
     this.notaDettaglio = { ...nota };
     this.isDettaglioOpen = true;
+    this.dettaglioError = null;
+    this.dettagliSpesa = [];
+    this.dettaglioTabAttiva = 0;
+    const spesaId = nota.idSpesa ?? Number(nota.id);
+    if (spesaId) {
+      setBodyScrollLock(true);
+      this.loadDettagliSpesa(spesaId);
+    } else {
+      this.dettagliSpesa = [this.buildDettaglioVuoto()];
+      setBodyScrollLock(true);
+    }
   }
 
   closeDettaglio(): void {
     this.isDettaglioOpen = false;
     this.notaDettaglio = null;
+    this.dettagliSpesa = [];
+    this.dettaglioError = null;
+    this.isDettaglioLoading = false;
+    setBodyScrollLock(false);
   }
 
   passaAModificaDaDettaglio(): void {
@@ -470,6 +619,26 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     };
   }
 
+  private buildDettaglioVuoto(): DettaglioSpesa {
+    return {
+      idDettaglio: Date.now(),
+      dataDettaglio: this.notaDettaglio?.data || '',
+      vitto: 0,
+      hotel: 0,
+      trasporti: 0,
+      aereo: 0,
+      spesaVaria: 0,
+      auto: '',
+      km: 0,
+      telepass: 0,
+      parking: 0,
+      costoKilometri: 0,
+      totale: 0,
+      statoApprovazione: '',
+      allegati: [],
+    };
+  }
+
   private isNotaValida(nota: Nota): boolean {
     const { data, totaleAnnullato, totaleComplessivo, totaleNonValidato } = nota;
     return Boolean(data.trim() && totaleAnnullato.trim() && totaleComplessivo.trim() && totaleNonValidato.trim());
@@ -501,6 +670,31 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
       utente: labelUtente || undefined,
       codiceOrdine: api.codiceOrdine,
       idUtente: api.idUtente,
+    };
+  }
+
+  private mapDettaglio(api: DettaglioSpesaApi, idx: number): DettaglioSpesa {
+    const data = api.dataDettaglio ? this.formatIsoDate(api.dataDettaglio) : '';
+    const trasportiVal = api.trasportiLocali ?? api.trasporti ?? 0;
+    const spesaVariaVal = api.spesaVaria ?? api.varie ?? 0;
+    const stato = api.statoApprovazione ?? '';
+
+    return {
+      idDettaglio: api.idDettaglio ?? idx + 1,
+      dataDettaglio: data,
+      vitto: api.vitto ?? 0,
+      hotel: api.hotel ?? 0,
+      trasporti: trasportiVal,
+      aereo: api.aereo ?? 0,
+      spesaVaria: spesaVariaVal,
+      auto: api.auto ?? '',
+      km: api.km ?? 0,
+      telepass: api.telepass ?? 0,
+      parking: api.parking ?? 0,
+      costoKilometri: api.costoKilometri ?? 0,
+      totale: api.totale ?? 0,
+      statoApprovazione: stato,
+      allegati: api.allegati ?? [],
     };
   }
 
