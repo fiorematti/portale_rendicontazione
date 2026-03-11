@@ -151,6 +151,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   notaDaValidare: Nota | null = null;
   isValidazioneLoading = false;
   validazioneError: string | null = null;
+  validazioneLoadingId: number | null = null;
   dettagliSpesa: DettaglioSpesa[] = [];
   dettaglioTabAttiva = 0;
   isDettaglioLoading = false;
@@ -448,8 +449,34 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   }
 
   onToggleValidato(dett: DettaglioSpesa, value?: boolean): void {
+    if (!dett) return;
     const nextVal = typeof value === 'boolean' ? value : !this.isValidato(dett);
-    dett.statoApprovazione = nextVal ? 'Validato' : 'Non validato';
+
+    const idDett = dett.idDettaglio;
+    if (!idDett) {
+      dett.statoApprovazione = 'Non validato';
+      return;
+    }
+
+    this.validazioneLoadingId = idDett;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    const endpoint = nextVal
+      ? '/api/Dettaglio/admin/validaDettaglio'
+      : '/api/Dettaglio/admin/respingiDettaglio';
+
+    this.http.put(endpoint, [idDett], { headers, observe: 'response' }).subscribe({
+      next: (res: HttpResponse<any>) => {
+        const esito: string = (res.body?.esito || '').toLowerCase();
+        const ok = res.status >= 200 && res.status < 300 && esito.includes('riuscita');
+        dett.statoApprovazione = ok ? (nextVal ? 'Validato' : 'Non validato') : dett.statoApprovazione;
+      },
+      error: (err) => {
+        console.error('[RegistroNote] toggleDettaglio validazione/respingi error', err);
+      },
+      complete: () => {
+        this.validazioneLoadingId = null;
+      }
+    });
   }
 
   isValidato(dett: DettaglioSpesa | null | undefined): boolean {

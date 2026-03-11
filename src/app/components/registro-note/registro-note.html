@@ -277,12 +277,17 @@
           </div>
         }
 
-        <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-3 mt-4 pt-3 border-top text-center">
-          <div class="d-flex align-items-center gap-2">
-            <input type="checkbox" class="form-check-input" [checked]="isValidato(dettaglioCorrente)" (change)="onToggleValidato(dettaglioCorrente!, $event.target.checked)">
-            <div class="fw-bold">Stato validazione: <span class="text-muted">{{ dettaglioCorrente?.statoApprovazione || 'Non validata' }}</span></div>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mt-4 pt-3 border-top w-100">
+          <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-warning text-white px-4" (click)="onToggleValidato(dettaglioCorrente!, true)" [disabled]="validazioneLoadingId === dettaglioCorrente?.idDettaglio">
+              <span *ngIf="validazioneLoadingId === dettaglioCorrente?.idDettaglio" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+              Valida
+            </button>
+            <button class="btn-respingi px-4" (click)="onToggleValidato(dettaglioCorrente!, false)" [disabled]="validazioneLoadingId === dettaglioCorrente?.idDettaglio">
+              Respingi
+            </button>
           </div>
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-2 ms-md-auto">
             <button class="btn btn-dark px-4" (click)="closeDettaglio()">Esci</button>
             <button class="btn btn-warning text-white px-4" (click)="passaAModificaDaDettaglio()">Modifica</button>
           </div>
