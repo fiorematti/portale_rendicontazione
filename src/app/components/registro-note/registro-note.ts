@@ -728,29 +728,6 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     });
   }
 
-  modificaNota(nota: Nota): void {
-    this.isModifica = true;
-    this.indiceInModifica = this.elencoNote.findIndex(n => n.id === nota.id);
-    this.nuovaNota = { ...nota };
-    this.notaDettaglio = { ...nota };
-    this.mostraErrore = false;
-    this.mostraModal = true;
-    this.dettagliSpesa = [];
-    this.dettaglioTabAttiva = 0;
-    const spesaId = nota.idSpesa ?? Number(nota.id);
-
-    if (nota.dettagliLocali?.length) {
-      this.dettagliSpesa = this.cloneDettagli(nota.dettagliLocali);
-    } else if (spesaId) {
-      this.isDettaglioLoading = true;
-      this.loadDettagliSpesa(spesaId);
-    } else {
-      this.dettagliSpesa = [this.buildDettaglioVuoto()];
-    }
-
-    setBodyScrollLock(true);
-  }
-
   openDettaglio(nota: Nota): void {
     this.notaDettaglio = { ...nota };
     this.isDettaglioOpen = true;
@@ -775,12 +752,6 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     this.isDettaglioLoading = false;
     this.closeAttachmentPopup(true);
     setBodyScrollLock(false);
-  }
-
-  passaAModificaDaDettaglio(): void {
-    if (!this.notaDettaglio) return;
-    this.modificaNota(this.notaDettaglio);
-    this.closeDettaglio();
   }
 
   chiudiModal(): void {
