@@ -1,23 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
+import { RegistroAttivitaService, AttivitaApi, UtenteExport } from './registro-attivita.service';
 import { generateCalendarDays, navigateMonth, formatSelectedDay, isDaySelected, MONTH_NAMES_IT } from '../../shared/utils/calendar.utils';
 import { sanitizeDateInput, formatDateIt } from '../../shared/utils/date.utils';
+import { downloadBlob } from '../../shared/utils/file-download.utils';
+import { FormatoExport } from '../../shared/models/export.model';
 
-type FormatoExport = 'PDF' | 'EXCEL';
 type StatoConvalidaFiltro = '' | 'convalidato' | 'da-convalidare';
-
-interface AttivitaApi {
-  idAttivita: number;
-  name: string;
-  codiceOrdine: string;
-  nominativoCliente: string;
-  stato_Approvazione: string;
-  location: string;
-  ore: number;
-  dataAttivita: string;
-}
 
 interface Attivita {
   id: number;
@@ -32,16 +22,10 @@ interface Attivita {
   convalidato: boolean;
 }
 
-interface UtenteExport {
-  id: number;
-  nome: string;
-  cognome: string;
-}
-
 @Component({
   selector: 'app-registro-attivita',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './registro-attivita.html',
   styleUrl: './registro-attivita.css',
 })
@@ -87,7 +71,7 @@ export class RegistroAttivitaComponent implements OnInit {
   isRejecting = false;
   rejectError: string | null = null;
 
-  constructor(private readonly http: HttpClient) {
+  constructor(private readonly registroService: RegistroAttivitaService) {
     this.generateCalendar();
   }
 
@@ -102,7 +86,7 @@ export class RegistroAttivitaComponent implements OnInit {
 
   loadUtentiExport(): void {
     if (this.utentiLoaded) return;
-    this.http.get<any[]>('/api/Utente/admin/getAllUtenti').subscribe({
+    this.registroService.getAllUtenti().subscribe({
       next: (res) => {
         this.utentiExport = (res || []).map(u => ({
           id: u.idUtente,
@@ -111,7 +95,7 @@ export class RegistroAttivitaComponent implements OnInit {
         }));
         this.utentiLoaded = true;
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err) => {
         console.error('[RegistroAttivita] getAllUtenti error', err);
       }
     });
@@ -135,31 +119,20 @@ export class RegistroAttivitaComponent implements OnInit {
 
     const year = this.currentYear || new Date().getFullYear();
     const monthParam = this.exportMese || this.buildMonthValue(new Date().getMonth());
-    const endpoint = this.formatoSelezionato === 'PDF'
-      ? '/api/Attivita/admin/pdfMensile'
-      : '/api/Attivita/admin/excelMensile';
     const estensione = this.formatoSelezionato === 'PDF' ? 'pdf' : 'xlsx';
 
-    this.http.get(endpoint, {
-      params: {
-        userId: userId.toString(),
-        year: year.toString(),
-        month: monthParam,
-      },
-      responseType: 'blob'
-    }).subscribe({
+    const export$ = this.formatoSelezionato === 'PDF'
+      ? this.registroService.exportPdfMensile(userId, year, monthParam)
+      : this.registroService.exportExcelMensile(userId, year, monthParam);
+
+    export$.subscribe({
       next: (blob: Blob) => {
         const filename = `Riepilogo_${userId}_${year}_${monthParam}.${estensione}`;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
+        downloadBlob(blob, filename);
         this.showExportPopup = false;
         this.formatoSelezionato = null;
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err) => {
         console.error('[RegistroAttivita] export error', err);
         alert('Errore durante l\'export.');
       }
@@ -234,7 +207,7 @@ export class RegistroAttivitaComponent implements OnInit {
     this.isValidating = true;
     this.validaError = null;
 
-    this.http.put('/api/Attivita/admin/validaAttivita', ids, { observe: 'response' }).subscribe({
+    this.registroService.validaAttivita(ids).subscribe({
       next: (res) => {
         const ok = res.status >= 200 && res.status < 300;
         if (ok) {
@@ -243,7 +216,7 @@ export class RegistroAttivitaComponent implements OnInit {
           this.validaError = 'Validazione non riuscita.';
         }
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err) => {
         console.error('[RegistroAttivita] validaAttivita error', err);
         this.validaError = 'Errore durante la validazione.';
       },
@@ -260,7 +233,7 @@ export class RegistroAttivitaComponent implements OnInit {
     this.isRejecting = true;
     this.rejectError = null;
 
-    this.http.put('/api/Attivita/admin/rifiutaAttivita', ids, { observe: 'response' }).subscribe({
+    this.registroService.rifiutaAttivita(ids).subscribe({
       next: (res) => {
         const ok = res.status >= 200 && res.status < 300;
         if (ok) {
@@ -269,7 +242,7 @@ export class RegistroAttivitaComponent implements OnInit {
           this.rejectError = 'Rifiuto non riuscito.';
         }
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err) => {
         console.error('[RegistroAttivita] rifiutaAttivita error', err);
         this.rejectError = 'Errore durante il rifiuto delle attività.';
       },
@@ -284,13 +257,11 @@ export class RegistroAttivitaComponent implements OnInit {
     this.loadError = null;
     const dataParam = this.buildDateParam(this.filtroData);
 
-    this.http.get<AttivitaApi[]>('/api/Attivita/admin/getAllAttivita', {
-      params: { data: dataParam }
-    }).subscribe({
+    this.registroService.getAllAttivita(dataParam).subscribe({
       next: (res) => {
         this.elencoAttivita = (res || []).map(a => this.mapApiToAttivita(a));
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err) => {
         console.error('[RegistroAttivita] loadAttivita error', err);
         this.loadError = 'Errore nel caricamento delle attività.';
       },

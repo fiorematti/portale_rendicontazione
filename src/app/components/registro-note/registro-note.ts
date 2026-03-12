@@ -1,10 +1,26 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { generateCalendarDays, navigateMonth, formatSelectedDay, isDaySelected, MONTH_NAMES_IT } from '../../shared/utils/calendar.utils';
 import { creaIntervalloAnni, sanitizeDateInput } from '../../shared/utils/date.utils';
 import { setBodyScrollLock } from '../../shared/utils/dom.utils';
+import { downloadBlobFromResponse } from '../../shared/utils/file-download.utils';
+import { RegistroNoteService, SpesaNotaApi, DettaglioSpesaApi, UtenteApi } from './registro-note.service';
+import { AttachmentInfo } from '../../shared/models/attachment.model';
+import {
+  revokeIfObjectUrl,
+  ensureAttachmentContainer,
+  setAttachment as setAttachmentUtil,
+  getAttachment as getAttachmentFromContainer,
+  removeAttachmentFromContainer,
+  showAttachmentPreview,
+  closeAttachmentPreview,
+  handleFileSelected,
+  openFileUploader,
+  createAttachmentState,
+  AttachmentState,
+} from '../../shared/utils/attachment.utils';
 
 interface Nota {
   id: string;
@@ -24,65 +40,9 @@ interface Nota {
 
 type CalendarContext = 'filter' | 'form' | 'dettaglio';
 
-interface UtenteApi {
-  idUtente: number;
-  nome: string;
-  cognome: string;
-  email: string | null;
-  ruolo: string;
-  stato: boolean;
-}
-
 interface UtenteOption {
   id: number;
   label: string;
-}
-
-interface SpesaNotaApi {
-  idSpesa?: number;
-  idUtente?: number;
-  nomeUtente?: string;
-  idCliente?: number;
-  codiceOrdine?: string;
-  dataNotificazione?: string;
-  data?: string;
-  dataNota?: string;
-  dataSpesa?: string;
-  totaleComplessivo?: number | string;
-  totaleValidato?: number | string;
-  totale?: string | number;
-  totaleRichiesto?: string | number;
-  totaleNonValidato?: number | string;
-  totaleNonVal?: string | number;
-  totaleAnnullato?: number | string;
-  annullato?: number | string;
-  statoPagamento?: boolean;
-  pagato?: boolean;
-  isPagato?: boolean;
-  paid?: boolean;
-  nome?: string;
-  cognome?: string;
-  utente?: string;
-}
-
-interface DettaglioSpesaApi {
-  idDettaglio?: number;
-  dataDettaglio?: string;
-  vitto?: number;
-  hotel?: number;
-  trasportiLocali?: number;
-  trasporti?: number;
-  aereo?: number;
-  spesaVaria?: number;
-  varie?: number;
-  auto?: string;
-  km?: number;
-  telepass?: number;
-  parking?: number;
-  totale?: number;
-  costoKilometri?: number;
-  statoApprovazione?: string;
-  allegati?: any[];
 }
 
 interface DettaglioSpesa {
@@ -104,16 +64,10 @@ interface DettaglioSpesa {
   attachments?: Record<string, AttachmentInfo>;
 }
 
-interface AttachmentInfo {
-  fileName: string;
-  previewUrl: string;
-  previewType: 'image' | 'pdf';
-}
-
 @Component({
   selector: 'app-registro-note',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: 'registro-note.html',
   styleUrl: './registro-note.css',
 })
@@ -128,11 +82,17 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   isDettaglioOpen: boolean = false;
   notaDettaglio: Nota | null = null;
   // Attachments state
-  mostraAttachmentPopup = false;
-  attachmentPreviewUrl: string | null = null;
-  attachmentPreviewType: 'image' | 'pdf' | null = null;
-  attachmentFileName: string = '';
-  currentAttachmentTarget: { tab: number; field: string } | null = null;
+  attachmentState = createAttachmentState();
+  get mostraAttachmentPopup() { return this.attachmentState.mostraAttachmentPopup; }
+  set mostraAttachmentPopup(v: boolean) { this.attachmentState.mostraAttachmentPopup = v; }
+  get attachmentPreviewUrl() { return this.attachmentState.attachmentPreviewUrl; }
+  set attachmentPreviewUrl(v: string | null) { this.attachmentState.attachmentPreviewUrl = v; }
+  get attachmentPreviewType() { return this.attachmentState.attachmentPreviewType; }
+  set attachmentPreviewType(v: 'image' | 'pdf' | null) { this.attachmentState.attachmentPreviewType = v; }
+  get attachmentFileName() { return this.attachmentState.attachmentFileName; }
+  set attachmentFileName(v: string) { this.attachmentState.attachmentFileName = v; }
+  get currentAttachmentTarget() { return this.attachmentState.currentAttachmentTarget; }
+  set currentAttachmentTarget(v: { tab: number; field: string } | null) { this.attachmentState.currentAttachmentTarget = v; }
 
   showExportPopup = false;
   exportMese = new Date().getMonth();
@@ -178,7 +138,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   isTableLoading = false;
   tableError: string | null = null;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly registroNoteService: RegistroNoteService) {}
 
   ngOnInit(): void {
     this.listaAnni = creaIntervalloAnni(2020, new Date().getFullYear() + 5);
@@ -289,13 +249,9 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
       params['userId'] = this.exportUtenteId;
     }
 
-    this.http.get('/api/SpesaNota/pdf', {
-      params,
-      observe: 'response',
-      responseType: 'blob'
-    }).subscribe({
+    this.registroNoteService.exportPdf(params).subscribe({
       next: (res: HttpResponse<Blob>) => {
-        this.downloadBlob(res, `NotaSpese_${params['anno']}_${String(params['mese']).padStart(2, '0')}.pdf`);
+        downloadBlobFromResponse(res.body, res.headers, `NotaSpese_${params['anno']}_${String(params['mese']).padStart(2, '0')}.pdf`);
         this.showExportPopup = false;
         setBodyScrollLock(false);
       },
@@ -315,9 +271,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     }
     const spesaId = nota.idSpesa ?? Number(nota.id);
     this.payingId = spesaId;
-     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-     // use http.put with explicit body; many backends expect a JSON array
-     this.http.put('/api/SpesaNota/admin/pagaSpese', [spesaId], { headers, observe: 'response' }).subscribe({
+     this.registroNoteService.pagaSpese([spesaId]).subscribe({
        next: (res: HttpResponse<any>) => {
          console.log('[RegistroNote] pagaSpese response', res.status, res.body);
          // if backend reports success, reload list to reflect persisted state
@@ -357,8 +311,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
       this.validazioneError = null;
       this.isValidazioneLoading = true;
 
-      const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-      this.http.put('/api/Dettaglio/admin/validaDettaglio', [spesaId], { headers, observe: 'response' }).subscribe({
+      this.registroNoteService.validaDettaglio([spesaId]).subscribe({
         next: (res: HttpResponse<any>) => {
           const esito: string = (res.body?.esito || '').toLowerCase();
           console.log('[RegistroNote] validaDettaglio response', res.status, res.body);
@@ -387,9 +340,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     this.isDettaglioLoading = true;
     this.dettaglioError = null;
 
-    this.http.get<DettaglioSpesaApi[]>('/api/Dettaglio/getDettagliBySpesa', {
-      params: { idSpesa: spesaId }
-    }).subscribe({
+    this.registroNoteService.getDettagliBySpesa(spesaId).subscribe({
       next: (res) => {
         this.dettagliSpesa = (res || []).map((item, idx) => this.mapDettaglio(item, idx));
         this.dettagliSpesa.forEach(d => this.syncTotaleDettaglio(d));
@@ -421,9 +372,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     this.isTableLoading = true;
     this.tableError = null;
 
-    this.http.get<SpesaNotaApi[]>('/api/SpesaNota/Admin/GetSpeseByYearAndMonth', {
-      params: { year, month }
-    }).subscribe({
+    this.registroNoteService.getSpeseByYearAndMonth(year, month).subscribe({
       next: (res) => {
         this.elencoNote = (res || []).map((item, idx) => this.mapApiToNota(item, idx));
       },
@@ -505,12 +454,11 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     }
 
     this.validazioneLoadingId = idDett;
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    const endpoint = nextVal
-      ? '/api/Dettaglio/admin/validaDettaglio'
-      : '/api/Dettaglio/admin/respingiDettaglio';
+    const request$ = nextVal
+      ? this.registroNoteService.validaDettaglio([idDett])
+      : this.registroNoteService.respingiDettaglio([idDett]);
 
-    this.http.put(endpoint, [idDett], { headers, observe: 'response' }).subscribe({
+    request$.subscribe({
       next: (res: HttpResponse<any>) => {
         const esito: string = (res.body?.esito || '').toLowerCase();
         const ok = res.status >= 200 && res.status < 300 && esito.includes('riuscita');
@@ -532,149 +480,34 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
 
   /** Attachments helpers (ispirati a Note Spese) */
   openAttachmentUploader(tabIndex: number, field: string): void {
-    this.ensureAttachmentContainer(tabIndex);
-    this.currentAttachmentTarget = { tab: tabIndex, field };
-    const input = document.getElementById('registroFileUploader') as HTMLInputElement | null;
-    if (input) {
-      input.value = '';
-      input.click();
-    }
+    ensureAttachmentContainer(this.dettagliSpesa, tabIndex);
+    openFileUploader(this.attachmentState, tabIndex, field, 'registroFileUploader');
   }
 
   onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input?.files && input.files[0];
-    const target = this.currentAttachmentTarget;
-    if (!file || !target) return;
-    const { tab, field } = target;
-    if (!this.dettagliSpesa[tab]) return;
-
-    const finalizeAttachment = (previewUrl: string, previewType: 'image' | 'pdf') => {
-      const info: AttachmentInfo = { fileName: file.name, previewUrl, previewType };
-      this.setAttachment(tab, field, info);
-      this.showAttachment(info);
-    };
-
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    if (isPdf) {
-      const blobUrl = URL.createObjectURL(file);
-      this.renderPdfAsImage(blobUrl)
-        .then((dataUrl) => {
-          if (dataUrl) {
-            finalizeAttachment(dataUrl, 'image');
-            this.revokeIfObjectUrl(blobUrl);
-          } else {
-            finalizeAttachment(blobUrl, 'pdf');
-          }
-        })
-        .catch(() => finalizeAttachment(blobUrl, 'pdf'));
-    } else if (file.type.startsWith('image/')) {
-      finalizeAttachment(URL.createObjectURL(file), 'image');
-    } else {
-      finalizeAttachment(URL.createObjectURL(file), 'image');
-    }
+    handleFileSelected(event, this.attachmentState, this.dettagliSpesa);
   }
 
   getAttachment(tabIndex: number, field: string): AttachmentInfo | null {
-    const dett = this.dettagliSpesa[tabIndex];
-    return dett?.attachments?.[field] || null;
+    return getAttachmentFromContainer(this.dettagliSpesa, tabIndex, field);
   }
 
   openStoredAttachment(tabIndex: number, field: string): void {
     const att = this.getAttachment(tabIndex, field);
     if (!att) return;
-    this.showAttachment(att);
+    showAttachmentPreview(this.attachmentState, att);
   }
 
   removeAttachment(tabIndex: number, field: string): void {
-    const dett = this.dettagliSpesa[tabIndex];
-    if (!dett || !dett.attachments || !dett.attachments[field]) return;
-    const att = dett.attachments[field];
-    this.revokeIfObjectUrl(att.previewUrl);
-    delete dett.attachments[field];
-    if (this.attachmentPreviewUrl === att.previewUrl) {
+    const prevUrl = this.attachmentPreviewUrl;
+    const att = removeAttachmentFromContainer(this.dettagliSpesa, tabIndex, field);
+    if (att && prevUrl === att.previewUrl) {
       this.closeAttachmentPopup();
     }
   }
 
   closeAttachmentPopup(clearTarget: boolean = false): void {
-    this.mostraAttachmentPopup = false;
-    this.attachmentPreviewUrl = null;
-    this.attachmentPreviewType = null;
-    this.attachmentFileName = '';
-    if (clearTarget) this.currentAttachmentTarget = null;
-  }
-
-  private showAttachment(info: AttachmentInfo): void {
-    this.attachmentFileName = info.fileName;
-    this.attachmentPreviewUrl = info.previewUrl;
-    this.attachmentPreviewType = info.previewType;
-    this.mostraAttachmentPopup = true;
-  }
-
-  private ensureAttachmentContainer(tabIndex: number): Record<string, AttachmentInfo> {
-    const dett = this.dettagliSpesa[tabIndex];
-    if (!dett) return {};
-    if (!dett.attachments) dett.attachments = {};
-    return dett.attachments;
-  }
-
-  private setAttachment(tabIndex: number, field: string, info: AttachmentInfo): void {
-    const container = this.ensureAttachmentContainer(tabIndex);
-    const existing = container[field];
-    if (existing && existing.previewUrl !== info.previewUrl) {
-      this.revokeIfObjectUrl(existing.previewUrl);
-    }
-    container[field] = info;
-  }
-
-  private revokeIfObjectUrl(url?: string | null): void {
-    if (!url || !url.startsWith('blob:')) return;
-    try { URL.revokeObjectURL(url); } catch { /* ignore */ }
-  }
-
-  /** Renderizza la prima pagina di un PDF come immagine (usa pdf.js se disponibile) */
-  private renderPdfAsImage(pdfUrl: string): Promise<string | null> {
-    return new Promise((resolve) => {
-      const finishRender = () => {
-        const pdfjsLib = (window as any).pdfjsLib;
-        if (!pdfjsLib || !pdfjsLib.getDocument) {
-          resolve(null);
-          return;
-        }
-        try {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-          pdfjsLib.getDocument(pdfUrl).promise.then((pdf: any) => {
-            pdf.getPage(1).then((page: any) => {
-              const viewport = page.getViewport({ scale: 1.5 });
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d');
-              canvas.width = viewport.width;
-              canvas.height = viewport.height;
-              page.render({ canvasContext: ctx, viewport }).promise.then(() => {
-                try {
-                  resolve(canvas.toDataURL('image/png'));
-                } catch {
-                  resolve(null);
-                }
-              }).catch(() => resolve(null));
-            }).catch(() => resolve(null));
-          }).catch(() => resolve(null));
-        } catch {
-          resolve(null);
-        }
-      };
-
-      if (!(window as any).pdfjsLib) {
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
-        script.onload = () => finishRender();
-        script.onerror = () => resolve(null);
-        document.head.appendChild(script);
-      } else {
-        finishRender();
-      }
-    });
+    closeAttachmentPreview(this.attachmentState, clearTarget);
   }
 
   toggleMeseDropdown(): void {
@@ -706,7 +539,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     this.isUtentiLoading = true;
     this.utentiLoadError = null;
 
-    this.http.get<UtenteApi[]>('/api/Utente/admin/getAllUtenti').subscribe({
+    this.registroNoteService.getAllUtenti().subscribe({
       next: (res) => {
         const map = new Map<number, string>();
         res.forEach(u => {
@@ -941,24 +774,4 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     return new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num as number) + ' €';
   }
 
-  private downloadBlob(res: HttpResponse<Blob>, fallbackName: string): void {
-    const blob = res.body;
-    if (!blob) return;
-    let fileName = fallbackName;
-    const disposition = res.headers.get('content-disposition');
-    if (disposition) {
-      const match = disposition.match(/filename\*?=UTF-8''([^;]+)|filename="?([^;"]+)"?/i);
-      const extracted = match?.[1] || match?.[2];
-      if (extracted) {
-        fileName = decodeURIComponent(extracted);
-      }
-    }
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 }
