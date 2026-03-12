@@ -273,8 +273,6 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     this.payingId = spesaId;
      this.registroNoteService.pagaSpese([spesaId]).subscribe({
        next: (res: HttpResponse<any>) => {
-         console.log('[RegistroNote] pagaSpese response', res.status, res.body);
-         // if backend reports success, reload list to reflect persisted state
          if (res.status >= 200 && res.status < 300) {
            this.loadRegistroNote(this.filtroAnno, this.filtroMese + 1);
          } else {
@@ -314,7 +312,6 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
       this.registroNoteService.validaDettaglio([spesaId]).subscribe({
         next: (res: HttpResponse<any>) => {
           const esito: string = (res.body?.esito || '').toLowerCase();
-          console.log('[RegistroNote] validaDettaglio response', res.status, res.body);
 
           if (res.status >= 200 && res.status < 300 && !esito.includes('parzialmente')) {
             this.showValidazionePopup = false;
