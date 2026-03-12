@@ -18,9 +18,11 @@ interface Nota {
   utente?: string;
   codiceOrdine?: string;
   idUtente?: number;
+  /** Dettagli gestiti localmente per modifiche lato UI */
+  dettagliLocali?: DettaglioSpesa[];
 }
 
-type CalendarContext = 'filter' | 'form';
+type CalendarContext = 'filter' | 'form' | 'dettaglio';
 
 interface UtenteApi {
   idUtente: number;
@@ -99,6 +101,13 @@ interface DettaglioSpesa {
   totale: number;
   statoApprovazione?: string;
   allegati: { fileName?: string; url?: string }[];
+  attachments?: Record<string, AttachmentInfo>;
+}
+
+interface AttachmentInfo {
+  fileName: string;
+  previewUrl: string;
+  previewType: 'image' | 'pdf';
 }
 
 @Component({
@@ -115,8 +124,15 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
   mostraCalendario: boolean = false;
   mostraErrore: boolean = false;
   calendarContext: CalendarContext = 'filter';
+  calendarTarget: DettaglioSpesa | null = null;
   isDettaglioOpen: boolean = false;
   notaDettaglio: Nota | null = null;
+  // Attachments state
+  mostraAttachmentPopup = false;
+  attachmentPreviewUrl: string | null = null;
+  attachmentPreviewType: 'image' | 'pdf' | null = null;
+  attachmentFileName: string = '';
+  currentAttachmentTarget: { tab: number; field: string } | null = null;
 
   showExportPopup = false;
   exportMese = new Date().getMonth();
@@ -203,14 +219,21 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     const selectedDate = formatSelectedDay(day, this.currentMonth, this.currentYear);
     if (context === 'filter') {
       this.filtroData = selectedDate;
+    } else if (context === 'dettaglio' && this.calendarTarget) {
+      this.calendarTarget.dataDettaglio = selectedDate;
     } else {
       this.nuovaNota.data = selectedDate;
     }
     this.mostraCalendario = false;
+    this.calendarTarget = null;
   }
 
   isSelected(day: number | null, context: CalendarContext = 'form'): boolean {
-    const dateToCheck = context === 'form' ? this.nuovaNota.data : this.filtroData;
+    const dateToCheck = context === 'form'
+      ? this.nuovaNota.data
+      : context === 'dettaglio'
+        ? this.calendarTarget?.dataDettaglio || ''
+        : this.filtroData;
     return isDaySelected(day, dateToCheck, this.currentMonth, this.currentYear);
   }
   
@@ -218,12 +241,30 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     this.nuovaNota.data = sanitizeDateInput(event.target.value);
   }
 
+  apriCalendarioDettaglio(dett: DettaglioSpesa): void {
+    // Toggle behavior: if calendar already open for the same dettaglio, close it
+    if (this.mostraCalendario && this.calendarContext === 'dettaglio' && this.calendarTarget && this.calendarTarget.idDettaglio === dett.idDettaglio) {
+      this.mostraCalendario = false;
+      this.calendarTarget = null;
+      this.calendarContext = 'filter';
+      return;
+    }
+
+    this.calendarContext = 'dettaglio';
+    this.calendarTarget = dett;
+    this.mostraCalendario = true;
+  }
+
   formattaDataFiltro(event: any): void {
     this.filtroData = sanitizeDateInput(event.target.value);
   }
 
   nuovaNotaFn(): void {
+    this.dettagliSpesa = [this.buildDettaglioVuoto()];
+    this.dettaglioTabAttiva = 0;
+    this.notaDettaglio = null;
     this.apriModal('aggiungi');
+    setBodyScrollLock(true);
   }
 
   toggleExportPopup(): void {
@@ -354,6 +395,10 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
         this.dettagliSpesa.forEach(d => this.syncTotaleDettaglio(d));
         this.dettaglioTabAttiva = 0;
 
+        if (this.isModifica || this.mostraModal) {
+          this.nuovaNota.dettagliLocali = this.cloneDettagli(this.dettagliSpesa);
+        }
+
         if (!this.dettagliSpesa.length) {
           this.dettaglioError = 'Nessun dettaglio trovato per questa spesa.';
           this.dettagliSpesa.push(this.buildDettaglioVuoto());
@@ -398,6 +443,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
 
   selezionaDettaglio(idx: number): void {
     this.dettaglioTabAttiva = idx;
+    this.closeAttachmentPopup(true);
   }
 
   get dettaglioCorrente(): DettaglioSpesa | null {
@@ -484,6 +530,153 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     return (dett.statoApprovazione || '').toLowerCase().includes('valid');
   }
 
+  /** Attachments helpers (ispirati a Note Spese) */
+  openAttachmentUploader(tabIndex: number, field: string): void {
+    this.ensureAttachmentContainer(tabIndex);
+    this.currentAttachmentTarget = { tab: tabIndex, field };
+    const input = document.getElementById('registroFileUploader') as HTMLInputElement | null;
+    if (input) {
+      input.value = '';
+      input.click();
+    }
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input?.files && input.files[0];
+    const target = this.currentAttachmentTarget;
+    if (!file || !target) return;
+    const { tab, field } = target;
+    if (!this.dettagliSpesa[tab]) return;
+
+    const finalizeAttachment = (previewUrl: string, previewType: 'image' | 'pdf') => {
+      const info: AttachmentInfo = { fileName: file.name, previewUrl, previewType };
+      this.setAttachment(tab, field, info);
+      this.showAttachment(info);
+    };
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (isPdf) {
+      const blobUrl = URL.createObjectURL(file);
+      this.renderPdfAsImage(blobUrl)
+        .then((dataUrl) => {
+          if (dataUrl) {
+            finalizeAttachment(dataUrl, 'image');
+            this.revokeIfObjectUrl(blobUrl);
+          } else {
+            finalizeAttachment(blobUrl, 'pdf');
+          }
+        })
+        .catch(() => finalizeAttachment(blobUrl, 'pdf'));
+    } else if (file.type.startsWith('image/')) {
+      finalizeAttachment(URL.createObjectURL(file), 'image');
+    } else {
+      finalizeAttachment(URL.createObjectURL(file), 'image');
+    }
+  }
+
+  getAttachment(tabIndex: number, field: string): AttachmentInfo | null {
+    const dett = this.dettagliSpesa[tabIndex];
+    return dett?.attachments?.[field] || null;
+  }
+
+  openStoredAttachment(tabIndex: number, field: string): void {
+    const att = this.getAttachment(tabIndex, field);
+    if (!att) return;
+    this.showAttachment(att);
+  }
+
+  removeAttachment(tabIndex: number, field: string): void {
+    const dett = this.dettagliSpesa[tabIndex];
+    if (!dett || !dett.attachments || !dett.attachments[field]) return;
+    const att = dett.attachments[field];
+    this.revokeIfObjectUrl(att.previewUrl);
+    delete dett.attachments[field];
+    if (this.attachmentPreviewUrl === att.previewUrl) {
+      this.closeAttachmentPopup();
+    }
+  }
+
+  closeAttachmentPopup(clearTarget: boolean = false): void {
+    this.mostraAttachmentPopup = false;
+    this.attachmentPreviewUrl = null;
+    this.attachmentPreviewType = null;
+    this.attachmentFileName = '';
+    if (clearTarget) this.currentAttachmentTarget = null;
+  }
+
+  private showAttachment(info: AttachmentInfo): void {
+    this.attachmentFileName = info.fileName;
+    this.attachmentPreviewUrl = info.previewUrl;
+    this.attachmentPreviewType = info.previewType;
+    this.mostraAttachmentPopup = true;
+  }
+
+  private ensureAttachmentContainer(tabIndex: number): Record<string, AttachmentInfo> {
+    const dett = this.dettagliSpesa[tabIndex];
+    if (!dett) return {};
+    if (!dett.attachments) dett.attachments = {};
+    return dett.attachments;
+  }
+
+  private setAttachment(tabIndex: number, field: string, info: AttachmentInfo): void {
+    const container = this.ensureAttachmentContainer(tabIndex);
+    const existing = container[field];
+    if (existing && existing.previewUrl !== info.previewUrl) {
+      this.revokeIfObjectUrl(existing.previewUrl);
+    }
+    container[field] = info;
+  }
+
+  private revokeIfObjectUrl(url?: string | null): void {
+    if (!url || !url.startsWith('blob:')) return;
+    try { URL.revokeObjectURL(url); } catch { /* ignore */ }
+  }
+
+  /** Renderizza la prima pagina di un PDF come immagine (usa pdf.js se disponibile) */
+  private renderPdfAsImage(pdfUrl: string): Promise<string | null> {
+    return new Promise((resolve) => {
+      const finishRender = () => {
+        const pdfjsLib = (window as any).pdfjsLib;
+        if (!pdfjsLib || !pdfjsLib.getDocument) {
+          resolve(null);
+          return;
+        }
+        try {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+          pdfjsLib.getDocument(pdfUrl).promise.then((pdf: any) => {
+            pdf.getPage(1).then((page: any) => {
+              const viewport = page.getViewport({ scale: 1.5 });
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              canvas.width = viewport.width;
+              canvas.height = viewport.height;
+              page.render({ canvasContext: ctx, viewport }).promise.then(() => {
+                try {
+                  resolve(canvas.toDataURL('image/png'));
+                } catch {
+                  resolve(null);
+                }
+              }).catch(() => resolve(null));
+            }).catch(() => resolve(null));
+          }).catch(() => resolve(null));
+        } catch {
+          resolve(null);
+        }
+      };
+
+      if (!(window as any).pdfjsLib) {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
+        script.onload = () => finishRender();
+        script.onerror = () => resolve(null);
+        document.head.appendChild(script);
+      } else {
+        finishRender();
+      }
+    });
+  }
+
   toggleMeseDropdown(): void {
     this.isMeseDropdownOpen = !this.isMeseDropdownOpen;
     if (this.isMeseDropdownOpen) this.isAnnoDropdownOpen = false;
@@ -539,8 +732,23 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     this.isModifica = true;
     this.indiceInModifica = this.elencoNote.findIndex(n => n.id === nota.id);
     this.nuovaNota = { ...nota };
+    this.notaDettaglio = { ...nota };
     this.mostraErrore = false;
     this.mostraModal = true;
+    this.dettagliSpesa = [];
+    this.dettaglioTabAttiva = 0;
+    const spesaId = nota.idSpesa ?? Number(nota.id);
+
+    if (nota.dettagliLocali?.length) {
+      this.dettagliSpesa = this.cloneDettagli(nota.dettagliLocali);
+    } else if (spesaId) {
+      this.isDettaglioLoading = true;
+      this.loadDettagliSpesa(spesaId);
+    } else {
+      this.dettagliSpesa = [this.buildDettaglioVuoto()];
+    }
+
+    setBodyScrollLock(true);
   }
 
   openDettaglio(nota: Nota): void {
@@ -565,6 +773,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     this.dettagliSpesa = [];
     this.dettaglioError = null;
     this.isDettaglioLoading = false;
+    this.closeAttachmentPopup(true);
     setBodyScrollLock(false);
   }
 
@@ -578,9 +787,15 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
     this.mostraModal = false;
     this.isModifica = false;
     this.indiceInModifica = -1;
+    this.notaDettaglio = null;
     this.resetForm();
     this.mostraCalendario = false;
+    this.calendarTarget = null;
     this.mostraErrore = false;
+    this.dettagliSpesa = [];
+    this.dettaglioTabAttiva = 0;
+    this.closeAttachmentPopup(true);
+    setBodyScrollLock(false);
   }
 
   confermaNota(): void {
@@ -590,10 +805,13 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const dettagliClone = this.cloneDettagli(this.dettagliSpesa);
+    const notaAggiornata = { ...this.nuovaNota, dettagliLocali: dettagliClone };
+
     if (this.isModifica && this.indiceInModifica > -1) {
-      this.elencoNote[this.indiceInModifica] = { ...this.nuovaNota };
+      this.elencoNote[this.indiceInModifica] = notaAggiornata;
     } else {
-      this.elencoNote.unshift({ ...this.nuovaNota, id: this.nextId() });
+      this.elencoNote.unshift({ ...notaAggiornata, id: this.nextId() });
     }
     this.chiudiModal();
   }
@@ -609,6 +827,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
 
   resetForm(): void {
     this.nuovaNota = this.buildNota();
+    this.dettagliSpesa = [this.buildDettaglioVuoto()];
   }
 
 
@@ -663,17 +882,26 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
       totale: 0,
       statoApprovazione: '',
       allegati: [],
+      attachments: {},
     };
   }
 
   private isNotaValida(nota: Nota): boolean {
-    const { data, totaleAnnullato, totaleComplessivo, totaleNonValidato } = nota;
-    return Boolean(data.trim() && totaleAnnullato.trim() && totaleComplessivo.trim() && totaleNonValidato.trim());
+    const { totaleAnnullato, totaleComplessivo, totaleNonValidato } = nota;
+    return Boolean(totaleAnnullato.trim() && totaleComplessivo.trim() && totaleNonValidato.trim());
   }
 
   private nextId(): string {
     const maxId = this.elencoNote.reduce((acc, n) => Math.max(acc, Number(n.id) || 0), 0);
     return String(maxId + 1);
+  }
+
+  private cloneDettagli(dettagli: DettaglioSpesa[]): DettaglioSpesa[] {
+    return dettagli.map(d => ({
+      ...d,
+      allegati: d.allegati ? [...d.allegati] : [],
+      attachments: d.attachments ? { ...d.attachments } : {},
+    }));
   }
 
   private mapApiToNota(api: SpesaNotaApi, idx: number): Nota {
@@ -722,6 +950,7 @@ export class RegistroNoteComponent implements OnInit, OnDestroy {
       totale: api.totale ?? 0,
       statoApprovazione: stato,
       allegati: api.allegati ?? [],
+      attachments: {},
     };
   }
 

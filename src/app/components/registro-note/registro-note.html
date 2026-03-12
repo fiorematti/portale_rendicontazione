@@ -91,76 +91,275 @@
 
   @if (mostraModal) {
     <div class="modal-overlay" (click)="chiudiModal()">
-      <div class="modal-card shadow-lg" (click)="$event.stopPropagation()">
-        <h2 class="modal-title-custom">{{ isModifica ? 'Modifica Nota' : 'Aggiungi Nota' }}</h2>
-
-        @if (mostraErrore) {
-          <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert" style="border-radius: 15px;">
-            <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
-            <div>Tutti i campi sono obbligatori per confermare.</div>
-          </div>
-        }
-
-        <div class="row g-4 mt-2">
-          <div class="col-md-6">
-            <label class="label-custom">Data</label>
-            <div class="date-container">
-              <input type="text" [(ngModel)]="nuovaNota.data" (input)="formattaDataNota($event)" class="form-control input-modal-style" placeholder="gg/mm/aaaa" maxlength="10">
-              <div class="calendar-wrapper" (click)="calendarContext='form'; mostraCalendario = !mostraCalendario">
-                <i class="bi bi-calendar3"></i>
+      <div class="custom-modal" (click)="$event.stopPropagation()">
+        <div class="p-4">
+          <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+            <h2 class="fw-bold m-0">{{ isModifica ? 'Modifica nota' : 'Nuova nota' }}</h2>
+            <div class="d-flex align-items-start gap-4 text-end">
+              <div class="text-only-info">
+                <div class="small fw-bold text-muted">Utente</div>
+                <div class="fw-semibold">{{ notaDettaglio?.utente || nuovaNota.utente || '—' }}</div>
               </div>
-
-              @if (mostraCalendario) {
-                <div class="calendar-popup shadow border-0">
-                  <div class="calendar-header d-flex justify-content-between align-items-center">
-                    <i class="bi bi-chevron-left nav-arrow" (click)="prevMonth($event)"></i>
-                    <span class="month-display">{{ nomeMeseAnno }}</span>
-                    <i class="bi bi-chevron-right nav-arrow" (click)="nextMonth($event)"></i>
-                  </div>
-                  <div class="calendar-grid">
-                    <div class="day-name">L</div><div class="day-name">M</div><div class="day-name">M</div>
-                    <div class="day-name">G</div><div class="day-name">V</div><div class="day-name">S</div><div class="day-name">D</div>
-                    @for (day of calendarDays; track $index) {
-                      <div class="calendar-day" [class.empty]="!day" [class.selected]="isSelected(day, 'form')" (click)="selectDate(day, 'form')">
-                        {{ day }}
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
+              <div class="text-only-info">
+                <div class="small fw-bold text-muted">Codice ordine</div>
+                <div class="fw-semibold">{{ notaDettaglio?.codiceOrdine || nuovaNota.codiceOrdine || '—' }}</div>
+              </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <label class="label-custom">Totale annullato</label>
-            <input type="text" [(ngModel)]="nuovaNota.totaleAnnullato" class="form-control input-modal-style" placeholder="Inserisci totale annullato">
-          </div>
 
-          <div class="col-md-6">
-            <label class="label-custom">Totale complessivo</label>
-            <input type="text" [(ngModel)]="nuovaNota.totaleComplessivo" class="form-control input-modal-style" placeholder="Inserisci totale complessivo">
-          </div>
+          @if (mostraErrore) {
+            <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-3" role="alert" style="border-radius: 15px;">
+              <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
+              <div>Compila i campi obbligatori prima di salvare.</div>
+            </div>
+          }
 
-          <div class="col-md-6">
-            <label class="label-custom">Totale non validato</label>
-            <input type="text" [(ngModel)]="nuovaNota.totaleNonValidato" class="form-control input-modal-style" placeholder="Inserisci totale non validato">
-          </div>
+          @if (dettaglioError) {
+            <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-3" role="alert" style="border-radius: 12px;">
+              <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+              <div>{{ dettaglioError }}</div>
+            </div>
+          }
 
-          <div class="col-md-6">
-            <label class="label-custom">Pagato</label>
-            <input type="checkbox" class="form-check-input" [(ngModel)]="nuovaNota.pagato">
-          </div>
-        </div>
+          @if (isDettaglioLoading) {
+            <div class="text-center py-4">
+              <div class="spinner-border text-warning" role="status"><span class="visually-hidden">Caricamento...</span></div>
+              <p class="mt-2 text-muted">Caricamento dettagli...</p>
+            </div>
+          }
 
-        @if (isModifica) {
-          <div class="d-flex justify-content-center gap-3 mt-4">
-            <button class="btn btn-danger rounded-pill px-4 py-2 fw-bold" (click)="eliminaNota(elencoNote[indiceInModifica]); chiudiModal()">Elimina</button>
-            <button class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-white" (click)="confermaNota()">Modifica</button>
-          </div>
-        }
+          @if (!isDettaglioLoading) {
+            <div class="tab-strip d-flex align-items-center gap-3 mb-4 border-bottom pb-2">
+              <span *ngFor="let dett of dettagliSpesa; let i = index" class="tab-item" [class.active]="dettaglioTabAttiva === i" (click)="selezionaDettaglio(i)">
+                Dett. {{ i + 1 }}
+              </span>
+              <i class="bi bi-plus-circle-fill text-warning fs-5 cursor-pointer ms-1" (click)="aggiungiDettaglio()"></i>
+              <i class="bi bi-dash-circle-fill text-secondary fs-5 cursor-pointer" *ngIf="dettagliSpesa.length > 1" (click)="rimuoviDettaglioCorrente()"></i>
+            </div>
 
-        <div class="d-flex justify-content-center gap-3 mt-5">
-          <button class="btn btn-modal-annulla" (click)="chiudiModal()">Annulla</button>
-          <button class="btn btn-modal-conferma" (click)="confermaNota()">{{ isModifica ? 'Salva modifiche' : 'Conferma' }}</button>
+            <div *ngIf="dettaglioCorrente as dett">
+              <div class="row g-4">
+                <div class="col-md-7 border-end pe-4">
+                  <div class="row g-3">
+                    <div class="col-6 position-relative">
+                      <label class="small fw-bold">Data dettaglio</label>
+                      <div class="input-with-icon">
+                        <input class="form-control custom-input" placeholder="gg/mm/aaaa" type="text" [(ngModel)]="dett.dataDettaglio" (input)="formattaDataDettaglio($event, dett)">
+                        <div class="calendar-wrapper" (click)="apriCalendarioDettaglio(dett)">
+                          <i class="bi bi-calendar3"></i>
+                        </div>
+                      </div>
+
+                      @if (mostraCalendario && calendarContext === 'dettaglio' && calendarTarget === dett) {
+                        <div class="calendar-popup shadow border-0">
+                          <div class="calendar-header d-flex justify-content-between align-items-center">
+                            <i class="bi bi-chevron-left nav-arrow" (click)="prevMonth($event)"></i>
+                            <span class="month-display">{{ nomeMeseAnno }}</span>
+                            <i class="bi bi-chevron-right nav-arrow" (click)="nextMonth($event)"></i>
+                          </div>
+                          <div class="calendar-grid">
+                            <div class="day-name">L</div><div class="day-name">M</div><div class="day-name">M</div>
+                            <div class="day-name">G</div><div class="day-name">V</div><div class="day-name">S</div><div class="day-name">D</div>
+                            @for (day of calendarDays; track $index) {
+                              <div class="calendar-day" [class.empty]="!day" [class.selected]="isSelected(day, 'dettaglio')" (click)="selectDate(day, 'dettaglio')">
+                                {{ day }}
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="row g-2">
+                      <div class="col-4">
+                        <label class="small fw-bold mb-0">Vitto</label>
+                        <div class="input-attach">
+                          <div class="input-left">
+                            <input class="form-control custom-input input-mini" type="number" min="0" step="0.01" [(ngModel)]="dett.vitto" (ngModelChange)="onDettaglioValueChange(dett)">
+                          </div>
+                          <div class="input-sep" aria-hidden="true">
+                            <div class="sep-line"></div>
+                            <button type="button" class="btn-clip" (click)="openAttachmentUploader(dettaglioTabAttiva, 'vitto')" aria-label="Allega documento">
+                              <i class="bi bi-paperclip"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(dettaglioTabAttiva, 'vitto') as att">
+                          <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                          <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(dettaglioTabAttiva, 'vitto')">Apri</button>
+                          <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(dettaglioTabAttiva, 'vitto')">Rimuovi</button>
+                        </div>
+                      </div>
+                      <div class="col-4">
+                        <label class="small fw-bold mb-0">Hotel</label>
+                        <div class="input-attach">
+                          <div class="input-left">
+                            <input class="form-control custom-input input-mini" type="number" min="0" step="0.01" [(ngModel)]="dett.hotel" (ngModelChange)="onDettaglioValueChange(dett)">
+                          </div>
+                          <div class="input-sep" aria-hidden="true">
+                            <div class="sep-line"></div>
+                            <button type="button" class="btn-clip" (click)="openAttachmentUploader(dettaglioTabAttiva, 'hotel')" aria-label="Allega documento">
+                              <i class="bi bi-paperclip"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(dettaglioTabAttiva, 'hotel') as att">
+                          <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                          <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(dettaglioTabAttiva, 'hotel')">Apri</button>
+                          <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(dettaglioTabAttiva, 'hotel')">Rimuovi</button>
+                        </div>
+                      </div>
+                      <div class="col-4">
+                        <label class="small fw-bold mb-0">Aereo</label>
+                        <div class="input-attach">
+                          <div class="input-left">
+                            <input class="form-control custom-input input-mini" type="number" min="0" step="0.01" [(ngModel)]="dett.aereo" (ngModelChange)="onDettaglioValueChange(dett)">
+                          </div>
+                          <div class="input-sep" aria-hidden="true">
+                            <div class="sep-line"></div>
+                            <button type="button" class="btn-clip" (click)="openAttachmentUploader(dettaglioTabAttiva, 'aereo')" aria-label="Allega documento">
+                              <i class="bi bi-paperclip"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(dettaglioTabAttiva, 'aereo') as att">
+                          <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                          <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(dettaglioTabAttiva, 'aereo')">Apri</button>
+                          <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(dettaglioTabAttiva, 'aereo')">Rimuovi</button>
+                        </div>
+                      </div>
+                      <div class="col-4">
+                        <label class="small fw-bold mb-0">Trasporti</label>
+                        <div class="input-attach">
+                          <div class="input-left">
+                            <input class="form-control custom-input input-mini" type="number" min="0" step="0.01" [(ngModel)]="dett.trasporti" (ngModelChange)="onDettaglioValueChange(dett)">
+                          </div>
+                          <div class="input-sep" aria-hidden="true">
+                            <div class="sep-line"></div>
+                            <button type="button" class="btn-clip" (click)="openAttachmentUploader(dettaglioTabAttiva, 'trasporti')" aria-label="Allega documento">
+                              <i class="bi bi-paperclip"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(dettaglioTabAttiva, 'trasporti') as att">
+                          <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                          <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(dettaglioTabAttiva, 'trasporti')">Apri</button>
+                          <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(dettaglioTabAttiva, 'trasporti')">Rimuovi</button>
+                        </div>
+                      </div>
+                      <div class="col-4">
+                        <label class="small fw-bold mb-0">Varie</label>
+                        <div class="input-attach">
+                          <div class="input-left">
+                            <input class="form-control custom-input input-mini" type="number" min="0" step="0.01" [(ngModel)]="dett.spesaVaria" (ngModelChange)="onDettaglioValueChange(dett)">
+                          </div>
+                          <div class="input-sep" aria-hidden="true">
+                            <div class="sep-line"></div>
+                            <button type="button" class="btn-clip" (click)="openAttachmentUploader(dettaglioTabAttiva, 'spesaVaria')" aria-label="Allega documento">
+                              <i class="bi bi-paperclip"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(dettaglioTabAttiva, 'spesaVaria') as att">
+                          <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                          <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(dettaglioTabAttiva, 'spesaVaria')">Apri</button>
+                          <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(dettaglioTabAttiva, 'spesaVaria')">Rimuovi</button>
+                        </div>
+                      </div>
+                      <div class="col-4">
+                        <label class="small fw-bold mb-0">Telepass</label>
+                        <div class="input-attach">
+                          <div class="input-left">
+                            <input class="form-control custom-input input-mini" type="number" min="0" step="0.01" [(ngModel)]="dett.telepass" (ngModelChange)="onDettaglioValueChange(dett)">
+                          </div>
+                          <div class="input-sep" aria-hidden="true">
+                            <div class="sep-line"></div>
+                            <button type="button" class="btn-clip" (click)="openAttachmentUploader(dettaglioTabAttiva, 'telepass')" aria-label="Allega documento">
+                              <i class="bi bi-paperclip"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(dettaglioTabAttiva, 'telepass') as att">
+                          <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                          <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(dettaglioTabAttiva, 'telepass')">Apri</button>
+                          <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(dettaglioTabAttiva, 'telepass')">Rimuovi</button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-6">
+                      <label class="small fw-bold mb-0">Parking</label>
+                      <div class="input-attach">
+                        <div class="input-left">
+                          <input class="form-control custom-input input-mini" type="number" min="0" step="0.01" [(ngModel)]="dett.parking" (ngModelChange)="onDettaglioValueChange(dett)">
+                        </div>
+                        <div class="input-sep" aria-hidden="true">
+                          <div class="sep-line"></div>
+                          <button type="button" class="btn-clip" (click)="openAttachmentUploader(dettaglioTabAttiva, 'parking')" aria-label="Allega documento">
+                            <i class="bi bi-paperclip"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="mt-1 small text-muted d-flex align-items-center gap-2 flex-wrap" *ngIf="getAttachment(dettaglioTabAttiva, 'parking') as att">
+                        <span class="text-truncate" style="max-width: 160px;">{{ att.fileName }}</span>
+                        <button type="button" class="btn btn-link btn-sm p-0" (click)="openStoredAttachment(dettaglioTabAttiva, 'parking')">Apri</button>
+                        <button type="button" class="btn btn-link btn-sm text-danger p-0" (click)="removeAttachment(dettaglioTabAttiva, 'parking')">Rimuovi</button>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <label class="small fw-bold mb-0">Totale dettaglio</label>
+                      <div class="fw-bold">{{ calcolaTotaleDettaglio(dett) | number: '1.2-2' }} €</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-5 ps-4">
+                  <div class="row g-3">
+
+                    <div class="col-6">
+                      <label class="small fw-bold mb-0">Totale complessivo</label>
+                      <input type="text" [(ngModel)]="nuovaNota.totaleComplessivo" class="form-control custom-input" placeholder="Inserisci totale complessivo">
+                    </div>
+                    <div class="col-6">
+                      <label class="small fw-bold mb-0">Totale non validato</label>
+                      <input type="text" [(ngModel)]="nuovaNota.totaleNonValidato" class="form-control custom-input" placeholder="Inserisci totale non validato">
+                    </div>
+                    <div class="col-6">
+                      <label class="small fw-bold mb-0">Totale annullato</label>
+                      <input type="text" [(ngModel)]="nuovaNota.totaleAnnullato" class="form-control custom-input" placeholder="Inserisci totale annullato">
+                    </div>
+                    <div class="col-6">
+                      <label class="small fw-bold mb-0">Totale validato</label>
+                      <input type="text" [(ngModel)]="nuovaNota.totaleValidato" class="form-control custom-input" placeholder="Inserisci totale validato">
+                    </div>
+
+                    <div class="col-12">
+                      <label class="small fw-bold mb-0">Auto</label>
+                      <input class="form-control custom-input input-mini" placeholder="Modello auto" [(ngModel)]="dett.auto">
+                    </div>
+                    <div class="col-6">
+                      <label class="small fw-bold mb-0">Km</label>
+                      <input class="form-control custom-input input-mini" type="number" min="0" step="1" [(ngModel)]="dett.km" (ngModelChange)="onDettaglioValueChange(dett)">
+                    </div>
+                    <div class="col-6">
+                      <label class="small fw-bold mb-0">Costo km</label>
+                      <input class="form-control custom-input input-mini" type="number" min="0" step="0.01" [(ngModel)]="dett.costoKilometri" (ngModelChange)="onDettaglioValueChange(dett)">
+                    </div>
+
+                    <div class="col-12 d-flex align-items-center gap-3">
+                      <label class="small fw-bold mb-0">Pagato</label>
+                      <input type="checkbox" class="form-check-input" [(ngModel)]="nuovaNota.pagato">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <div class="d-flex justify-content-center gap-3 mt-4 pt-2">
+            <button class="btn btn-dark px-4" (click)="chiudiModal()">Annulla</button>
+            <button class="btn btn-warning text-white px-4" (click)="confermaNota()">{{ isModifica ? 'Salva modifiche' : 'Conferma' }}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -242,10 +441,10 @@
                     </div>
                   </div>
 
-                  <div class="col-6">
-                    <label class="small fw-bold mb-0">Parking</label>
-                    <input class="form-control custom-input input-mini" type="number" min="0" step="0.01" [(ngModel)]="dett.parking" disabled>
-                  </div>
+                    <div class="col-6">
+                      <label class="small fw-bold mb-0">Parking</label>
+                      <input class="form-control custom-input input-mini" type="number" min="0" step="0.01" [(ngModel)]="dett.parking" disabled>
+                    </div>
                   <div class="col-6">
                     <label class="small fw-bold mb-0">Allegati</label>
                     <div class="small text-muted">{{ dett.allegati.length ? (dett.allegati.length + ' allegati') : 'Nessun allegato' }}</div>
@@ -295,6 +494,23 @@
       </div>
     </div>
   }
+</div>
+
+<!-- hidden file input used for attachment upload -->
+<input id="registroFileUploader" type="file" accept=".pdf,image/*" style="display:none" (change)="onFileSelected($event)">
+
+<!-- attachment preview popup -->
+<div class="attachment-popup-overlay" *ngIf="mostraAttachmentPopup">
+  <div class="attachment-popup shadow-lg rounded-3 p-3 bg-white">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="fw-bold text-truncate" style="max-width:70%">{{ attachmentFileName }}</div>
+      <button class="btn btn-sm btn-outline-secondary" (click)="closeAttachmentPopup()">Chiudi</button>
+    </div>
+    <div class="attachment-preview">
+      <img *ngIf="attachmentPreviewType === 'image'" [src]="attachmentPreviewUrl" class="img-fluid" alt="anteprima">
+      <embed *ngIf="attachmentPreviewType === 'pdf'" [src]="attachmentPreviewUrl" type="application/pdf" width="100%" height="360px">
+    </div>
+  </div>
 </div>
 
 @if (showExportPopup) {
