@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, NgIf, NgForOf, NgClass } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NoteSpeseService, DettaglioApiResponse, UpdateSpesaRequest } from './note-spese.service';
 import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
@@ -9,6 +9,16 @@ import { AutomobileDto } from '../../dto/automobile.dto';
 import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
 import { parseDateString, formatDateIt, formatDateISO, sanitizeDateInput, creaIntervalloAnni } from '../../shared/utils/date.utils';
 import { setBodyScrollLock } from '../../shared/utils/dom.utils';
+import { AttachmentInfo } from '../../shared/models/attachment.model';
+import {
+  ensureAttachmentContainer as ensureContainer,
+  setAttachment as setAtt,
+  getAttachment as getAtt,
+  removeAttachmentFromContainer,
+  cleanupAttachmentForDettaglio as cleanupDettaglio,
+  cleanupAllAttachments,
+  renderPdfAsImage
+} from '../../shared/utils/attachment.utils';
 
 
 /** Rappresenta una nota spesa nella lista principale */
@@ -52,18 +62,13 @@ interface DettaglioSpesa {
   attachments?: Record<string, AttachmentInfo>;
 }
 
-/** Informazioni su un allegato caricato */
-interface AttachmentInfo {
-  fileName: string;
-  previewUrl: string;
-  previewType: 'image' | 'pdf';
-}
+
 
 
 @Component({
   selector: 'app-note-spese',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIf, NgForOf, NgClass],
+  imports: [CommonModule, FormsModule],
   templateUrl: './note-spese.html',
   styleUrl: './note-spese.css',
 })
@@ -204,11 +209,6 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   confermaExport(): void {
-    console.log('[NoteSpese] export richiesta', {
-      meseIndex: this.exportMese,
-      anno: this.exportAnno,
-      utente: this.exportUtente,
-    });
     this.showExportPopup = false;
     setBodyScrollLock(false);
   }
@@ -216,7 +216,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   /** Apre la modale in modalità visualizzazione e carica i dettagli dal backend */
   visualizzaDettaglio(spesa: Spesa): void {
-    this.cleanupAttachments();
+    cleanupAllAttachments(this.dettagliSpesa);
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
     this.ensureAutomobiliLoaded();
@@ -302,7 +302,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   /** Apre la modale in modalità modifica e carica i dettagli dal backend */
   apriModifica(spesa: Spesa): void {
-    this.cleanupAttachments();
+    cleanupAllAttachments(this.dettagliSpesa);
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
     this.ensureAutomobiliLoaded();
@@ -429,9 +429,6 @@ export class NoteSpese implements OnInit, OnDestroy {
 
     if (this.isAggiungi) {
       const formData = this.buildAddPayload();
-      for (const [k, v] of formData.entries()) {
-    console.log('AddSpesa payload ->', k, v);
-  }
       this.noteSpeseService.addSpesa(formData).subscribe({
         next: (ok) => {
           if (ok === true) {
@@ -482,7 +479,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   /** Resetta il form della spesa e prepara per una nuova creazione */
   resetNuovaSpesa(): void {
-    this.cleanupAttachments();
+    cleanupAllAttachments(this.dettagliSpesa);
     this.nuovaSpesaData = '';
     this.dettagliSpesa = [{
       idCliente: null,
@@ -509,7 +506,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   /** Chiude la modale e ripristina lo stato */
   chiudiModal(): void {
-    this.cleanupAttachments();
+    cleanupAllAttachments(this.dettagliSpesa);
     this.closeAttachmentPopup();
     this.mostraModal = false;
     this.mostraCalendario = false;
@@ -546,7 +543,6 @@ export class NoteSpese implements OnInit, OnDestroy {
   get speseFiltrate(): Spesa[] {
     const filtroDate = parseDateString(this.filtroData);
     return this.listaSpese.filter((s) => {
-      console.log(s);
       const mPagato = this.filtroPagate === this.filtroDefault || (this.filtroPagate === 'Si' ? s.pagato : !s.pagato);
       let mData = true;
       if (this.filtroData && filtroDate) {
@@ -604,7 +600,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
     // Fallback: elimina solo il dettaglio locale (scenario senza id remoto)
     const dett = this.dettagliSpesa[this.tabAttiva];
-    this.cleanupAttachmentForDettaglio(dett);
+    cleanupDettaglio(dett);
     this.dettagliSpesa.splice(this.tabAttiva, 1);
     if (this.dettagliSpesa.length === 0) this.chiudiModal();
     else this.tabAttiva = 0;
@@ -855,7 +851,6 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.loading = true;
     this.noteSpeseService.getSpeseByYear(year, month).subscribe({
       next: (res) => {
-        console.log('[NoteSpese] API response spese:', res);
         const mapped = (res || []).map(item => {
           const id = (item as any)?.id ?? item?.idSpesa ?? (item as any)?.idSpesaNota ?? null;
           const idCliente = (item as any)?.idCliente ?? (item as any)?.idClienteOrdine ?? (item as any)?.clienteId ?? null;
@@ -868,7 +863,6 @@ export class NoteSpese implements OnInit, OnDestroy {
             pagato: Boolean(item.statoPagamento),
             idCliente,
           } as Spesa;
-          console.log('[NoteSpese] mapped item ->', result);
           return result;
         });
         this.listaSpese = mapped.sort((a, b) => {
@@ -878,7 +872,6 @@ export class NoteSpese implements OnInit, OnDestroy {
           const tb = db ? db.getTime() : 0;
           return tb - ta; // più recenti prima
         });
-        console.log('[NoteSpese] listaSpese popolata', this.listaSpese.length);
         this.enrichSpeseWithClienti();
         this.rebuildFiltroOrdiniOptions();
       },
@@ -891,7 +884,6 @@ export class NoteSpese implements OnInit, OnDestroy {
       complete: () => {
         this.isSpeseLoading = false;
         this.loading = false;
-        console.log('[NoteSpese] loadSpese complete');
       }
     });
   }
@@ -1095,7 +1087,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   /** Apre il selettore file per un campo allegato specifico */
   openAttachmentUploader(tabIndex: number, field: string): void {
-    this.ensureAttachmentContainer(tabIndex);
+    ensureContainer(this.dettagliSpesa, tabIndex);
     this.currentAttachmentTarget = { tab: tabIndex, field };
     const input = document.getElementById('fileUploader') as HTMLInputElement | null;
     if (input) {
@@ -1114,12 +1106,8 @@ export class NoteSpese implements OnInit, OnDestroy {
     if (!this.dettagliSpesa[tab]) return;
 
     const finalizeAttachment = (previewUrl: string, previewType: 'image' | 'pdf') => {
-      const info: AttachmentInfo = {
-        fileName: file.name,
-        previewUrl,
-        previewType
-      };
-      this.setAttachment(tab, field, info);
+      const info: AttachmentInfo = { fileName: file.name, previewUrl, previewType };
+      setAtt(this.dettagliSpesa, tab, field, info);
       this.showAttachment(info);
     };
 
@@ -1127,7 +1115,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     if (isPdf) {
       const url = URL.createObjectURL(file);
-      this.renderPdfAsImage(url).then((dataUrl) => {
+      renderPdfAsImage(url).then((dataUrl) => {
         if (dataUrl) {
           finalizeAttachment(dataUrl, 'image');
         } else {
@@ -1152,8 +1140,7 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
   getAttachment(tabIndex: number, field: string): AttachmentInfo | null {
-    const dett = this.dettagliSpesa[tabIndex];
-    return dett?.attachments?.[field] || null;
+    return getAtt(this.dettagliSpesa, tabIndex, field);
   }
 
   openStoredAttachment(tabIndex: number, field: string): void {
@@ -1163,12 +1150,8 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
   removeAttachment(tabIndex: number, field: string): void {
-    const dett = this.dettagliSpesa[tabIndex];
-    if (!dett || !dett.attachments || !dett.attachments[field]) return;
-    const att = dett.attachments[field];
-    this.revokeIfObjectUrl(att.previewUrl);
-    delete dett.attachments[field];
-    if (this.attachmentPreviewUrl === att.previewUrl) {
+    const att = removeAttachmentFromContainer(this.dettagliSpesa, tabIndex, field);
+    if (att && this.attachmentPreviewUrl === att.previewUrl) {
       this.closeAttachmentPopup();
     }
   }
@@ -1180,86 +1163,6 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.mostraAttachmentPopup = true;
   }
 
-  private ensureAttachmentContainer(tabIndex: number): Record<string, AttachmentInfo> {
-    const dett = this.dettagliSpesa[tabIndex];
-    if (!dett) return {};
-    if (!dett.attachments) dett.attachments = {};
-    return dett.attachments;
-  }
-
-  private setAttachment(tabIndex: number, field: string, info: AttachmentInfo): void {
-    const container = this.ensureAttachmentContainer(tabIndex);
-    const existing = container[field];
-    if (existing && existing.previewUrl !== info.previewUrl) {
-      this.revokeIfObjectUrl(existing.previewUrl);
-    }
-    container[field] = info;
-  }
-
-  private cleanupAttachmentForDettaglio(dett: DettaglioSpesa | undefined): void {
-    if (!dett?.attachments) return;
-    Object.values(dett.attachments).forEach(att => this.revokeIfObjectUrl(att.previewUrl));
-    dett.attachments = {};
-  }
-
-  private cleanupAttachments(): void {
-    this.dettagliSpesa.forEach(d => this.cleanupAttachmentForDettaglio(d));
-  }
-
-  private revokeIfObjectUrl(url: string): void {
-    if (!url || url.startsWith('data:')) return;
-    try {
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      // ignore revoke errors
-    }
-  }
-
-  /**
-   * Renderizza la prima pagina di un PDF come immagine (data URL) usando pdf.js.
-   * Carica la libreria pdf.js dal CDN se non ancora disponibile.
-   */
-  private renderPdfAsImage(pdfUrl: string): Promise<string | null> {
-    return new Promise((resolve, reject) => {
-      const finishRender = () => {
-        const pdfjsLib = (window as any).pdfjsLib;
-        if (!pdfjsLib || !pdfjsLib.getDocument) {
-          resolve(null);
-          return;
-        }
-        try {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-          pdfjsLib.getDocument(pdfUrl).promise.then((pdf: any) => {
-            pdf.getPage(1).then((page: any) => {
-              const viewport = page.getViewport({ scale: 1.5 });
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d');
-              canvas.width = viewport.width;
-              canvas.height = viewport.height;
-              page.render({ canvasContext: ctx, viewport }).promise.then(() => {
-                try {
-                  const dataUrl = canvas.toDataURL('image/png');
-                  resolve(dataUrl);
-                } catch (err) {
-                  resolve(null);
-                }
-              }).catch((e: any) => resolve(null));
-            }).catch(() => resolve(null));
-          }).catch(() => resolve(null));
-        } catch (e) { resolve(null); }
-      };
-
-      if (!(window as any).pdfjsLib) {
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
-        script.onload = () => finishRender();
-        script.onerror = () => resolve(null);
-        document.head.appendChild(script);
-      } else {
-        finishRender();
-      }
-    });
-  }
   
   
 }
