@@ -11,7 +11,6 @@ import { parseDateString, formatDateIt, formatDateISO, sanitizeDateInput, creaIn
 import { setBodyScrollLock } from '../../shared/utils/dom.utils';
 import { AttachmentInfo } from '../../shared/models/attachment.model';
 import {
-  revokeIfObjectUrl,
   ensureAttachmentContainer as ensureContainer,
   setAttachment as setAtt,
   getAttachment as getAtt,
@@ -20,7 +19,6 @@ import {
   cleanupAllAttachments,
   renderPdfAsImage
 } from '../../shared/utils/attachment.utils';
-import { downloadBlob } from '../../shared/utils/file-download.utils';
 
 
 /** Rappresenta una nota spesa nella lista principale */
@@ -218,7 +216,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   /** Apre la modale in modalità visualizzazione e carica i dettagli dal backend */
   visualizzaDettaglio(spesa: Spesa): void {
-    this.cleanupAttachments();
+    cleanupAllAttachments(this.dettagliSpesa);
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
     this.ensureAutomobiliLoaded();
@@ -304,7 +302,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   /** Apre la modale in modalità modifica e carica i dettagli dal backend */
   apriModifica(spesa: Spesa): void {
-    this.cleanupAttachments();
+    cleanupAllAttachments(this.dettagliSpesa);
     this.rigaSelezionata = spesa;
     this.nuovaSpesaData = spesa.data;
     this.ensureAutomobiliLoaded();
@@ -481,7 +479,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   /** Resetta il form della spesa e prepara per una nuova creazione */
   resetNuovaSpesa(): void {
-    this.cleanupAttachments();
+    cleanupAllAttachments(this.dettagliSpesa);
     this.nuovaSpesaData = '';
     this.dettagliSpesa = [{
       idCliente: null,
@@ -508,7 +506,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   /** Chiude la modale e ripristina lo stato */
   chiudiModal(): void {
-    this.cleanupAttachments();
+    cleanupAllAttachments(this.dettagliSpesa);
     this.closeAttachmentPopup();
     this.mostraModal = false;
     this.mostraCalendario = false;
@@ -602,7 +600,7 @@ export class NoteSpese implements OnInit, OnDestroy {
 
     // Fallback: elimina solo il dettaglio locale (scenario senza id remoto)
     const dett = this.dettagliSpesa[this.tabAttiva];
-    this.cleanupAttachmentForDettaglio(dett);
+    cleanupDettaglio(dett);
     this.dettagliSpesa.splice(this.tabAttiva, 1);
     if (this.dettagliSpesa.length === 0) this.chiudiModal();
     else this.tabAttiva = 0;
@@ -1163,26 +1161,6 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.attachmentPreviewUrl = info.previewUrl;
     this.attachmentPreviewType = info.previewType;
     this.mostraAttachmentPopup = true;
-  }
-
-  private ensureAttachmentContainer(tabIndex: number): Record<string, AttachmentInfo> {
-    return ensureContainer(this.dettagliSpesa, tabIndex);
-  }
-
-  private setAttachment(tabIndex: number, field: string, info: AttachmentInfo): void {
-    setAtt(this.dettagliSpesa, tabIndex, field, info);
-  }
-
-  private cleanupAttachmentForDettaglio(dett: DettaglioSpesa | undefined): void {
-    cleanupDettaglio(dett);
-  }
-
-  private cleanupAttachments(): void {
-    cleanupAllAttachments(this.dettagliSpesa);
-  }
-
-  private revokeIfObjectUrl(url: string): void {
-    revokeIfObjectUrl(url);
   }
 
   
