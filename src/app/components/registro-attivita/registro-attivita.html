@@ -53,7 +53,8 @@
           <label class="label-custom">Location</label>
           <select [(ngModel)]="filtroLocation" class="form-select border-0 custom-input-bg shadow-none">
             <option value="">Tutti</option>
-            <option value="In sede">In sede</option>
+            <option value="Sede">Sede</option>
+            <option value="Smart Working">Smart Working</option>
             <option value="Trasferta">Trasferta</option>
           </select>
         </div>
@@ -76,37 +77,69 @@
       <table class="table align-middle mb-0">
         <thead>
           <tr>
-            <th class="ps-4">Nome</th><th>Cognome</th><th>Data</th><th>Location</th><th class="pe-4 text-center">Convalida</th>
+            <th class="ps-4">Nome</th>
+            <th>Cliente</th>
+            <th>Codice ordine</th>
+            <th>Data</th>
+            <th>Location</th>
+            <th class="text-center">Ore</th>
+            <th class="text-center">Stato</th>
+            <th class="pe-4 text-center">Convalida</th>
           </tr>
         </thead>
         <tbody>
-          @for (attivita of attivitaFiltrate; track $index) {
+          @for (attivita of attivitaFiltrate; track attivita.id) {
             <tr>
-              <td class="ps-4 fw-medium">{{ attivita.nome }}</td>
-              <td>{{ attivita.cognome }}</td>
+              <td class="ps-4 fw-medium">{{ attivita.nome }} {{ attivita.cognome }}</td>
+              <td>{{ attivita.cliente }}</td>
+              <td>{{ attivita.codiceOrdine }}</td>
               <td class="text-muted">{{ attivita.data | date:'dd/MM/yyyy' }}</td>
               <td>{{ attivita.location }}</td>
+              <td class="text-center">{{ attivita.ore }}</td>
+              <td class="text-center">{{ attivita.statoApprovazione }}</td>
               <td class="pe-4 text-center">
                 <input type="checkbox" class="form-check-input border-secondary" [(ngModel)]="attivita.convalidato">
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="5" class="text-center py-4 text-muted">Nessuna attività trovata.</td>
+              <td colspan="8" class="text-center py-4 text-muted">Nessuna attività trovata.</td>
             </tr>
           }
         </tbody>
       </table>
     </div>
+    @if (isLoading) {
+      <div class="text-center py-3 text-muted">Caricamento attività...</div>
+    }
+    @if (loadError) {
+      <div class="text-center py-2 text-danger small">{{ loadError }}</div>
+    }
   </div>
 
   <div class="text-end pe-2">
-    <button class="btn px-5 py-3 fw-bold rounded-4 shadow-sm" 
-            [class.btn-confirm-orange]="countSelezionati > 0"
-            [class.btn-confirm-gray]="countSelezionati === 0"
-            (click)="confermaConvalide()">
-      Conferma convalide
-    </button>
+    <div class="d-inline-flex gap-2">
+      <button class="btn px-5 py-3 fw-bold rounded-4 shadow-sm btn-respingi" 
+              [disabled]="isValidating || isRejecting || countSelezionati === 0"
+              (click)="respingiConvalide()">
+        <span *ngIf="isRejecting" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+        Respingi convalida
+      </button>
+      <button class="btn px-5 py-3 fw-bold rounded-4 shadow-sm" 
+              [class.btn-confirm-orange]="countSelezionati > 0"
+              [class.btn-confirm-gray]="countSelezionati === 0"
+              [disabled]="isValidating || isRejecting || countSelezionati === 0"
+              (click)="confermaConvalide()">
+        <span *ngIf="isValidating" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+        Conferma convalide
+      </button>
+    </div>
+    @if (validaError) {
+      <div class="text-danger small mt-2">{{ validaError }}</div>
+    }
+    @if (rejectError) {
+      <div class="text-danger small mt-1">{{ rejectError }}</div>
+    }
   </div>
 
   @if (showExportPopup) {
@@ -118,16 +151,17 @@
           <div class="col-6">
             <label class="label-custom text-start d-block">Mese</label>
             <select [(ngModel)]="exportMese" class="form-select border-0 custom-input-bg shadow-none">
-              <option value="AUG">AUG</option>
-              <option value="SET">SET</option>
+              @for (m of exportMonths; track m.value) {
+                <option [value]="m.value">{{ m.label | uppercase }}</option>
+              }
             </select>
           </div>
           <div class="col-6">
             <label class="label-custom text-start d-block">Utente</label>
-            <select [(ngModel)]="exportUtente" class="form-select border-0 custom-input-bg shadow-none">
-              <option value="">Nome Utente</option>
-              @for (a of elencoAttivita; track $index) {
-                <option [value]="a.nome">{{ a.nome }} {{ a.cognome }}</option>
+            <select [(ngModel)]="exportUtente" class="form-select border-0 custom-input-bg shadow-none" (click)="loadUtentiExport()">
+              <option [ngValue]="null">Nome Utente</option>
+              @for (u of utentiExport; track u.id) {
+                <option [ngValue]="u.id">{{ u.nome }} {{ u.cognome }}</option>
               }
             </select>
           </div>

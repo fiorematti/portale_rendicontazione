@@ -1,5 +1,11 @@
 <div class="main-content">
-  <h2 class="fw-bold mb-4">Note Spese</h2>
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="fw-bold m-0">Note Spese</h2>
+    <button class="btn btn-dark rounded-pill px-4 d-flex align-items-center gap-2" (click)="toggleExportPopup()">
+      <i class="bi bi-box-arrow-up"></i>
+      <span>Esporta</span>
+    </button>
+  </div>
 
 
   <!-- Filtri: stato pagamento, data, cliente, codice ordine -->
@@ -54,6 +60,9 @@
   </div>
 
 
+  
+
+
   <!-- Tabella elenco note spese con stato e azioni -->
   <div class="table-container shadow-sm p-3 bg-white rounded-5">
     <div *ngIf="loading" class="text-center py-4">
@@ -104,6 +113,44 @@
   </div>
 
 
+  <div *ngIf="showExportPopup" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-start justify-content-center bg-dark bg-opacity-50" style="z-index: 1055; padding-top: 3.5rem; padding-bottom: 3.5rem; overflow-y: auto;">
+    <div class="bg-white rounded-4 shadow-lg p-4" style="max-width: 520px; width: 92%;">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+          <h4 class="fw-bold mb-1">Esporta note spese</h4>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+          <label class="fw-bold small mb-1">Mese</label>
+          <select class="form-select custom-select" [(ngModel)]="exportMese">
+            <option *ngFor="let m of listaMesi; let i = index" [ngValue]="i">{{ m }}</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="fw-bold small mb-1">Anno</label>
+          <select class="form-select custom-select" [(ngModel)]="exportAnno">
+            <option *ngFor="let a of listaAnni" [ngValue]="a">{{ a }}</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="fw-bold small mb-1">Utente</label>
+          <select class="form-select custom-select" [(ngModel)]="exportUtente">
+            <option [ngValue]="'Tutti'">Tutti</option>
+            <option *ngFor="let u of utentiExport" [ngValue]="u">{{ u }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-center gap-3">
+        <button class="btn btn-dark px-4" (click)="toggleExportPopup()">Annulla</button>
+        <button class="btn btn-warning text-white px-4" (click)="confermaExport()">Esporta</button>
+      </div>
+    </div>
+  </div>
+
+
   <!-- Modal per aggiunta/visualizzazione/modifica spesa -->
   <div class="modal-overlay" *ngIf="mostraModal">
     <div class="custom-modal shadow-lg rounded-4">
@@ -121,6 +168,7 @@
                 <label class="fw-bold mb-1">Cliente</label>
                 <select class="form-select custom-select" [(ngModel)]="dettagliSpesa[tabAttiva].idCliente"
                   (ngModelChange)="onClienteChange(dettagliSpesa[tabAttiva])">
+                  <option [ngValue]="null" disabled selected>Seleziona cliente</option>
                   <option *ngIf="isClientiLoading" [ngValue]="dettagliSpesa[tabAttiva].idCliente">Caricamento clienti...</option>
                   <option *ngFor="let c of clientiOptions" [ngValue]="c.idCliente">{{ c.nominativo }}</option>
                 </select>
@@ -131,6 +179,7 @@
                 <select class="form-select custom-select" [(ngModel)]="dettagliSpesa[tabAttiva].codiceOrdine"
                   (ngModelChange)="onCodiceChange(dettagliSpesa[tabAttiva], $event)"
                   [disabled]="!dettagliSpesa[tabAttiva].idCliente || isOrdiniLoading">
+                  <option value="" disabled selected>Seleziona ordine</option>
                   <option *ngIf="isOrdiniLoading" [value]="dettagliSpesa[tabAttiva].codiceOrdine">Caricamento ordini...</option>
                   <option *ngFor="let o of ordiniDisponibili(dettagliSpesa[tabAttiva])" [value]="o.codiceOrdine">{{ o.codiceOrdine }}</option>
                 </select>
@@ -378,6 +427,10 @@
                   [(ngModel)]="dettagliSpesa[tabAttiva].auto" (click)="onAutoDropdownClick()"
                   (focus)="onAutoDropdownClick()">
                   <option value="Modello auto">Modello auto</option>
+                  <option *ngIf="dettagliSpesa[tabAttiva].auto && !isAutoInList(dettagliSpesa[tabAttiva].auto)"
+                    [ngValue]="dettagliSpesa[tabAttiva].auto">
+                    {{ dettagliSpesa[tabAttiva].auto }}
+                  </option>
                   <option *ngIf="isAutomobiliLoading" [ngValue]="dettagliSpesa[tabAttiva].auto">Caricamento
                     automobili...</option>
                   <option *ngIf="!isAutomobiliLoading && !automobili.length" value="Modello auto">Nessuna automobile

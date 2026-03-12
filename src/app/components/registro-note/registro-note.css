@@ -9,6 +9,57 @@
   border: 1px solid #e0e0e0;
 }
 
+.custom-select {
+  border-radius: 10px;
+  border: 1px solid #ced4da;
+  background-color: #f8f9fa;
+  height: 38px;
+  padding: 0.375rem 0.75rem;
+  min-width: 160px;
+}
+.custom-dropdown {
+  position: relative;
+  user-select: none;
+}
+.custom-dropdown-toggle {
+  border: 1px solid #ced4da;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 0.375rem 0.75rem;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.custom-dropdown-menu {
+  list-style: none;
+  margin: 4px 0 0 0;
+  padding: 6px 0;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  max-height: 220px;
+  overflow-y: auto;
+  display: none;
+  z-index: 20;
+}
+.custom-dropdown-menu.show {
+  display: block;
+}
+.custom-dropdown-menu li {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.custom-dropdown-menu li:hover {
+  background-color: #f5f5f5;
+}
+
 .col-grow { flex: 1; }
 
 .label-filter {
@@ -74,6 +125,26 @@
   background: rgba(0, 0, 0, 0.4);
   display: flex; justify-content: center; align-items: center;
   z-index: 3000;
+}
+
+/* Modal stile Note Spese */
+.custom-modal {
+  background: white;
+  width: 95%;
+  max-width: 1200px;
+  max-height: none;
+  overflow: visible;
+  border-radius: 25px;
+  position: relative;
+}
+
+
+/* Keep the edit/nuova nota modal aligned with the larger dettaglio modal size */
+.custom-modal.registro-note-modal {
+  width: 95%;
+  max-width: 1200px;
+  max-height: none;
+  overflow: visible;
 }
 
 /* MODAL CARD */
@@ -230,3 +301,164 @@
 
 .btn-esporta-confirm { background-color: #ff9500; color: white; border-radius: 12px; border: none; }
 .btn-annulla-black { background-color: #1a1a1a; color: white; border-radius: 12px; border: none; }
+.btn-respingi {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.375rem 1.5rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-respingi:hover,
+.btn-respingi:focus,
+.btn-respingi:active {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* DETTAGLIO MODALE (allineato a Note Spese) */
+.modal-card-large {
+  max-width: 1200px;
+  width: 95%;
+  max-height: none;
+  overflow: visible;
+}
+
+/* Riduci spaziature interne nel popup modifica per farlo stare in pagina */
+.custom-modal > .p-4 { padding: 16px !important; }
+.custom-modal .row.g-4 { --bs-gutter-y: 0.6rem; --bs-gutter-x: 0.6rem; }
+.custom-modal .row.g-3 { --bs-gutter-y: 0.5rem; --bs-gutter-x: 0.5rem; }
+.custom-modal .gap-4 { gap: 0.75rem !important; }
+.custom-modal .gap-3 { gap: 0.6rem !important; }
+
+.tab-strip {
+  overflow-x: auto;
+  white-space: nowrap;
+  padding-bottom: 4px;
+}
+
+.tab-strip::-webkit-scrollbar { height: 6px; }
+.tab-strip::-webkit-scrollbar-thumb { background: #d1d1d1; border-radius: 10px; }
+
+.tab-item {
+  font-weight: 700;
+  cursor: pointer;
+  color: #333;
+  padding-bottom: 6px;
+  flex: 0 0 auto;
+}
+
+.tab-item.active {
+  color: #ff9500;
+  border-bottom: 3px solid #ff9500;
+}
+
+.custom-input {
+  border-radius: 10px;
+  border: 1px solid #ced4da;
+  background-color: #f8f9fa;
+  height: 38px;
+  padding: 0.375rem 0.75rem;
+}
+
+.input-mini {
+  height: 34px !important;
+  padding: 6px 10px !important;
+  font-size: 0.9rem !important;
+}
+
+/* Input con paperclip per allegati */
+.input-attach {
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #ced4da;
+  background-color: #f8f9fa;
+}
+.input-attach .input-left { flex: 1 1 auto; }
+.input-attach .input-left .form-control {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 6px 8px !important;
+  height: 34px !important;
+  border-radius: 0 !important;
+}
+.input-attach .input-sep {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  background: transparent;
+  min-width: 46px;
+  justify-content: center;
+  border-left: 1px solid #e6e6e6;
+}
+.input-attach .sep-line { display: none; }
+.btn-clip {
+  border: none;
+  background: transparent;
+  color: #6c757d;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+.btn-clip:hover { color: #333; }
+
+/* Overlay anteprima allegati */
+.attachment-popup-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 11001;
+  pointer-events: auto;
+}
+.attachment-popup {
+  width: 90%;
+  max-width: 680px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+.attachment-preview img { max-height: 420px; display:block; margin:0 auto; }
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Rimuovi freccette (spinner) per input type=number nelle modali */
+.custom-modal input[type="number"]::-webkit-outer-spin-button,
+.custom-modal input[type="number"]::-webkit-inner-spin-button,
+.modal-card input[type="number"]::-webkit-outer-spin-button,
+.modal-card input[type="number"]::-webkit-inner-spin-button,
+.modal-card-large input[type="number"]::-webkit-outer-spin-button,
+.modal-card-large input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.custom-modal input[type="number"],
+.modal-card input[type="number"],
+.modal-card-large input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+.text-only-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.border-end { border-right: 1px solid #dee2e6 !important; }
+.cursor-pointer { cursor: pointer; }

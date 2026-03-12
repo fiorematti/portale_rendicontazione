@@ -26,6 +26,7 @@
 /* BOTTONI CONFERMA */
 .btn-confirm-gray { background-color: #B2B2B2 !important; color: white !important; border: none; }
 .btn-confirm-orange { background-color: #ff9500 !important; color: white !important; border: none; }
+.btn-respingi { background-color: #dc3545 !important; color: white !important; border: none; }
 
 /* Tabella */
 .table thead th {

@@ -63,6 +63,7 @@ export interface DeleteAttivitaResponse {
 @Injectable({ providedIn: 'root' })
 export class AttivitaService {
   private readonly baseUrl = '/api/Attivita/utente';
+  private readonly adminBase = '/api/Attivita/admin';
   constructor(private readonly http: HttpClient) {}
 
   /** Recupera le attività dell'utente per una data specifica */
@@ -90,5 +91,21 @@ export class AttivitaService {
   /** Recupera tutti i luoghi di lavoro disponibili */
   getLocation(): Observable<LuogoApiItem[]> {
     return this.http.get<LuogoApiItem[]>('/api/Luogo/getAllLuoghi');
+  }
+
+  exportExcelMensile(userId: number, year: number, month: string): Observable<Blob> {
+    const params = new HttpParams()
+      .set('userId', userId.toString())
+      .set('year', year.toString())
+      .set('month', month);
+    return this.http.get(`${this.adminBase}/excelMensile`, { params, responseType: 'blob' });
+  }
+
+  exportPdfMensile(userId: number, year: number, month: string): Observable<Blob> {
+    const params = new HttpParams()
+      .set('userId', userId.toString())
+      .set('year', year.toString())
+      .set('month', month);
+    return this.http.get(`${this.adminBase}/pdfMensile`, { params, responseType: 'blob' });
   }
 }

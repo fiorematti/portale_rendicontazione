@@ -43,9 +43,12 @@
         </div>
       </div>
     </div>
-    <div>
+    <div class="d-flex flex-column align-items-end gap-3">
       <button class="btn btn-dark rounded-pill px-4" (click)="apriModal()">
         <i class="bi bi-plus-lg me-2"></i>Aggiungi attività
+      </button>
+      <button class="btn btn-dark rounded-pill px-4" (click)="toggleExportPopup()">
+        <i class="bi bi-box-arrow-up me-2"></i>Esporta
       </button>
     </div>
   </div>
@@ -180,3 +183,44 @@
     </div>
   </div>
 </div>
+
+@if (showExportPopup) {
+  <div class="modal-backdrop-custom">
+    <div class="export-card">
+      <h2 class="fw-bold mb-4">Esporta attività</h2>
+      <div class="row g-3 mb-4">
+        <div class="col-6 text-start">
+          <label class="label-custom d-block">Mese</label>
+          <select class="form-select border-0 custom-input-bg shadow-none" [(ngModel)]="exportMese">
+            <option *ngFor="let m of listaMesi; let i = index" [ngValue]="i">{{ m | uppercase }}</option>
+          </select>
+        </div>
+        <div class="col-6 text-start">
+          <label class="label-custom d-block">Utente</label>
+          <select class="form-select border-0 custom-input-bg shadow-none" [(ngModel)]="exportUtente">
+            <option value="">Nome Utente</option>
+            <option *ngFor="let a of listaAttivita" [value]="a.nominativoCliente">{{ a.nominativoCliente }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="d-flex gap-3 mb-4">
+        <button class="btn btn-format flex-fill py-3 rounded-4 d-flex align-items-center justify-content-center gap-2"
+                [class.selected]="formatoSelezionato === 'PDF'"
+                (click)="selezionaFormato('PDF')">
+          <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i> PDF
+        </button>
+        <button class="btn btn-format flex-fill py-3 rounded-4 d-flex align-items-center justify-content-center gap-2"
+                [class.selected]="formatoSelezionato === 'EXCEL'"
+                (click)="selezionaFormato('EXCEL')">
+          <i class="bi bi-file-earmark-excel-fill text-success fs-4"></i> EXCEL
+        </button>
+      </div>
+
+      <div class="d-flex gap-3 mt-2">
+        <button class="btn btn-annulla-black flex-fill py-3 fw-bold" (click)="toggleExportPopup()">Annulla</button>
+        <button class="btn btn-esporta-confirm flex-fill py-3 fw-bold" (click)="esportaDati()">Esporta</button>
+      </div>
+    </div>
+  </div>
+}

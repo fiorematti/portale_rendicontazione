@@ -8,6 +8,9 @@ import { OrdineApiItem } from '../../dto/ordine.dto';
 import { LuogoApiItem } from '../../dto/luogo.dto';
 import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
 import { creaIntervalloAnni } from '../../shared/utils/date.utils';
+import { AuthService } from '../../auth/auth.service';
+
+type FormatoExport = 'PDF' | 'EXCEL';
 
 /** Rappresenta un giorno nella griglia del calendario */
 interface GiornoCalendario {
@@ -64,6 +67,12 @@ export class Attivita implements OnInit {
   isLoading = false;
   errorMsg = '';
 
+  // Export popup state (allineato a Registro Attività)
+  showExportPopup = false;
+  exportMese: number = new Date().getMonth();
+  exportUtente: string = '';
+  formatoSelezionato: FormatoExport | null = null;
+
   /** Attività in fase di creazione o modifica nel form */
   nuovaAttivita: AttivitaItem = this.creaAttivitaVuota();
   mostraModal = false;
@@ -76,7 +85,8 @@ export class Attivita implements OnInit {
 
   constructor(
     private readonly attivitaService: AttivitaService,
-    private readonly clientiOrdiniService: ClientiOrdiniService
+    private readonly clientiOrdiniService: ClientiOrdiniService,
+    private readonly authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -336,6 +346,61 @@ export class Attivita implements OnInit {
 
   blockNegative(event: KeyboardEvent): void {
     blockNegative(event);
+  }
+
+  toggleExportPopup(): void {
+    this.showExportPopup = !this.showExportPopup;
+    if (!this.showExportPopup) this.formatoSelezionato = null;
+  }
+
+  selezionaFormato(f: FormatoExport): void {
+    this.formatoSelezionato = f;
+  }
+
+  esportaDati(): void {
+    if (!this.formatoSelezionato) {
+      alert('Seleziona il formato PDF o EXCEL per esportare.');
+      return;
+    }
+
+    const userId = Number(this.authService.userSnapshot()?.id || 0);
+    if (!userId) {
+      alert('Impossibile recuperare l\'utente per l\'export.');
+      return;
+    }
+
+    const year = Number(this.annoCorrente) || new Date().getFullYear();
+    const monthNumber = (this.exportMese ?? new Date().getMonth()) + 1;
+    const monthParam = monthNumber < 10 ? `0${monthNumber}` : `${monthNumber}`;
+    const onSuccess = (blob: Blob, extension: string) => {
+      const filename = `Riepilogo_${userId}_${year}_${monthParam}.${extension}`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      this.showExportPopup = false;
+      this.formatoSelezionato = null;
+    };
+
+    if (this.formatoSelezionato === 'EXCEL') {
+      this.attivitaService.exportExcelMensile(userId, year, monthParam).subscribe({
+        next: (blob) => onSuccess(blob, 'xlsx'),
+        error: (err) => {
+          console.error('exportExcelMensile error:', err);
+          alert('Errore durante l\'export in Excel.');
+        }
+      });
+    } else {
+      this.attivitaService.exportPdfMensile(userId, year, monthParam).subscribe({
+        next: (blob) => onSuccess(blob, 'pdf'),
+        error: (err) => {
+          console.error('exportPdfMensile error:', err);
+          alert('Errore durante l\'export in PDF.');
+        }
+      });
+    }
   }
 
   /** Restituisce la data selezionata in formato ISO yyyy-MM-dd */

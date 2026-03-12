@@ -137,6 +137,13 @@ export class NoteSpese implements OnInit, OnDestroy {
   annoFiltro = new Date().getFullYear();
 
 
+  /* --- Stato esportazione --- */
+  showExportPopup = false;
+  exportMese = this.meseFiltro;
+  exportAnno = this.annoFiltro;
+  exportUtente: string = 'Tutti';
+
+
   mostraCalendarioPopup = false;
   dataVisualizzataPopup: Date = new Date();
   giorniDelMesePopup: number[] = [];
@@ -153,6 +160,15 @@ export class NoteSpese implements OnInit, OnDestroy {
   get isAggiungi(): boolean { return this.modalMode === 'aggiungi'; }
   get isVisualizza(): boolean { return this.modalMode === 'visualizza'; }
   get isModifica(): boolean { return this.modalMode === 'modifica'; }
+
+  get utentiExport(): string[] {
+    const set = new Set<string>();
+    this.listaSpese.forEach(s => {
+      const val = (s.richiesto || '').trim();
+      if (val) set.add(val);
+    });
+    return Array.from(set).sort();
+  }
 
 
   constructor(
@@ -177,6 +193,23 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   ngOnDestroy(): void {
+    setBodyScrollLock(false);
+  }
+
+
+  toggleExportPopup(): void {
+    this.showExportPopup = !this.showExportPopup;
+    setBodyScrollLock(this.showExportPopup);
+  }
+
+
+  confermaExport(): void {
+    console.log('[NoteSpese] export richiesta', {
+      meseIndex: this.exportMese,
+      anno: this.exportAnno,
+      utente: this.exportUtente,
+    });
+    this.showExportPopup = false;
     setBodyScrollLock(false);
   }
 
@@ -244,6 +277,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     const telepass = (item as any).telepass ?? (item as any).Telepass ?? 0;
     const km = (item as any).km ?? (item as any).Km ?? 0;
     const idAutoVal = (item as any).idAuto ?? (item as any).IdAuto;
+    const autoNome = (item as any).auto ?? (item as any).Auto ?? (item as any)?.idAutoNavigation?.modello;
     const totale = (item as any).totale ?? (item as any).Totale ?? null;
     const statoApprovazione = (item as any).statoApprovazione ?? (item as any).StatoApprovazione ?? null;
     const costoKmApi = (item as any).costoKm ?? (item as any).costoKilometri ?? (item as any).CostoKilometri ?? null;
@@ -258,7 +292,7 @@ export class NoteSpese implements OnInit, OnDestroy {
       trasporti,
       aereo,
       varie,
-      auto: idAutoVal != null && idAutoVal > 0 ? String(idAutoVal) : 'Modello auto',
+      auto: idAutoVal != null ? String(idAutoVal) : 'Modello auto',
       km,
       parking,
       telepass,
@@ -471,13 +505,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     this.mostraErrore = false;
     this.syncDatePopupFromString();
     this.generaCalendarioPopup();
-    // se i clienti sono già caricati preimposta il primo
-    if (this.clientiLoaded && this.clientiOptions.length) {
-      const first = this.clientiOptions[0];
-      this.dettagliSpesa[0].idCliente = first.idCliente;
-      this.dettagliSpesa[0].nominativoCliente = first.nominativo;
-      this.loadOrdiniByCliente(first.idCliente, this.dettagliSpesa[0]);
-    }
+    // non preimpostare cliente/codice ordine: l'utente sceglie manualmente
   }
 
 
@@ -554,6 +582,35 @@ export class NoteSpese implements OnInit, OnDestroy {
     });
   }
   eliminaDettaglioCorrente(): void {
+    // In modifica, elimina l'intera spesa tramite API
+    if (this.isModifica && this.rigaSelezionata?.id != null) {
+      if (!confirm('Sei sicuro di voler eliminare questa nota spesa?')) return;
+      this.deletingSpesaId = this.rigaSelezionata.id;
+      this.noteSpeseService.deleteSpesa(this.rigaSelezionata.id).subscribe({
+        next: (res) => {
+          const esitoStr = typeof res?.esito === 'string' ? res.esito.toLowerCase() : '';
+          const esitoOk = !res?.esito
+            || esitoStr.includes('riuscita')
+            || esitoStr.includes('completata');
+          if (esitoOk) {
+            const idx = this.listaSpese.findIndex(s => s.id === this.rigaSelezionata?.id);
+            if (idx >= 0) this.listaSpese.splice(idx, 1);
+            this.rebuildFiltroOrdiniOptions();
+            this.chiudiModal();
+          } else {
+            this.salvaErrore = res?.motivazione || 'Eliminazione non riuscita.';
+          }
+        },
+        error: (err) => {
+          console.error('DeleteSpesa error:', err);
+          this.salvaErrore = 'Errore durante l\'eliminazione della spesa.';
+        },
+        complete: () => { this.deletingSpesaId = null; }
+      });
+      return;
+    }
+
+    // Fallback: elimina solo il dettaglio locale (scenario senza id remoto)
     const dett = this.dettagliSpesa[this.tabAttiva];
     this.cleanupAttachmentForDettaglio(dett);
 
@@ -594,8 +651,16 @@ export class NoteSpese implements OnInit, OnDestroy {
 
   /** Restituisce gli ordini disponibili per il cliente del dettaglio corrente */
   ordiniDisponibili(dett: DettaglioSpesa): { codiceOrdine: string; idCliente: number }[] {
-    if (!dett || dett.idCliente == null) return [];
-    return this.ordiniCache[dett.idCliente] || [];
+    if (!dett) return [];
+    const clienteId = dett.idCliente ?? this.rigaSelezionata?.idCliente ?? 0;
+    const ordiniCliente = clienteId && this.ordiniCache[clienteId] ? [...this.ordiniCache[clienteId]] : [];
+    const codesFromCache = ordiniCliente.map(o => o.codiceOrdine);
+    const fallbackCodes = this.filtroOrdiniOptions.filter(c => c && c !== this.filtroDefault);
+    const mergedCodes = [...codesFromCache, dett.codiceOrdine, ...fallbackCodes].filter(Boolean) as string[];
+    const uniqueCodes = Array.from(new Set(mergedCodes));
+    return uniqueCodes
+      .map(codiceOrdine => ({ codiceOrdine, idCliente: clienteId }))
+      .sort((a, b) => a.codiceOrdine.localeCompare(b.codiceOrdine, undefined, { numeric: true }));
   }
 
 
@@ -648,7 +713,7 @@ export class NoteSpese implements OnInit, OnDestroy {
     if (!dett) return;
     const cliente = this.clientiOptions.find(c => c.idCliente === dett.idCliente);
     dett.nominativoCliente = cliente ? cliente.nominativo : null;
-    this.loadOrdiniByCliente(dett.idCliente ?? null, dett);
+    this.loadOrdiniByCliente(dett.idCliente ?? null, dett, this.isAggiungi);
   }
 
   /** Chiamata quando cambia il filtro Cliente nella pagina principale */
@@ -687,17 +752,25 @@ export class NoteSpese implements OnInit, OnDestroy {
   onCodiceChange(dett: DettaglioSpesa, codice: string): void {
     if (!dett) return;
     dett.codiceOrdine = codice;
-    const ordine = this.findOrdineByCodice(codice);
-    if (ordine) {
-      dett.idCliente = ordine.idCliente;
-      const cliente = this.clientiOptions.find(c => c.idCliente === ordine.idCliente);
-      dett.nominativoCliente = cliente ? cliente.nominativo : dett.nominativoCliente;
+    // In aggiungi non modifichiamo il cliente scelto; in modifica/visualizza lo allineiamo all'ordine
+    if (!this.isAggiungi) {
+      const ordine = this.findOrdineByCodice(codice);
+      if (ordine) {
+        dett.idCliente = ordine.idCliente;
+        const cliente = this.clientiOptions.find(c => c.idCliente === ordine.idCliente);
+        dett.nominativoCliente = cliente ? cliente.nominativo : dett.nominativoCliente;
+      }
     }
   }
 
 
   onAutoDropdownClick(): void {
     this.ensureAutomobiliLoaded();
+  }
+
+  isAutoInList(value: string | undefined | null): boolean {
+    if (!value) return false;
+    return this.automobili.some(a => a.idauto.toString() === value);
   }
 
 
@@ -936,7 +1009,8 @@ export class NoteSpese implements OnInit, OnDestroy {
   private rebuildFiltroOrdiniOptions(): void {
     const fromOrdini = (this.ordini || []).map(o => o.codiceOrdine).filter(Boolean);
     const fromCache = Object.values(this.ordiniCache || {}).flat().map(o => o.codiceOrdine).filter(Boolean);
-    const allCodes = Array.from(new Set([...fromOrdini, ...fromCache]));
+    const fromSpese = (this.listaSpese || []).map(s => s.codice).filter(Boolean);
+    const allCodes = Array.from(new Set([...fromOrdini, ...fromCache, ...fromSpese]));
     allCodes.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
     this.filtroOrdiniOptions = [this.filtroDefault, ...allCodes];
     if (!this.filtroOrdiniOptions.includes(this.filtroOrdine)) {
@@ -965,12 +1039,12 @@ export class NoteSpese implements OnInit, OnDestroy {
 
 
   /** Carica gli ordini per un cliente (usa cache se disponibile) */
-  private loadOrdiniByCliente(idCliente: number | null, dett?: DettaglioSpesa): void {
+  private loadOrdiniByCliente(idCliente: number | null, dett?: DettaglioSpesa, skipAutoSelect: boolean = false): void {
     if (idCliente == null) return;
     if (this.ordiniCache[idCliente]) {
       this.ordini = this.ordiniCache[idCliente];
       this.enrichSpeseWithClienti();
-      this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente]);
+      this.ensureCodiceOrdineValid(dett, this.ordiniCache[idCliente], skipAutoSelect);
       return;
     }
     this.isOrdiniLoading = true;
@@ -981,7 +1055,7 @@ export class NoteSpese implements OnInit, OnDestroy {
         this.ordiniCache[idCliente] = ordini;
         this.ordini = ordini;
         this.enrichSpeseWithClienti();
-        this.ensureCodiceOrdineValid(dett, ordini);
+        this.ensureCodiceOrdineValid(dett, ordini, skipAutoSelect);
       },
       error: (err) => {
         console.error('[NoteSpese] getOrdiniByUtenteAndCliente error:', err);
@@ -992,8 +1066,9 @@ export class NoteSpese implements OnInit, OnDestroy {
   }
 
 
-  private ensureCodiceOrdineValid(dett: DettaglioSpesa | undefined, ordini: OrdineApiItem[]): void {
+  private ensureCodiceOrdineValid(dett: DettaglioSpesa | undefined, ordini: OrdineApiItem[], skipAutoSelect: boolean = false): void {
     if (!dett) return;
+    if (skipAutoSelect) return;
     const valido = ordini.some(o => o.codiceOrdine === dett.codiceOrdine);
     if (!valido) dett.codiceOrdine = ordini[0]?.codiceOrdine || '';
   }
