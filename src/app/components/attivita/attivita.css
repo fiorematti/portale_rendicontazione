@@ -11,6 +11,10 @@
 }
 
 .btn-dark { background-color: #1a1a1a; }
+.btn-annulla-black { background-color: #1a1a1a; color: white; border-radius: 12px; border: none; }
+.btn-esporta-confirm { background-color: #ff9500; color: white; border-radius: 12px; border: none; }
+.btn-format { background-color: #f2f2f2; border-radius: 15px; transition: all 0.2s; border: 1px solid transparent; }
+.btn-format.selected { background-color: #d0d0d0 !important; border: 1px solid #999 !important; }
 
 .main-content {
     background-color: white !important;
@@ -102,6 +106,30 @@
     justify-content: center;
     align-items: center;
     z-index: 9999;
+}
+
+/* Export popup */
+.modal-backdrop-custom {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.export-card {
+    background-color: #ffffff;
+    border-radius: 30px;
+    padding: 2.5rem;
+    width: 450px;
+    max-width: 90%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    text-align: center;
 }
 
 .modal-card {
