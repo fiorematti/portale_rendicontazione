@@ -1,34 +1,46 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { generateCalendarDays, navigateMonth, formatSelectedDay, isDaySelected, MONTH_NAMES_IT } from '../../shared/utils/calendar.utils';
 import { sanitizeDateInput, formatDateIt } from '../../shared/utils/date.utils';
 
 type FormatoExport = 'PDF' | 'EXCEL';
 type StatoConvalidaFiltro = '' | 'convalidato' | 'da-convalidare';
 
+interface AttivitaApi {
+  idAttivita: number;
+  name: string;
+  codiceOrdine: string;
+  nominativoCliente: string;
+  stato_Approvazione: string;
+  location: string;
+  ore: number;
+  dataAttivita: string;
+}
+
 interface Attivita {
+  id: number;
   nome: string;
   cognome: string;
+  codiceOrdine: string;
+  cliente: string;
+  statoApprovazione: string;
+  location: string;
+  ore: number;
   data: string; // yyyy-mm-dd
-  location: 'In sede' | 'Trasferta';
   convalidato: boolean;
 }
 
 @Component({
   selector: 'app-registro-attivita',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './registro-attivita.html',
   styleUrl: './registro-attivita.css',
 })
-export class RegistroAttivitaComponent {
-  elencoAttivita: Attivita[] = [
-    { nome: 'Giovanni', cognome: 'Bianchi', data: '2025-09-14', location: 'In sede', convalidato: false },
-    { nome: 'Lorenzo', cognome: 'Ostuni', data: '2025-09-14', location: 'Trasferta', convalidato: false },
-    { nome: 'Luca', cognome: 'Gini', data: '2025-09-14', location: 'In sede', convalidato: false },
-    { nome: 'Giulia', cognome: 'Lilla', data: '2025-09-14', location: 'Trasferta', convalidato: false },
-  ];
+export class RegistroAttivitaComponent implements OnInit {
+  elencoAttivita: Attivita[] = [];
 
   filtroTesto: string = '';
   filtroData: string = '';
@@ -46,8 +58,19 @@ export class RegistroAttivitaComponent {
   calendarDays: (number | null)[] = [];
   monthNames = MONTH_NAMES_IT;
 
-  constructor() {
+  isLoading = false;
+  loadError: string | null = null;
+  isValidating = false;
+  validaError: string | null = null;
+  isRejecting = false;
+  rejectError: string | null = null;
+
+  constructor(private readonly http: HttpClient) {
     this.generateCalendar();
+  }
+
+  ngOnInit(): void {
+    this.loadAttivita();
   }
 
   toggleExportPopup(): void {
@@ -85,6 +108,7 @@ export class RegistroAttivitaComponent {
 
   onDataInput(event: any): void {
     this.filtroData = sanitizeDateInput(event.target.value);
+    this.loadAttivita();
   }
 
   toggleCalendar(): void {
@@ -116,6 +140,7 @@ export class RegistroAttivitaComponent {
     if (!day) return;
     this.filtroData = formatSelectedDay(day, this.currentMonth, this.currentYear);
     this.showCalendar = false;
+    this.loadAttivita();
   }
 
   isSelected(day: number | null): boolean {
@@ -128,10 +153,108 @@ export class RegistroAttivitaComponent {
   }
 
   confermaConvalide(): void {
-    const count = this.countSelezionati;
-    if (count > 0) {
-      alert(`Hai convalidato con successo ${count} attività.`);
+    const ids = this.elencoAttivita.filter(a => a.convalidato).map(a => a.id);
+    if (!ids.length || this.isValidating) return;
+
+    this.isValidating = true;
+    this.validaError = null;
+
+    this.http.put('/api/Attivita/admin/validaAttivita', ids, { observe: 'response' }).subscribe({
+      next: (res) => {
+        const ok = res.status >= 200 && res.status < 300;
+        if (ok) {
+          this.loadAttivita();
+        } else {
+          this.validaError = 'Validazione non riuscita.';
+        }
+      },
+      error: (err: HttpErrorResponse) => {
+        console.error('[RegistroAttivita] validaAttivita error', err);
+        this.validaError = 'Errore durante la validazione.';
+      },
+      complete: () => {
+        this.isValidating = false;
+      }
+    });
+  }
+
+  respingiConvalide(): void {
+    const ids = this.elencoAttivita.filter(a => a.convalidato).map(a => a.id);
+    if (!ids.length || this.isRejecting) return;
+
+    this.isRejecting = true;
+    this.rejectError = null;
+
+    this.http.put('/api/Attivita/admin/rifiutaAttivita', ids, { observe: 'response' }).subscribe({
+      next: (res) => {
+        const ok = res.status >= 200 && res.status < 300;
+        if (ok) {
+          this.loadAttivita();
+        } else {
+          this.rejectError = 'Rifiuto non riuscito.';
+        }
+      },
+      error: (err: HttpErrorResponse) => {
+        console.error('[RegistroAttivita] rifiutaAttivita error', err);
+        this.rejectError = 'Errore durante il rifiuto delle attività.';
+      },
+      complete: () => {
+        this.isRejecting = false;
+      }
+    });
+  }
+
+  loadAttivita(): void {
+    this.isLoading = true;
+    this.loadError = null;
+    const dataParam = this.buildDateParam(this.filtroData);
+
+    this.http.get<AttivitaApi[]>('/api/Attivita/admin/getAllAttivita', {
+      params: { data: dataParam }
+    }).subscribe({
+      next: (res) => {
+        this.elencoAttivita = (res || []).map(a => this.mapApiToAttivita(a));
+      },
+      error: (err: HttpErrorResponse) => {
+        console.error('[RegistroAttivita] loadAttivita error', err);
+        this.loadError = 'Errore nel caricamento delle attività.';
+      },
+      complete: () => {
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private mapApiToAttivita(api: AttivitaApi): Attivita {
+    const fullName = (api.name || '').trim();
+    const [nome, ...rest] = fullName.split(' ');
+    const cognome = rest.join(' ').trim();
+    const stato = api.stato_Approvazione || '';
+    const convalidato = stato.toLowerCase().includes('valid');
+
+    return {
+      id: api.idAttivita,
+      nome: nome || fullName,
+      cognome,
+      codiceOrdine: api.codiceOrdine,
+      cliente: api.nominativoCliente,
+      statoApprovazione: stato,
+      location: api.location,
+      ore: api.ore,
+      data: api.dataAttivita,
+      convalidato,
+    };
+  }
+
+  private buildDateParam(value: string): string {
+    const todayIso = new Date().toISOString().split('T')[0];
+    if (!value) return todayIso;
+    const parts = value.split('/');
+    if (parts.length === 3) {
+      const [d, m, y] = parts;
+      return `${y}-${m}-${d}`;
     }
+    return todayIso;
   }
 
   private matchesConvalida(value: boolean, filtro: StatoConvalidaFiltro): boolean {
