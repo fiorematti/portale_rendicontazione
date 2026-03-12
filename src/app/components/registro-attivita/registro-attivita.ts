@@ -32,6 +32,12 @@ interface Attivita {
   convalidato: boolean;
 }
 
+interface UtenteExport {
+  id: number;
+  nome: string;
+  cognome: string;
+}
+
 @Component({
   selector: 'app-registro-attivita',
   standalone: true,
@@ -48,9 +54,25 @@ export class RegistroAttivitaComponent implements OnInit {
   filtroLocation: string = '';
 
   showExportPopup = false;
-  exportMese: string = 'AUG';
-  exportUtente: string = '';
+  exportMese: string = this.buildMonthValue(new Date().getMonth());
+  exportUtente: number | null = null;
   formatoSelezionato: FormatoExport | null = null;
+  utentiExport: UtenteExport[] = [];
+  utentiLoaded = false;
+  readonly exportMonths = [
+    { label: 'Gen', value: '01' },
+    { label: 'Feb', value: '02' },
+    { label: 'Mar', value: '03' },
+    { label: 'Apr', value: '04' },
+    { label: 'Mag', value: '05' },
+    { label: 'Giu', value: '06' },
+    { label: 'Lug', value: '07' },
+    { label: 'Ago', value: '08' },
+    { label: 'Set', value: '09' },
+    { label: 'Ott', value: '10' },
+    { label: 'Nov', value: '11' },
+    { label: 'Dic', value: '12' },
+  ];
 
   showCalendar = false;
   currentMonth = new Date().getMonth();
@@ -78,17 +100,70 @@ export class RegistroAttivitaComponent implements OnInit {
     if (!this.showExportPopup) this.formatoSelezionato = null;
   }
 
+  loadUtentiExport(): void {
+    if (this.utentiLoaded) return;
+    this.http.get<any[]>('/api/Utente/admin/getAllUtenti').subscribe({
+      next: (res) => {
+        this.utentiExport = (res || []).map(u => ({
+          id: u.idUtente,
+          nome: u.nome,
+          cognome: u.cognome,
+        }));
+        this.utentiLoaded = true;
+      },
+      error: (err: HttpErrorResponse) => {
+        console.error('[RegistroAttivita] getAllUtenti error', err);
+      }
+    });
+  }
+
   selezionaFormato(f: FormatoExport): void {
     this.formatoSelezionato = f;
   }
 
   esportaDati(): void {
     if (!this.formatoSelezionato) {
-      alert("Seleziona PDF o EXCEL");
+      alert('Seleziona PDF o EXCEL');
       return;
     }
-    alert("Esportazione avviata!");
-    this.showExportPopup = false;
+
+    const userId = Number(this.exportUtente || 0);
+    if (!userId) {
+      alert('Seleziona un utente per esportare.');
+      return;
+    }
+
+    const year = this.currentYear || new Date().getFullYear();
+    const monthParam = this.exportMese || this.buildMonthValue(new Date().getMonth());
+    const endpoint = this.formatoSelezionato === 'PDF'
+      ? '/api/Attivita/admin/pdfMensile'
+      : '/api/Attivita/admin/excelMensile';
+    const estensione = this.formatoSelezionato === 'PDF' ? 'pdf' : 'xlsx';
+
+    this.http.get(endpoint, {
+      params: {
+        userId: userId.toString(),
+        year: year.toString(),
+        month: monthParam,
+      },
+      responseType: 'blob'
+    }).subscribe({
+      next: (blob: Blob) => {
+        const filename = `Riepilogo_${userId}_${year}_${monthParam}.${estensione}`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.showExportPopup = false;
+        this.formatoSelezionato = null;
+      },
+      error: (err: HttpErrorResponse) => {
+        console.error('[RegistroAttivita] export error', err);
+        alert('Errore durante l\'export.');
+      }
+    });
   }
 
   get countSelezionati(): number {
@@ -261,5 +336,10 @@ export class RegistroAttivitaComponent implements OnInit {
     if (filtro === 'convalidato') return value === true;
     if (filtro === 'da-convalidare') return value === false;
     return true;
+  }
+
+  private buildMonthValue(index: number): string {
+    const m = index + 1;
+    return m < 10 ? `0${m}` : `${m}`;
   }
 }

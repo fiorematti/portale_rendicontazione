@@ -151,16 +151,17 @@
           <div class="col-6">
             <label class="label-custom text-start d-block">Mese</label>
             <select [(ngModel)]="exportMese" class="form-select border-0 custom-input-bg shadow-none">
-              <option value="AUG">AUG</option>
-              <option value="SET">SET</option>
+              @for (m of exportMonths; track m.value) {
+                <option [value]="m.value">{{ m.label | uppercase }}</option>
+              }
             </select>
           </div>
           <div class="col-6">
             <label class="label-custom text-start d-block">Utente</label>
-            <select [(ngModel)]="exportUtente" class="form-select border-0 custom-input-bg shadow-none">
-              <option value="">Nome Utente</option>
-              @for (a of elencoAttivita; track $index) {
-                <option [value]="a.nome">{{ a.nome }} {{ a.cognome }}</option>
+            <select [(ngModel)]="exportUtente" class="form-select border-0 custom-input-bg shadow-none" (click)="loadUtentiExport()">
+              <option [ngValue]="null">Nome Utente</option>
+              @for (u of utentiExport; track u.id) {
+                <option [ngValue]="u.id">{{ u.nome }} {{ u.cognome }}</option>
               }
             </select>
           </div>
