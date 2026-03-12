@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, NgFor, NgIf } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AttivitaService, AttivitaItem, AddAttivitaPayload, UpdateAttivitaPayload } from './attivitaservice';
 import { ClientiOrdiniService } from '../../shared/services/clienti-ordini.service';
@@ -9,8 +9,8 @@ import { LuogoApiItem } from '../../dto/luogo.dto';
 import { clampNonNegative, blockNegative } from '../../shared/utils/input.utils';
 import { creaIntervalloAnni } from '../../shared/utils/date.utils';
 import { AuthService } from '../../auth/auth.service';
-
-type FormatoExport = 'PDF' | 'EXCEL';
+import { FormatoExport } from '../../shared/models/export.model';
+import { downloadBlob } from '../../shared/utils/file-download.utils';
 
 /** Rappresenta un giorno nella griglia del calendario */
 interface GiornoCalendario {
@@ -21,7 +21,7 @@ interface GiornoCalendario {
 @Component({
   selector: 'app-attivita',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIf, NgFor],
+  imports: [CommonModule, FormsModule],
   templateUrl: './attivita.html',
   styleUrls: ['./attivita.css'],
 })
@@ -205,7 +205,6 @@ export class Attivita implements OnInit {
 
     const payload = this.buildUpdatePayload();
     const dataAttivita = payload.dataAttivita;
-    console.log('Modifica Attività - Payload:', payload);
     this.isLoading = true;
     this.errorMsg = '';
     this.attivitaService.updateAttivita(payload).subscribe({
@@ -374,12 +373,7 @@ export class Attivita implements OnInit {
     const monthParam = monthNumber < 10 ? `0${monthNumber}` : `${monthNumber}`;
     const onSuccess = (blob: Blob, extension: string) => {
       const filename = `Riepilogo_${userId}_${year}_${monthParam}.${extension}`;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, filename);
       this.showExportPopup = false;
       this.formatoSelezionato = null;
     };
