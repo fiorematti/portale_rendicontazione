@@ -300,32 +300,52 @@ Questa transizione ha cambiato anche il modo di scrivere: meno frasi accademiche
 ### 12.1 Il perché di un portale unico
 Un portale di rendicontazione è nato per ridurre il rumore: meno mail con allegati, meno versioni di file che si perdono, meno “chi ha toccato cosa”. L’idea discorsiva dietro è semplice: se l’inserimento delle ore e delle spese è un gesto quotidiano, deve essere quasi invisibile. Come prendere un caffè: apri, compili, chiudi. Niente cerimonie, niente frasi pompose. Questo approccio informale ha creato empatia con chi non ama i gestionali: “entra, fai quello che ti serve, esci con la sensazione di aver sistemato tutto”.
 
+Più si parlava con le persone, più emergeva che il valore stava nel togliere ansia: sapere dove sono i dati, avere conferme chiare, non dover rincorrere un foglio stampato. Il portale è stato raccontato come un tavolo ordinato dove appoggi ore e scontrini e li ritrovi intatti. Ogni scelta tecnica è stata filtrata con questa lente: se non toglie confusione, non serve.
+
 ### 12.2 Raccontare Syncpoint con parole semplici
 Syncpoint vive di infrastrutture serie, ma le storie che girano in corridoio sono quelle di notti passate a ripristinare un servizio o di un firewall che ha deciso di fare i capricci durante una demo. Inserire il portale in questa realtà ha significato usare la stessa lingua: chiamare le cose col loro nome, spiegare perché un campo è obbligatorio con esempi reali (“se non metti il cliente, a fine mese non sappiamo a chi fatturare quella giornata”). Questo tono ha reso il progetto vicino, come una chiacchierata tra colleghi.
+
+Quando un requisito sembrava astratto, si riportava a episodi vissuti: “ricordi quella volta che non trovavamo il codice ordine? Ecco, qui lo mettiamo in alto così non succede più”. Questo modo di parlare ha tenuto il team sul binario giusto, senza deviazioni fuori tema. Ogni slide o documento interno evitava acronimi inutili e puntava a frasi brevi, quasi da messaggio chat.
 
 ### 12.3 Il lavoro di squadra in versione narrativa
 Il team non è mai stato una somma di specialisti isolati. Ogni bug segnalato da chi lavorava sul back-end diventava un micro-racconto da condividere col front-end: “quando chiami questa API, se non mandi il token giusto, il server ti risponde male, quindi avvisa l’utente in modo civile”. Ogni componente UI che veniva ripulito veniva mostrato al designer come si mostrerebbe una stanza appena riordinata. Questo modo di raccontare le cose ha tenuto alta la collaborazione e bassa la tensione.
 
+Anche le retro giornaliere erano più simili a “com’è andata oggi?” che a verbali formali. Si celebravano i piccoli fix (“abbiamo tolto due click inutili”) e si segnavano i nodi grossi con parole semplici (“qui serve aiuto backend”). Questa leggerezza ha tenuto il gruppo concentrato sul prodotto senza trasformare ogni confronto in una riunione pesante.
+
 ### 12.4 Onboarding come storia di sopravvivenza
 Arrivare e orientarsi è stato come aprire una nuova serie TV: bisogna capire chi sono i personaggi, quali sono le trame principali, quali gli episodi filler da evitare. Le checklist di setup erano il “riassunto delle puntate precedenti”: cosa installare, cosa configurare, come lanciare l’ambiente. Lavorare con questa mentalità narrativa ha aiutato a non perdersi nei dettagli e a restare aderenti al tema portante: mettere in piedi un ambiente che permette di lavorare sulle ore e sulle spese senza impazzire.
+
+Ogni nuova persona riceveva anche consigli pratici: “fai subito una build per vedere se tutto gira”, “apri le note spese in modalità admin e user per capire i due mondi”. Questi appunti erano scritti come se li stessi lasciando a un amico, con emoji verbali e tono colloquiale. Il risultato è stato un onboarding veloce e meno stressante.
 
 ### 12.5 Formazione continua, ma senza fronzoli
 Studiare Angular 20 e Signals è stato come imparare nuovi passi di danza: all’inizio impacciato, poi sempre più fluido. Ogni esercizio pratico diventava un pezzetto di coreografia che sarebbe stato utile in produzione. Quando qualcosa non funzionava, invece di arrabbiarmi con il framework, annotavo “cosa non rifarei” e lo trasformavo in un consiglio per il me del futuro. Questo ha mantenuto il racconto concreto e sul pezzo.
 
+Le lezioni più utili finivano in brevi note vocali o snippet condivisi nel canale del team: “se devi fare questo, occhio a quell’opzione”, “non dimenticare il debounce sul filtro”. Non erano manuali, erano promemoria amichevoli che hanno reso la curva di apprendimento meno ripida e più conversazionale.
+
 ### 12.6 SAL come episodi settimanali
 Ogni SAL era una puntata con cliffhanger. Si mostrava cosa era successo, si lasciavano un paio di domande in sospeso da risolvere nel prossimo episodio, si chiudeva con un “to be continued” sul task principale. Questo ha dato ritmo e ha tenuto tutti sul tema centrale. Nessuno voleva che la puntata fosse noiosa, quindi si portavano demo vere e numeri che parlavano. L’informalità ha tolto la paura del giudizio: si poteva dire “questo non è andato come speravo, ma so già cosa provare”.
+
+Spesso i SAL finivano con una mini-lista di azioni “subito dopo pranzo”: due fix veloci, un controllo log, una chiamata con chi aveva segnalato un bug. Il giorno seguente si apriva la chat con “ieri abbiamo chiuso questo, oggi attacchiamo quello”. Questa continuità ha fatto percepire il progetto come un flusso unico e non come task isolati.
 
 ### 12.7 GitHub come diario di viaggio
 Le PR sono diventate pagine di diario: cosa ho fatto, perché, come l’ho testato. I commit erano note a margine per ricordare la strada. Questo stile narrativo ha reso più facile per gli altri seguire il filo e per me ritrovare il senso di scelte prese settimane prima. Niente romanzi, ma appunti chiari e in tema, sempre centrati su come migliorare l’esperienza di rendicontazione.
 
+Anche le descrizioni delle issue erano scritte con tono diretto: “cosa vedi”, “cosa ti aspetti”, “come lo risolviamo”. Questo ha evitato equivoci e ha reso le review più rapide. Ogni volta che una PR veniva approvata, si lasciava un breve commento di ringraziamento o di nota utile per il futuro, mantenendo un clima cordiale.
+
 ### 12.8 Dal mockup alla realtà con prove di strada
 Mettere i mockup davanti agli utenti è stato come far assaggiare un piatto mentre è ancora in cottura: meglio scoprire subito se manca sale. Ogni prova generava una lista di “aggiungi qui”, “togli là”, “questo pulsante non si vede”. Raccontare i cambiamenti con esempi (“guarda, ora il totale mese è in alto, così non lo cerchi”) ha reso le correzioni comprensibili e non arbitrarie.
+
+Quando un feedback arrivava tardi, si cercava comunque di inserirlo nel ciclo successivo, spiegando perché magari non finiva subito in produzione. Questo dialogo aperto ha tenuto alta la fiducia: gli utenti vedevano le loro richieste trasformarsi in piccoli miglioramenti, anche se diluiti nel tempo.
 
 ### 12.9 Angular 20 senza mitologia
 Invece di venerare il framework, lo si è trattato come un utensile: utile, potente, ma pur sempre uno strumento. Le spiegazioni restavano terra a terra: “Signals ti evita la giungla di subscribe”, “Standalone significa meno moduli e meno confusione”. Questo modo di parlarne ha aiutato anche chi non era tecnico a capire perché certe scelte erano state fatte e perché era importante rispettare certe convenzioni.
 
+Si sono evitati discorsi da conferenza e si è preferito il tono da “ti faccio vedere al volo”: apri il file, guarda la differenza tra prima e dopo, prova a cambiarlo tu. Questo approccio ha creato sicurezza anche nei meno esperti, che si sono sentiti legittimati a toccare il codice senza paura di rompere tutto.
+
 ### 12.10 SSO e sicurezza raccontate facile
 Spiegare OAuth2 e SSO in modo discorsivo è stato fondamentale: “vai fuori un attimo, ti riconoscono, torni con un pass valido”. I token scadono? “È come avere un biglietto che dopo un po’ non vale più, te ne diamo uno nuovo in silenzio, e se proprio non riusciamo te lo chiediamo apertamente.” Questo approccio ha rassicurato gli utenti e ha evitato la sensazione di essere in balia di meccanismi oscuri.
+
+Quando arrivavano dubbi su permessi e ruoli, li si risolveva mostrando un caso reale: “se entri come admin vedi anche questo, se sei user no, prova a fare switch e guarda le differenze”. La chiarezza pratica ha evitato ticket di supporto e ha reso l’argomento sicurezza meno arcigno e più quotidiano.
 
 ### 12.11 Struttura del workspace come mappa del tesoro
 Organizzare il progetto per feature è stato come disegnare una mappa con luoghi chiari: qui il core, qui i pezzi condivisi, qui le stanze dove si lavora su attività e spese. Ogni nuova persona riceveva questa mappa con una breve legenda, in tono informale: “se devi cambiare un testo di errore comune, passa da core; se ti serve un bottone già pronto, guarda in shared”. Così si restava sul tema e si evitavano smarrimenti.
@@ -361,33 +381,53 @@ Le conclusioni non sono mai state una chiusura, ma un “continuiamo”. L’ide
 ### 13.1 Inserire le ore senza stress
 Apri la sezione Attività, scegli il giorno, indica cliente e codice ordine. Se superi il limite giornaliero, l’app te lo dice con calma e ti suggerisce di spostare parte delle ore. Nessun gergo, solo indicazioni pratiche. Se ti dimentichi di salvare e provi a uscire, un avviso amichevole ti ricorda di non perdere il lavoro.
 
+Un trucco che molti usano: compilare prima i campi “sicuri” (data, cliente) e poi gli orari, così il salvataggio veloce si porta dietro tutto. Se lavori su più progetti nello stesso giorno, segnati le note nel campo descrizione con parole semplici (“mattina cliente X, pomeriggio ambiente Y”) per ritrovarle al volo a fine mese.
+
 ### 13.2 Aggiungere una nota spesa come se fossi al bar
 Vai su Note Spese, carica la foto dello scontrino, scegli la categoria (vitto, hotel, trasporti, auto). L’app normalizza l’importo e ti mostra subito il totale richiesto. Se sbagli formato, ti avverte prima di inviare. Tutto spiegato con testi brevi e diretti.
+
+Se hai più ricevute simili, usa le note per distinguere (“cena lunedì”, “pranzo martedì”). Carica gli scontrini appena li hai: meno rischio di perderli e il totale si aggiorna in tempo reale. Se la foto è storta, non serve rifarla: l’importante è che si legga, e l’app ti dice se va bene.
 
 ### 13.3 Usare i filtri senza impazzire
 Filtri rapidi per cliente, mese, stato di pagamento. Mentre digiti, i risultati si aggiornano. Se non trovi nulla, un messaggio ti invita a togliere un filtro. Nessun termine oscuro, solo istruzioni chiare: “prova a cercare meno”.
 
+Quando cerchi anomalie, prova combinazioni semplici: prima il mese, poi il cliente, poi semmai lo stato. Se i risultati sono troppi, restringi; se sono zero, allarga. È come cercare qualcosa in un cassetto: togli quello che non serve e lascia il resto.
+
 ### 13.4 Gestire clienti e ordini con poche mosse
 In area Admin puoi creare, modificare o chiudere ordini. I form ti guidano con esempi (“Codice ordine: es. SPX-2024-001”). Quando chiudi un ordine, l’utente operativo smette di vederlo, così non lo usa per errore. Tutto accompagnato da note brevi sul perché.
+
+Se devi aggiornare molti ordini, procedi a blocchi: prima verifica i dati base (codice, cliente), poi gli stati. Dopo ogni gruppo, fai un rapido controllo filtrando in lista: ti evita di tornare indietro dieci volte. Ricorda di lasciare una descrizione sintetica quando chiudi un ordine: aiuterà chi se lo ritrova sparito dall’elenco.
 
 ### 13.5 Tenere d’occhio la flotta auto
 Le schede auto mostrano targa, modello, parametri di costo. Se cambi una tariffa, viene applicata alle nuove note spese. Nessun passaggio nascosto: ogni campo ha un piccolo testo che spiega a cosa serve e come impatta i rimborsi.
 
+Prima di modificare una tariffa, segna il valore attuale in una nota interna: se qualcosa non torna, puoi ripristinarlo. Se noti che una stessa auto compare spesso con spese anomale, fai un rapido export e guarda gli intervalli di utilizzo: a volte emergono pattern utili per migliorare le regole.
+
 ### 13.6 Fare una release senza tremare
 Prima di rilasciare: build, controllo warning, nota di rilascio. Se qualcosa va storto, c’è un piano di rollback. Il messaggio al team spiega in modo colloquiale cosa è cambiato e cosa provare. L’obiettivo è mantenere tutti sereni.
+
+Un post di due righe nel canale giusto evita valanghe di domande: “Nuova versione online: controllate note spese e filtri attività, se vedete qualcosa di strano scrivete qui.” È il modo più semplice per avere feedback rapido e tenere sotto controllo le aree toccate.
 
 ## Capitolo 14: Storie dal campo (più dettagliate)
 ### 14.1 Il giorno del token scaduto
 Un lunedì mattina piovoso, metà team riceveva errori strani. Si è scoperto che i token erano scaduti dopo un tempo di inattività e l’intercettore non li rinnovava in un caso limite. Una volta riprodotto il problema, si è aggiunta una gestione esplicita con messaggio chiaro. La morale: controllare sempre i percorsi meno battuti.
 
+Quell’episodio ha anche insegnato a tenere log mirati per i flussi di autenticazione, così da capire in pochi secondi dove si è rotto il giro. Da allora, ogni volta che si tocca l’autenticazione, si fa un mini test con rete ballerina per non farsi sorprendere.
+
 ### 14.2 L’importo con il simbolo nel mezzo
 Un utente copiava e incollava importi da una mail con il simbolo euro in mezzo ai numeri. Il parser andava in crisi. Si è scritto un normalizzatore che pulisce tutto prima di sommare. È stato raccontato in release note come “il portale ora sa fare pulizia anche tra importi strani”.
+
+La lezione è stata di non dare mai per scontato il formato dei dati inseriti a mano. Ogni volta che un campo accetta testo libero, si aggiunge una sanificazione leggera e un messaggio amichevole per spiegare cosa ci si aspetta.
 
 ### 14.3 Il filtro che non filtrava
 Un filtro per stato rimaneva appeso perché il debounce era troppo aggressivo. Durante un SAL si è visto in diretta: digitavi e non succedeva nulla per qualche secondo. È bastato ritarare il tempo e dare feedback immediato (“sto cercando...”). Piccolo fix, grande sollievo.
 
+Da allora, ogni nuovo filtro viene testato in modalità “dattilografo veloce” e “cliccatore impaziente”. Se regge a entrambi, è pronto per l’uso quotidiano. La regola è: meglio una UI che reagisce subito, anche se i dati arrivano un attimo dopo, che una UI silenziosa che lascia nel dubbio.
+
 ### 14.4 Il ruolo fantasma
 Un admin temporaneo doveva validare spese ma non aveva permessi di modifica. Invece di creare un ruolo complesso, si è optato per un toggle lato backend con messaggio chiaro sul front-end. Raccontato al team come “mettiamo una luce verde temporanea, poi la spegniamo”.
+
+Quel caso ha portato a una checklist per le eccezioni: durata, ambito, messaggio all’utente. Così si evita di lasciare aperture dimenticate e si tiene traccia di chi può fare cosa, per quanto tempo, e perché.
 
 ## Capitolo 15: Domande ultra-frequenti (ancora più discorsive)
 - **Posso lavorare da mobile?**  
@@ -398,6 +438,8 @@ Un admin temporaneo doveva validare spese ma non aveva permessi di modifica. Inv
   Badge verde: pagata. Rosso: da pagare. Niente leggende complicate.
 - **Cosa succede se chiudo la scheda senza salvare?**  
   Ti avvisiamo. Se insisti, perdi le modifiche, ma cerchiamo di avvisarti prima.
+- **Chi contatto se qualcosa non va?**  
+  C’è un canale dedicato: allega screenshot e orario. Più dettagli dai, più veloce la soluzione.
 
 ## Capitolo 16: Roadmap raccontata al caffè
 Prossimi passi discussi con tono leggero ma intenzioni serie:
@@ -407,6 +449,8 @@ Prossimi passi discussi con tono leggero ma intenzioni serie:
 - Miglioramento accessibilità con contrasto alto e scorciatoie tastiera.
 
 Ogni punto sarà affrontato con la stessa ricetta: linguaggio chiaro, prove rapide, feedback continuo. Niente voli pindarici, solo passi concreti per rendere ore e spese ancora più facili da gestire.
+
+La roadmap non è una profezia, è una lista che evolve con i feedback. Se un punto diventa urgente (es. notifiche), sale di priorità; se un’idea perde senso, scivola giù. Questa elasticità è dichiarata apertamente per evitare aspettative sbagliate.
 
 ## Capitolo 17: Retroscena tecnici in tono leggero
 ### 17.1 Intercettori e retry
@@ -420,6 +464,8 @@ Invece di bloccare con messaggi duri, si è scelto di avvisare e suggerire. Se u
 
 ### 17.4 Performance percepite
 Non potendo sempre ridurre il peso dei bundle oltre i budget warning ereditati, ci si è concentrati sulla percezione: skeleton loader al posto di pagine vuote, messaggi “ci siamo quasi” per i caricamenti più lenti, e cache ragionata per le liste stabili. Così l’utente percepisce un’app sveglia anche quando dietro si lavora di più.
+
+Ogni volta che un’azione richiede più di qualche secondo, si mostra un segnale visivo e, se serve, un testo breve (“stiamo preparando i dati”). Questo evita clic ripetuti e la sensazione di blocco. Le micro-ottimizzazioni non sempre si vedono nei numeri, ma si sentono nell’esperienza.
 
 ## Capitolo 18: Guida pratica per i tester interni
 ### 18.1 Prima del test
@@ -436,6 +482,7 @@ Apri un ticket o un messaggio nel canale dedicato, includi screenshot e, se puoi
 - Cambio ruolo tra user e admin nella stessa sessione.
 - Filtri combinati su registro attività con date strane (inizio > fine).
 - Logout e login con rete instabile.
+- Interruzioni improvvise del browser durante un salvataggio: verificare che i dati non vadano persi.
 
 ## Capitolo 19: Micro-glossario informale
 - **Badge**: l’etichetta colorata che ti dice se qualcosa è pagato o no. Verde bene, rosso da pagare.
@@ -444,6 +491,7 @@ Apri un ticket o un messaggio nel canale dedicato, includi screenshot e, se puoi
 - **Loader**: l’animazione che ti dice “aspetta un attimo, sto lavorando”.
 - **Mock API**: finti server usati per provare flussi quando il vero backend dorme.
 - **Debounce**: il “non ti agitare” dei filtri: aspetta un attimo prima di cercare mentre scrivi.
+- **Rollback**: il tasto “torna indietro” delle release, per rimettere online la versione precedente se serve.
 
 ## Capitolo 20: Checklist operative (in salsa colloquiale)
 - Prima di iniziare a sviluppare una feature, chiediti: chi la userà domani mattina e perché?
@@ -451,10 +499,13 @@ Apri un ticket o un messaggio nel canale dedicato, includi screenshot e, se puoi
 - Se un errore può capitare, preparagli un messaggio umano.
 - Ogni PR: cosa ho fatto, come l’ho testato, cosa potrebbe rompersi.
 - Ogni release: cosa provare per primo, chi avvisare, come tornare indietro.
+- Ogni demo: prepara dati realistici, così i commenti saranno utili e non teorici.
 
 ## Capitolo 21: Mini-guide per ruoli specifici
 ### 21.1 Per i consulenti in trasferta
 Scatta la foto dello scontrino appena lo ricevi e caricala subito: così non la perdi. Se non hai rete, annota l’importo e carica più tardi, il campo importo si normalizza da solo. Controlla il totale settimanale per non dimenticare giornate.
+
+Se cambi spesso città, usa le note per segnare dove ti trovavi: aiuta a ricordare il contesto quando l’amministrazione fa domande. E se devi rifare un itinerario, basta rileggere le note spese per ricostruire i movimenti.
 
 ### 21.2 Per gli amministrativi
 Usa i filtri per mese e cliente per preparare i report. Se vedi un ordine disattivato che compare ancora, forzane l’aggiornamento dal pannello admin. Quando validi una spesa, lascia un breve commento se rifiuti, così l’utente capisce cosa sistemare.
@@ -462,17 +513,27 @@ Usa i filtri per mese e cliente per preparare i report. Se vedi un ordine disatt
 ### 21.3 Per i responsabili di commessa
 Guarda i totali di ore per cliente e ordine: se vedi un picco, verifica se c’è un errore di inserimento. Usa l’export rapido per confrontare con i dati di fatturazione. Se un ordine sta per chiudersi, avvisa il team così non ci finiscono altre ore.
 
+Quando pianifichi il mese successivo, dai un’occhiata agli andamenti: se un cliente assorbe più ore del previsto, preparati a ribilanciare. Il portale è un termometro rapido, sfruttalo prima che i problemi arrivino a fine mese.
+
 ### 21.4 Per chi fa supporto
 Quando arriva una segnalazione, chiedi sempre screenshot e ora dell’evento: aiutano a leggere i log. Se l’utente è agitato, rassicuralo: “i dati sono al sicuro, vediamo insieme”. Molti problemi sono risolvibili con un refresh o un re-login, ma spiegalo con calma.
+
+Tieni una piccola FAQ interna dei problemi ricorrenti: “non vedo l’ordine”, “token scaduto”, “foto troppo grande”. Rispondi con messaggi pronti ma personalizzati, mantenendo il tono amichevole che caratterizza tutto il portale.
 
 ## Capitolo 22: Cosa abbiamo imparato sulle parole
 Il linguaggio informale non è sciatteria: è scelta di chiarezza. Dire “aggiungi ore” invece di “registra attività” ha ridotto domande. Dire “ritenta il login” invece di “l’autenticazione è fallita” ha ridotto frustrazione. Ogni testo è stato pesato per suonare come un collega che ti spiega qualcosa alla macchinetta del caffè.
 
+Quando si è dovuto scegliere tra due sinonimi, ha vinto quello più corto e familiare. Se un messaggio suonava anche solo un po’ intimidatorio, veniva riscritto. Questo lavoro di micro-copia ha avuto un impatto enorme sulla percezione generale: l’app sembra meno rigida e più complice.
+
 ## Capitolo 23: Se domani arrivasse una nuova feature
 Prima di scriverla si farebbe una chiacchierata con chi la userà, si disegnerebbero due schermate, si farebbe provare un prototipo rapido. Solo dopo si passerebbe al codice. La regola resterebbe la stessa: restare sul tema centrale, parlare semplice, testare presto, correggere in fretta.
 
+E se la feature non convincesse? Si archiviano i mockup, si prendono appunti su cosa non ha funzionato e si passa oltre. Meglio un “ci abbiamo provato” che una funzionalità forzata che complica la vita. La porta resta aperta per ripensarla quando i bisogni cambiano.
+
 ## Capitolo 24: Chiusura (ma non troppo)
 Questa versione del racconto è volutamente lunga e discorsiva, pensata per riempire pagine come se si stesse chiacchierando davanti a un monitor acceso. Ogni punto è stato allargato per dare spazio ai dettagli che spesso si perdono nelle sintesi. Il filo conduttore resta uno: un portale per ore e spese che parli la lingua di chi lo usa, che risolva problemi quotidiani e che cresca senza mai complicarsi la vita.
+
+Se dovessi riassumere tutto in una frase, sarebbe: “teniamo in ordine le nostre giornate di lavoro senza farla troppo lunga”. Tutto qui. Il resto sono esempi, storie, piccole scelte che rendono quel concetto vero ogni volta che qualcuno apre il portale.
 
 ## Bibliografia e sitografia
 - Documentazione ufficiale Angular: https://angular.dev
