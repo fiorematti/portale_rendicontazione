@@ -93,7 +93,7 @@ Oltre al guard, alcune chiamate API controllano lato server il ruolo, così anch
 ### 5.1 Validazione e debugging
 Ogni settimana i SAL hanno fatto da momento di verifica: si provava l’app, si raccoglievano bug, si riproducevano e si risolvevano con fix mirati. I log strutturati e gli strumenti di profilazione hanno aiutato a capire dove intervenire senza andare a tentoni.
 
-Alcuni problemi tipici sono emersi presto: form che perdevano lo stato al refresh, filtri che non reset- tavano i totali, errori di formattazione valuta. Ogni bug veniva documentato con passaggi per la riproduzione, così chi lo prendeva in carico sapeva esattamente da dove partire. Anche piccoli script di mock API hanno aiutato a testare i flussi quando i servizi reali non erano disponibili.
+Alcuni problemi tipici sono emersi presto: form che perdevano lo stato al refresh, filtri che non resettavano i totali, errori di formattazione valuta. Ogni bug veniva documentato con passaggi per la riproduzione, così chi lo prendeva in carico sapeva esattamente da dove partire. Anche piccoli script di mock API hanno aiutato a testare i flussi quando i servizi reali non erano disponibili.
 
 ### 5.2 Analisi dell’usabilità (UX)
 L’usabilità è stata misurata guardando quanto facilmente le persone navigavano, se trovavano subito i pulsanti giusti e se i messaggi di errore erano comprensibili. Si è puntato su etichette chiare, gerarchie tipografiche costanti e percorsi guidati per evitare confusione.
