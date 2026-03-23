@@ -56,9 +56,15 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 
 ## 3.3 Organizzazione del Workspace in VS Code: cartelle dei progetti
 
-Aprendo il progetto in VS Code si vede subito la classica struttura Angular, ma vale la pena fare un giro guidato per orientarsi. Nella root ci sono i file di configurazione principali: `angular.json` governa i target di build e le impostazioni CLI, mentre `package.json` e `package-lock.json` elencano le dipendenze e gli script (`ng serve`, `ng test`, ecc.). I vari `tsconfig*.json` gestiscono la compilazione TypeScript per app e test. La cartella `public/` contiene asset statici condivisi (favicon e logo), così da essere serviti direttamente senza passare dal bundler.
+Aprendo il progetto in VS Code si vede subito la classica struttura Angular, ma vale la pena fare un giro guidato per orientarsi.
 
-Il cuore sta in `src/`. Qui `main.ts` bootstrappa l’app con `bootstrapApplication(AppComponent, appConfig)`. La configurazione vive in `src/app/app.config.ts`, dove si vede l’iniezione del router, dell’`HttpClient` e dell’MSAL per l’autenticazione. Subito accanto c’è `app.routes.ts`, la mappa delle rotte: login pubblico e tutte le schermate protette con l’`authGuard`. Il componente root è definito in `app.ts` con il template `app.html` e gli stili `app.css`.
+Nella root ci sono i file di configurazione principali: `angular.json` governa i target di build e le impostazioni CLI, mentre `package.json` e `package-lock.json` elencano le dipendenze e gli script (`ng serve`, `ng test`, ecc.).
+
+I vari `tsconfig*.json` gestiscono la compilazione TypeScript per app e test. La cartella `public/` contiene asset statici condivisi (favicon e logo), così da essere serviti direttamente senza passare dal bundler.
+
+Il cuore sta in `src/`. Qui `main.ts` bootstrappa l’app con `bootstrapApplication(AppComponent, appConfig)`.
+
+La configurazione vive in `src/app/app.config.ts`, dove si vede l’iniezione del router, dell’`HttpClient` e dell’MSAL per l’autenticazione. Subito accanto c’è `app.routes.ts`, la mappa delle rotte: login pubblico e tutte le schermate protette con l’`authGuard`. Il componente root è definito in `app.ts` con il template `app.html` e gli stili `app.css`.
 
 Dentro `src/app/` le cartelle sono ordinate per responsabilità. `components/` raccoglie le pagine principali, ognuna con trio `*.ts`, `*.html`, `*.css`: 
 - `attivita/` gestisce la creazione e modifica delle attività (service dedicato `attivitaservice.ts`).
@@ -76,7 +82,11 @@ La cartella `shared/` è la cassetta degli attrezzi riusabili:
 - `shared/utils/` raccoglie utility per date, input, download file, gestione del DOM e attachment.
 Questa separazione permette di importare pezzi condivisi senza duplicare codice nelle singole feature.
 
-Completano il quadro `src/styles.css` per gli stili globali e `src/index.html` come host page. In VS Code ha senso tenere l’esplora risorse aperto e pinnare le cartelle `components` e `shared` per saltare rapidamente tra le viste e le utility. Anche la search di VS Code torna utile per seguire le chiamate API: i servizi sono quasi sempre nello stesso folder del componente oppure in `shared/services` se condivisi. Infine, ricordarsi che il routing è definito in un unico punto (`app.routes.ts`), quindi aggiungere una pagina nuova significa creare il componente sotto `components/` e registrarlo lì. Con questa mappa mentale diventa più semplice muoversi nel workspace senza perdersi tra i file.
+Completano il quadro `src/styles.css` per gli stili globali e `src/index.html` come host page.
+
+In VS Code ha senso tenere l’esplora risorse aperto e pinnare le cartelle `components` e `shared` per saltare rapidamente tra le viste e le utility. Anche la search di VS Code torna utile per seguire le chiamate API: i servizi sono quasi sempre nello stesso folder del componente oppure in `shared/services` se condivisi.
+
+Infine, ricordarsi che il routing è definito in un unico punto (`app.routes.ts`), quindi aggiungere una pagina nuova significa creare il componente sotto `components/` e registrarlo lì. Con questa mappa mentale diventa più semplice muoversi nel workspace senza perdersi tra i file.
 
 ## Additional Resources
 
