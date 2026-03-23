@@ -114,8 +114,13 @@
         <label class="fw-bold text-muted d-block">Ore</label>
         <span class="fw-bold">{{ attivitaDettaglio?.ore }}:00</span>
       </div>
-      
       <div class="col-6 text-start">
+        <label class="fw-bold text-muted d-block">Data attività</label>
+        <span class="fw-bold">{{ attivitaDettaglio?.dataAttivita | date:'dd/MM/yyyy' }}</span>
+      </div>
+      <div class="col-6 text-start">
+        <label class="fw-bold text-muted d-block">Stato</label>
+        <span class="fw-bold">{{ attivitaDettaglio?.stato || '—' }}</span>
       </div>
     </div>
 
