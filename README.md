@@ -56,7 +56,7 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 
 ## GitHub
 
-GitHub is the central base here. It hosts the code, keeps the commit and branch history, and lets everyone open issues and pull requests without running into version conflicts. In this project it handled version control, made it easy to see what changed, and let us pull back any update when needed.
+GitHub is the central base here. It hosts the code, keeps the commit and branch history, and lets everyone open issues and pull requests without running into version conflicts. For this project we branch off `main` for each feature, open a pull request for review, and track tasks with issues so every change stays visible and recoverable.
 
 ## Additional Resources
 
