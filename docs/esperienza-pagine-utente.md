@@ -12,7 +12,7 @@ La pagina **Note Spese** prende una piega più articolata, perché qui si raccol
 
 La tabella centrale mostra data, codice, importo richiesto e stato di pagamento con badge colorati “Pagato” o “Da Pagare”. Le icone a lato permettono di aprire il dettaglio, eliminare o modificare la riga. Quando il caricamento è in corso si vede la spinner con il messaggio “Caricamento spese…”, mentre gli errori compaiono dentro un alert rosso. Il linguaggio resta diretto e non troppo formale: anche chi arriva solo per controllare lo stato di rimborso capisce al volo cosa sta succedendo.
 
-Dentro il modale di aggiunta o modifica si entra nel vivo: la pagina supporta più tab “Dettagli”, così si possono registrare più voci di spesa nello stesso invio. Per la data c’è un mini calendario pop-up che rende più difficile sbagliare il formato.
+Dentro il modale di aggiunta o modifica si entra nel vivo: la pagina supporta più tab “Dettagli”, ognuno dedicato a una voce distinta, così si possono registrare più spese nello stesso invio. Per la data c’è un mini calendario pop-up che rende più difficile sbagliare il formato.
 
 Ogni categoria ha il suo campo numerico e un pulsante con icona a graffetta per allegare ricevute in PDF o immagine: vitto, hotel, aereo, trasporti, varie, parking, telepass. C’è spazio anche per l’auto e i chilometri percorsi, con il costo chilometrico bloccato per evitare errori.
 
