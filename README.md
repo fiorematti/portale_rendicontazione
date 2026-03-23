@@ -60,4 +60,4 @@ For more information on using the Angular CLI, including detailed command refere
 
 ## Pagine utente
 
-An informal, narrative walkthrough of the post-login **Attività** and **Note Spese** pages is available in [docs/esperienza-pagine-utente.md](docs/esperienza-pagine-utente.md).
+Una panoramica discorsiva (in italiano) delle pagine post-accesso **Attività** e **Note Spese** è disponibile in [docs/esperienza-pagine-utente.md](docs/esperienza-pagine-utente.md).
