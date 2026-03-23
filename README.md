@@ -54,6 +54,15 @@ ng e2e
 
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
+## GitHub
+
+GitHub is the central base here. It hosts the code and keeps the commit and branch history so we avoid version conflicts.
+
+- work on branches created from `main` for each feature or fix
+- open a pull request to get it reviewed and merged
+- use issues to list what’s left to do and track every change
+- if needed, recover or revert any change from the commit history
+
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
