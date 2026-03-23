@@ -56,7 +56,7 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 
 ## GitHub
 
-Qui GitHub fa da base operativa: ospita il codice, tiene lo storico dei commit e dei branch e permette di aprire issue e pull request senza incastrarsi con versioni diverse. Per questo progetto è servito a condividere le modifiche tra tutti, controllare cosa è stato fatto e recuperare al volo ogni variazione quando serviva.
+Here GitHub is the home base: it hosts the code, keeps the commit and branch history, and lets everyone open issues and pull requests without tripping over different versions. For this project it was the hub to share changes with everyone, check what got done, and grab any past tweak in a pinch.
 
 ## Additional Resources
 
