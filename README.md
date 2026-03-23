@@ -66,7 +66,7 @@ Il cuore sta in `src/`. Qui `main.ts` bootstrappa l’app con `bootstrapApplicat
 
 La configurazione vive in `src/app/app.config.ts`, dove si vede l’iniezione del router, dell’`HttpClient` e dell’MSAL per l’autenticazione. Subito accanto c’è `app.routes.ts`, la mappa delle rotte: login pubblico e tutte le schermate protette con l’`authGuard`. Il componente root è definito in `app.ts` con il template `app.html` e gli stili `app.css`.
 
-Dentro `src/app/` le cartelle sono ordinate per responsabilità. `components/` raccoglie le pagine principali, ognuna con trio `*.ts`, `*.html`, `*.css`: 
+Dentro `src/app/` le cartelle sono ordinate per responsabilità. `components/` raccoglie le pagine principali, ognuna composta da tre file (`*.ts`, `*.html`, `*.css`): 
 - `attivita/` gestisce la creazione e modifica delle attività (service dedicato `attivitaservice.ts`).
 - `note-spese/` per inserire e validare le note spese, con relativo `note-spese.service.ts`.
 - `registro-attivita/` e `registro-note/` mostrano i registri, entrambi con servizi per le chiamate API.
