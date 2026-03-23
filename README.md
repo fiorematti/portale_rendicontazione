@@ -58,10 +58,10 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 
 GitHub is the central base here. It hosts the code and keeps the commit and branch history so we avoid version conflicts.
 
-- si lavora su branch creati da `main` per ogni feature o fix
-- si apre una pull request per farla rivedere e unirla
-- si usano le issue per segnare cosa resta da fare e tenere traccia di ogni modifica
-- se serve si può sempre recuperare o revertare un cambiamento dal registro dei commit
+- work on branches created from `main` for each feature or fix
+- open a pull request to get it reviewed and merged
+- use issues to list what’s left to do and track every change
+- if needed, recover or revert any change from the commit history
 
 ## Additional Resources
 
