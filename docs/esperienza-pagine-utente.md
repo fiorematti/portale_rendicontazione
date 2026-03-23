@@ -12,7 +12,7 @@ La pagina **Note Spese** prende una piega più articolata, perché qui si raccol
 
 La tabella centrale mostra data, codice, importo richiesto e stato di pagamento con badge colorati “Pagato” o “Da Pagare”. Le icone a lato permettono di aprire il dettaglio, eliminare o modificare la riga. Quando il caricamento è in corso si vede la spinner con il messaggio “Caricamento spese…”, mentre gli errori compaiono dentro un alert rosso. Il linguaggio resta diretto e non troppo formale: anche chi arriva solo per controllare lo stato di rimborso capisce al volo cosa sta succedendo.
 
-Dentro il modale di aggiunta o modifica si entra nel vivo: la pagina supporta più “Dett.” (tab multipli) così si possono registrare più dettagli di spesa nello stesso invio. Per la data c’è un mini calendario pop-up che rende più difficile sbagliare il formato.
+Dentro il modale di aggiunta o modifica si entra nel vivo: la pagina supporta più tab “Dettagli”, così si possono registrare più voci di spesa nello stesso invio. Per la data c’è un mini calendario pop-up che rende più difficile sbagliare il formato.
 
 Ogni categoria ha il suo campo numerico e un pulsante con icona a graffetta per allegare ricevute in PDF o immagine: vitto, hotel, aereo, trasporti, varie, parking, telepass. C’è spazio anche per l’auto e i chilometri percorsi, con il costo chilometrico bloccato per evitare errori.
 
@@ -20,4 +20,6 @@ Se un allegato è già salvato, viene mostrato con nome file e pulsanti “Apri�
 
 Le validazioni sono pragmatiche: numeri negativi bloccati, alert gialli per problemi di salvataggio, rossi per errori di compilazione. Quando la pagina è in sola lettura, i campi diventano testo e i menu a tendina si spengono; un badge finale ricorda lo stato di validazione (approvato o meno). In fondo al modale, un totale aggiornato in tempo reale rassicura sull’importo complessivo, così si evita di fare somme a mano.
 
-Nel complesso le due pagine condividono un approccio comune: si privilegia la chiarezza, si lascia spazio all’azione rapida e ci si appoggia a modali per non perdere il contesto. La grafica usa bottoni arrotondati, badge colorati e ombre leggere per dare profondità senza appesantire. Chi deve solo segnare ore o spese passa in pochi click, chi deve esportare trova comandi sempre nello stesso punto e chi deve controllare lo stato è aiutato da badge e alert visivi. Nessuna esigenza di linguaggio burocratico: il portale parla come un collega che spiega la procedura in due minuti, mantenendo però i binari per evitare errori grossolani.
+Nel complesso le due pagine condividono un approccio comune: si privilegia la chiarezza, si lascia spazio all’azione rapida e ci si appoggia a modali per non perdere il contesto. La grafica usa bottoni arrotondati, badge colorati e ombre leggere per dare profondità senza appesantire.
+
+Chi deve solo segnare ore o spese passa in pochi click, chi deve esportare trova comandi sempre nello stesso punto e chi deve controllare lo stato è aiutato da badge e alert visivi. Nessuna esigenza di linguaggio burocratico: il portale parla come un collega che spiega la procedura in due minuti, mantenendo però i binari per evitare errori grossolani.
