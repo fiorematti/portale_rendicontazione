@@ -57,3 +57,7 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## User-facing pages
+
+An informal, narrative walkthrough of the post-login **Attività** and **Note Spese** pages is available in [docs/esperienza-pagine-utente.md](docs/esperienza-pagine-utente.md).
