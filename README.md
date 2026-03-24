@@ -58,11 +58,11 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
 
-## 5. Analisi dell'Usabilità (UX)
+## Analisi dell'Usabilità (UX)
 
-### 5.2 Facilità di navigazione e accessibilità dell'interfaccia sviluppata
+### Facilità di navigazione e accessibilità dell'interfaccia sviluppata
 
-Questa sezione documenta sinteticamente l’analisi di usabilità svolta sul portale di rendicontazione, con focus su navigazione e accessibilità dell’interfaccia.
+Estratto dei contenuti preparati per la sezione 5.2 della tesi. La sezione documenta sinteticamente l’analisi di usabilità svolta sul portale di rendicontazione, con focus su navigazione e accessibilità dell’interfaccia.
 
 #### Obiettivi e metrica di riferimento
 - **Facilità di navigazione**: ridurre il numero di click e il tempo necessari per raggiungere le aree chiave (Attività, Note spese, Registro attività, Registro note, Anagrafica Clienti/Utenti).
