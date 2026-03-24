@@ -2,6 +2,12 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.13.
 
+## Pagina Ordini: cosa fa e come si usa
+
+La pagina Ordini è la bacheca dove tenere sotto controllo i lavori: in alto c’è la barra di filtro, con la ricerca libera (codice o cliente) e il selettore di stato per passare da “Tutti” a “Ricevuto” o “Fatto”. A destra spicca il bottone scuro “Aggiungi Ordine” con l’icona “+”: cliccandolo si apre la modale per inserire un nuovo ordine, completa di campi per codice ordine, cliente, data di inizio, stato e codice offerta. Per la data c’è l’input formattato con l’icona calendario: toccando l’icona appare il mini calendario, navigabile con le frecce sinistra/destra del mese e selezione del giorno con un click (l’ultimo giorno scelto si evidenzia). Nella modale i bottoni in fondo cambiano etichetta a seconda del contesto: “Conferma” quando si aggiunge un ordine nuovo, “Salva modifiche” quando si modifica, “Annulla” per chiudere senza salvare; se manca qualche campo compare un alert rosso che invita a compilare tutto. Quando si apre un ordine in sola lettura, la modale mostra i dati formattati e i due bottoni “Chiudi” e “Modifica” (quest’ultimo passa direttamente alla modalità di editing).
+
+La tabella centrale elenca gli ordini con colonne per codice, cliente, data inizio, codice offerta e stato; lo stato è visualizzato con un badge che cambia colore tra “Ricevuto” e “Fatto”. Nella colonna Azioni ci sono tre icone: l’occhio apre la modale in sola lettura per vedere i dettagli, la matita apre la stessa modale già in modalità modifica (campi editabili e pulsante “Salva modifiche”), il cestino chiede conferma e poi rimuove l’ordine dalla lista. Filtri e tabella lavorano insieme: la lista si aggiorna al volo mentre si digita o si cambia lo stato selezionato.
+
 ## Development server
 
 To start a local development server, run:
