@@ -4,7 +4,9 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 
 ## Pagina Ordini - funzionalità e utilizzo
 
-La pagina Ordini è la bacheca dove tenere sotto controllo i lavori. In alto c’è la barra di filtro con la ricerca libera (codice o cliente) e il selettore di stato per passare da “Tutti” a “Ricevuto” o “Fatto”. A destra spicca il bottone scuro “Aggiungi Ordine” con l’icona “+”: cliccandolo si apre la modale per inserire un nuovo ordine, con i campi per codice ordine, cliente, data di inizio, stato e codice offerta.
+La pagina Ordini è la bacheca dove tenere sotto controllo i lavori. In alto c’è la barra di filtro con la ricerca libera (codice o cliente) e il selettore di stato per passare da “Tutti” a “Ricevuto” o “Fatto”.
+
+A destra spicca il bottone scuro “Aggiungi Ordine” con l’icona “+”: cliccandolo si apre la modale per inserire un nuovo ordine, con i campi per codice ordine, cliente, data di inizio, stato e codice offerta.
 
 Per la data c’è l’input con l’icona calendario: toccandola appare il mini calendario, navigabile con le frecce di mese e con la selezione del giorno (quello scelto si evidenzia).
 
@@ -14,7 +16,9 @@ La tabella elenca gli ordini con colonne per codice, cliente, data inizio, codic
 
 ## Gestione Auto (admin) - funzionalità e pulsanti
 
-La pagina Gestione Auto lato admin è il cruscotto per tenere allineate le auto associate agli utenti e le loro tariffe chilometriche. In alto c’è il campo “Cerca” con la lente per filtrare al volo per marca, modello o targa; a destra il bottone arancione “Aggiungi Auto” con il “+” apre la modale di inserimento/modifica.
+La pagina Gestione Auto lato admin è il cruscotto per tenere allineate le auto associate agli utenti e le loro tariffe chilometriche. In alto c’è il campo “Cerca” con la lente per filtrare al volo per marca, modello o targa.
+
+A destra il bottone arancione “Aggiungi Auto” con il “+” apre la modale di inserimento/modifica.
 
 La tabella mostra Utente, Marca, Modello, Targa e Tariffa chilometrica (formattata a 4 decimali).
 
