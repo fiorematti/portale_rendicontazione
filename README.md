@@ -2,7 +2,7 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.13.
 
-## Pagina Ordini: cosa fa e come si usa
+## Pagina Ordini - funzionalità e utilizzo
 
 La pagina Ordini è la bacheca dove tenere sotto controllo i lavori. In alto c’è la barra di filtro con la ricerca libera (codice o cliente) e il selettore di stato per passare da “Tutti” a “Ricevuto” o “Fatto”. A destra spicca il bottone scuro “Aggiungi Ordine” con l’icona “+”: cliccandolo si apre la modale per inserire un nuovo ordine, con i campi per codice ordine, cliente, data di inizio, stato e codice offerta.
 
@@ -12,7 +12,7 @@ Nella modale i bottoni in basso cambiano etichetta: “Conferma” quando si agg
 
 La tabella elenca gli ordini con colonne per codice, cliente, data inizio, codice offerta e stato; il badge di stato cambia colore tra “Ricevuto” e “Fatto”. Nella colonna Azioni ci sono tre icone: occhio (apre il dettaglio), matita (apre la modale già in modifica), cestino (chiede conferma ed elimina). Filtri e tabella lavorano insieme: la lista si aggiorna mentre si digita o si cambia lo stato.
 
-## Gestione Auto (admin): a cosa serve e pulsanti
+## Gestione Auto (admin) - funzionalità e pulsanti
 
 La pagina Gestione Auto lato admin è il cruscotto per tenere allineate le auto associate agli utenti e le loro tariffe chilometriche. In alto c’è il campo “Cerca” con la lente per filtrare al volo per marca, modello o targa; a destra il bottone arancione “Aggiungi Auto” con il “+” apre la modale di inserimento/modifica.
 
