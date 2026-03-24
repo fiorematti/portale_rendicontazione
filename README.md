@@ -61,3 +61,5 @@ For more information on using the Angular CLI, including detailed command refere
 ## Pagine utente
 
 Una panoramica discorsiva (in italiano) delle pagine post-accesso **Attività** e **Note Spese** è disponibile in [docs/esperienza-pagine-utente.md](docs/esperienza-pagine-utente.md).
+
+Per la vista admin del **Registro Note Spese**, trovi un racconto informale di tutte le funzionalità e dei pulsanti in [docs/registro-note-admin.md](docs/registro-note-admin.md).
