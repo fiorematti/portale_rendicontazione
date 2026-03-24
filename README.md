@@ -57,3 +57,11 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Pagine utente
+
+Una panoramica discorsiva (in italiano) delle pagine post-accesso **Attività** e **Note Spese** è disponibile in [docs/esperienza-pagine-utente.md](docs/esperienza-pagine-utente.md).
+
+Per la vista admin del **Registro Note Spese**, trovi un racconto informale di tutte le funzionalità e dei pulsanti in [docs/registro-note-admin.md](docs/registro-note-admin.md).
+
+Per la vista admin del **Registro Attività**, c’è un discorso fluido e impersonale in [docs/registro-attivita.md](docs/registro-attivita.md).
