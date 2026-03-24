@@ -14,7 +14,9 @@ La tabella elenca gli ordini con colonne per codice, cliente, data inizio, codic
 
 ## Gestione Auto (admin): a cosa serve e pulsanti
 
-La pagina Gestione Auto lato admin è il cruscotto per tenere allineate le auto associate agli utenti e le loro tariffe chilometriche. In alto c’è il campo “Cerca” con la lente per filtrare al volo per marca, modello o targa; a destra il bottone arancione “Aggiungi Auto” con il “+” apre la modale di inserimento/modifica. La tabella mostra Utente, Marca, Modello, Targa e Tariffa chilometrica (formattata a 4 decimali).
+La pagina Gestione Auto lato admin è il cruscotto per tenere allineate le auto associate agli utenti e le loro tariffe chilometriche. In alto c’è il campo “Cerca” con la lente per filtrare al volo per marca, modello o targa; a destra il bottone arancione “Aggiungi Auto” con il “+” apre la modale di inserimento/modifica.
+
+La tabella mostra Utente, Marca, Modello, Targa e Tariffa chilometrica (formattata a 4 decimali).
 
 Nell’ultima colonna ci sono tre icone: l’occhio apre il dettaglio in sola lettura, il cestino chiede conferma ed elimina l’auto, la matita apre la modale già precompilata per modificare.
 
