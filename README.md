@@ -85,6 +85,8 @@ _Nota_: sezione redatta in italiano poiché costituisce un estratto della tesi. 
 - **Contrasto e feedback**: palette con fondo chiaro e testo scuro, combinata con stati attivi/hover sugli elementi di navigazione, aiuta l’orientamento; i modali evidenziano il contenuto attivo.
 
 #### Punti di attenzione e miglioramento continuo
-- Introdurre **test di usabilità quantitativi** (time-on-task e System Usability Scale (SUS), metrica standardizzata della facilità d’uso percepita) su un campione di utenti interni.
+- Introdurre **test di usabilità quantitativi** (time-on-task e System Usability Scale - SUS) su un campione di utenti interni.
 - Estendere gli **aria-label** ai pulsanti iconici e assicurare descrizioni alternative per loghi/immagini decorative.
 - Validare i livelli di **contrasto** con strumenti automatici (es. axe, Lighthouse) e aggiungere indicatori di focus più marcati per l’uso da tastiera.
+
+SUS è una metrica standardizzata della facilità d’uso percepita.
