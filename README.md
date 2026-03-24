@@ -62,7 +62,7 @@ For more information on using the Angular CLI, including detailed command refere
 
 ### Facilità di navigazione e accessibilità dell'interfaccia sviluppata
 
-Estratto dei contenuti preparati per la sezione 5.2 della tesi. La sezione documenta sinteticamente l’analisi di usabilità svolta sul portale di rendicontazione, con focus su navigazione e accessibilità dell’interfaccia.
+_Nota_: sezione redatta in italiano poiché costituisce un estratto della tesi. La sezione documenta sinteticamente l’analisi di usabilità svolta sul portale di rendicontazione, con focus su navigazione e accessibilità dell’interfaccia.
 
 #### Obiettivi e metrica di riferimento
 - **Facilità di navigazione**: ridurre il numero di click e il tempo necessari per raggiungere le aree chiave (Attività, Note spese, Registro attività, Registro note, Anagrafica Clienti/Utenti).
@@ -85,6 +85,6 @@ Estratto dei contenuti preparati per la sezione 5.2 della tesi. La sezione docum
 - **Contrasto e feedback**: palette con fondo chiaro e testo scuro, combinata con stati attivi/hover sugli elementi di navigazione, aiuta l’orientamento; i modali evidenziano il contenuto attivo.
 
 #### Punti di attenzione e miglioramento continuo
-- Introdurre **test di usabilità quantitativi** (time-on-task, SUS) su un campione di utenti interni.
+- Introdurre **test di usabilità quantitativi** (time-on-task, System Usability Scale - SUS) su un campione di utenti interni.
 - Estendere gli **aria-label** ai pulsanti iconici e assicurare descrizioni alternative per loghi/immagini decorative.
 - Validare i livelli di **contrasto** con strumenti automatici (es. axe, Lighthouse) e aggiungere indicatori di focus più marcati per l’uso da tastiera.
