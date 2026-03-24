@@ -8,6 +8,12 @@ La pagina Ordini è la bacheca dove tenere sotto controllo i lavori: in alto c�
 
 La tabella centrale elenca gli ordini con colonne per codice, cliente, data inizio, codice offerta e stato; lo stato è visualizzato con un badge che cambia colore tra “Ricevuto” e “Fatto”. Nella colonna Azioni ci sono tre icone: l’occhio apre la modale in sola lettura per vedere i dettagli, la matita apre la stessa modale già in modalità modifica (campi editabili e pulsante “Salva modifiche”), il cestino chiede conferma e poi rimuove l’ordine dalla lista. Filtri e tabella lavorano insieme: la lista si aggiorna al volo mentre si digita o si cambia lo stato selezionato.
 
+## Gestione Auto (admin): a cosa serve e pulsanti
+
+La pagina Gestione Auto lato admin è il cruscotto dove si tengono allineate le auto associate agli utenti e le loro tariffe chilometriche. In alto c’è il campo “Cerca” con l’iconcina lente per filtrare al volo per marca, modello o targa; a destra il bottone arancione “Aggiungi Auto” con il “+” apre la modale di inserimento/modifica. La tabella sotto mostra Utente, Marca, Modello, Targa e Tariffa chilometrica (formattata a 4 decimali). Nell’ultima colonna ci sono tre icone: l’occhio apre il dettaglio in sola lettura, il cestino chiede conferma e poi elimina l’auto, la matita apre la modale già precompilata per modificare.
+
+Nella modale di aggiunta/modifica sono presenti i campi per selezionare l’utente, inserire marca, modello, targa, tariffa chilometrica e cilindrata. I pulsanti in fondo sono “Annulla” per chiudere senza salvare e “Conferma” per salvare (switcha automaticamente tra crea e aggiorna). Se qualche campo è mancante o non numerico compare un alert rosso che invita a completare i dati. La modale dettaglio mostra i dati in tabella compatta e offre due bottoni: “Esci” per chiudere e “Modifica” per passare direttamente all’editing dello stesso record. Tutte le finestre modali bloccano lo scroll di sfondo finché non vengono chiuse.
+
 ## Development server
 
 To start a local development server, run:
