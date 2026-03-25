@@ -57,3 +57,11 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## 5.3 Processo di Build e Deployment
+
+La regia sta in `angular.json`: definisce l’entrypoint (`src/main.ts`), polyfill e asset pubblici, e include automaticamente stili/script di Bootstrap. La build di produzione applica i budget (1 MB per il bundle iniziale, 4 kB per i CSS dei componenti) e usa `outputHashing: all` per nomi già cache-busted; quella di sviluppo mantiene le source map e disattiva le ottimizzazioni per un debug comodo. Se servono asset extra o budget più permissivi, è lì che si interviene.
+
+Per compilare: `npm run build` (alias `npx ng build`). Di default usa la produzione e deposita tutto in `dist/portale-rendicontazione` con hash nel nome. Per un giro rapido e leggibile: `ng build --configuration development`, con output meno ottimizzato ma più semplice da ispezionare.
+
+Il rilascio su GitHub resta lineare: `dist/` è già in `.gitignore`, quindi si versionano solo le sorgenti (`git add . && git commit -m "build: aggiorna app"`) e si fa push del branch (`git push origin <branch>`). Poi si apre una pull request o si tagga una release; un workflow GitHub Actions può costruire in CI e pubblicare l’output su GitHub Pages o su un host esterno.
